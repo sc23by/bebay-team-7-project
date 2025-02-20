@@ -2,7 +2,7 @@
 {% block content %}
 <div>
     <div>
-        <h1>Register</h1>
+        <h1>Login</h1>
         
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -15,41 +15,24 @@
           {% endif %}
         {% endwith %}
 
-        <!-- Registration form -->
+        <!-- Login form -->
         <form method="post">
             {{ form.hidden_tag() }}
+
             <!-- Username input -->
             <div>
-                {{ form.username.label }}
-                {{ form.username }}
+                {{ form.username.label(class="form-label") }}
+                {{ form.username(class="form-control") }}
                 {% for error in form.username.errors %}
-                    <small>{{ error }}</small>
-                {% endfor %}
-            </div>
-
-            <!-- Email input -->
-            <div>
-                {{ form.email.label }}
-                {{ form.email }}
-                {% for error in form.email.errors %}
                     <small>{{ error }}</small>
                 {% endfor %}
             </div>
 
             <!-- Password input -->
             <div>
-                {{ form.password.label }}
-                {{ form.password }}
+                {{ form.password.label(class="form-label") }}
+                {{ form.password(class="form-control") }}
                 {% for error in form.password.errors %}
-                    <small>{{ error }}</small>
-                {% endfor %}
-            </div>
-
-            <!-- Confirm Password input -->
-            <div>
-                {{ form.confirm_password.label }}
-                {{ form.confirm_password }}
-                {% for error in form.confirm_password.errors %}
                     <small>{{ error }}</small>
                 {% endfor %}
             </div>
