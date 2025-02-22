@@ -78,3 +78,7 @@ def loggedIn():
     Redirects to main page when website first opened.
     """
     return render_template('loggedIn.html')
+
+@app.route('/account')
+def account():
+    return render_template('account.html')
