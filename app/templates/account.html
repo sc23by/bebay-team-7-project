@@ -1,6 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-    
 {% extends 'base.html' %}
 {% block content %}
 <body class="container-fluid bg-light">
@@ -8,21 +5,41 @@
     <div class="row vh-100">
         <!-- Sidebar -->
         <div class="col-md-3 col-lg-2 bg-white shadow-sm p-4">
-            <h3 class="mb-4">Bebay</h3>
             <div class="d-grid gap-2">
-                <button class="btn btn-outline-secondary">Info</button>
-                <button class="btn btn-outline-secondary">Listings</button>
-                <button class="btn btn-outline-secondary">My Watchlist</button>
-                <button class="btn btn-outline-secondary">Notifications</button>
+                <form action="{{ url_for('account') }}" method="post" name="sidebar">
+                    {{ form.hidden_tag() }}
+
+                    <div>{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
+                    <div>{{ form.listings(class="btn btn-outline-secondary custom-button") }}</div>
+                    <div>{{ form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
+                    <div>{{ form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
+                </form>
             </div>
         </div>
 
         <!-- Content Area -->
         <div class="col-md-9 col-lg-10 p-5">
             <h2 class="mb-4">My Info</h2>
-            
+
+            <h3>Hello <!-- {{ current_user.username}} --> </h3>
+        
+
             <div class="mb-3 row">
-                <label class="col-sm-2 col-form-label">Name</label>
+                <label class="col-sm-2 col-form-label">First name</label>
+                <div class="col-sm-6">
+                    <input type="text" class="form-control" value="{{ firstname }}" readonly>
+                </div>
+            </div>
+
+            <div class="mb-3 row">
+                <label class="col-sm-2 col-form-label">Last name</label>
+                <div class="col-sm-6">
+                    <input type="text" class="form-control" value="{{ lastname }}" readonly>
+                </div>
+            </div>
+
+            <div class="mb-3 row">
+                <label class="col-sm-2 col-form-label">Username</label>
                 <div class="col-sm-6">
                     <input type="text" class="form-control" value="{{ username }}" readonly>
                 </div>
@@ -31,15 +48,34 @@
                 </div>
             </div>
 
+            <h3>Change Password:</h3>
+
             <div class="mb-3 row">
-                <label class="col-sm-2 col-form-label">Password</label>
+                <label class="col-sm-2 col-form-label">Current Password</label>
                 <div class="col-sm-6">
                     <input type="password" class="form-control" value="********" readonly>
                 </div>
-                <div class="col-sm-2">
-                    <button class="btn btn-outline-primary">Edit</button>
+            </div>
+
+            <div class="mb-3 row">
+                <label class="col-sm-2 col-form-label">New Password</label>
+                <div class="col-sm-6">
+                    <input type="text" class="form-control" value="{{ newPassword }}" readonly>
                 </div>
             </div>
+
+            <div class="mb-3 row">
+                <label class="col-sm-2 col-form-label">Verify New Password</label>
+                <div class="col-sm-6">
+                    <input type="text" class="form-control" value="{{ newPassword }}" readonly>
+                </div>
+            </div>
+
+            <div class="col-sm-2">
+                <button class="btn btn-outline-primary">Submit</button>
+            </div>
+
+            <h3>Card and Shipping Information:</h3>
 
             <div class="mb-3 row">
                 <label class="col-sm-2 col-form-label">Card</label>
@@ -47,7 +83,17 @@
                     <input type="password" class="form-control" value="**** **** ****" readonly>
                 </div>
                 <div class="col-sm-2">
-                    <button class="btn btn-outline-primary">Edits</button>
+                    <button class="btn btn-outline-primary">Edit</button>
+                </div>
+            </div>
+
+            <div class="mb-3 row">
+                <label class="col-sm-2 col-form-label">Shipping Address</label>
+                <div class="col-sm-6">
+                    <input type="password" class="form-control" value="{{ shippingAddress}}" readonly>
+                </div>
+                <div class="col-sm-2">
+                    <button class="btn btn-outline-primary">Edit</button>
                 </div>
             </div>
 

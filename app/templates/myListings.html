@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<body class="container-fluid bg-light">
+
+    <div class="row vh-100">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 bg-white shadow-sm p-4">
+            <div class="d-grid gap-2">
+                <form action="{{ url_for('listings') }}" method="post" name="sidebar">
+                    {{ form.hidden_tag() }}
+
+                    <div>{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
+                    <div>{{ form.listings(class="btn btn-outline-secondary custom-button") }}</div>
+                    <div>{{ form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
+                    <div>{{ form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="col-md-9 col-lg-10 p-5">
+            <h2 class="mb-4">My Listings</h2>
+
+        </div>
+    </div>
+
+</body>
+{% endblock %}
