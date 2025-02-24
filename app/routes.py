@@ -1,7 +1,7 @@
 from app import app, db, bcrypt
-from flask import render_template, redirect, url_for, flash
+from flask import render_template, redirect, url_for, flash, request
 from flask_login import login_user, current_user, login_required,logout_user
-from app.forms import RegistrationForm, LoginForm
+from app.forms import RegistrationForm, LoginForm, SideBarForm
 from app.models import User
 
 
@@ -79,6 +79,70 @@ def loggedIn():
     """
     return render_template('loggedIn.html')
 
-@app.route('/account')
+@app.route('/account', methods=['GET', 'POST'])
 def account():
-    return render_template('account.html')
+
+    form = SideBarForm()
+
+    if form.validate_on_submit():
+        if form.info.data:
+            return redirect(url_for("account"))
+        elif form.listings.data:
+            return redirect(url_for("listings"))
+        elif form.watchlist.data:
+            return redirect(url_for("watchlist"))
+        elif form.notifications.data:
+            return redirect(url_for("notifications"))
+
+    return render_template('account.html', form=form)
+
+@app.route('/listings', methods=['GET', 'POST'])
+def listings():
+
+    form = SideBarForm()
+
+    if form.validate_on_submit():
+        if form.info.data:
+            return redirect(url_for("account"))
+        elif form.listings.data:
+            return redirect(url_for("listings"))
+        elif form.watchlist.data:
+            return redirect(url_for("watchlist"))
+        elif form.notifications.data:
+            return redirect(url_for("notifications"))
+
+    return render_template('myListings.html', form=form)
+
+@app.route('/watchlist', methods=['GET', 'POST'])
+def watchlist():
+
+    form = SideBarForm()
+
+    if form.validate_on_submit():
+        if form.info.data:
+            return redirect(url_for("account"))
+        elif form.listings.data:
+            return redirect(url_for("listings"))
+        elif form.watchlist.data:
+            return redirect(url_for("watchlist"))
+        elif form.notifications.data:
+            return redirect(url_for("notifications"))
+
+    return render_template('watchlist.html', form=form)
+
+@app.route('/notifications', methods=['GET', 'POST'])
+def notifications():
+
+    form = SideBarForm()
+
+    if form.validate_on_submit():
+        if form.info.data:
+            return redirect(url_for("account"))
+        elif form.listings.data:
+            return redirect(url_for("listings"))
+        elif form.watchlist.data:
+            return redirect(url_for("watchlist"))
+        elif form.notifications.data:
+            return redirect(url_for("notifications"))
+
+    return render_template('notifications.html', form=form)
