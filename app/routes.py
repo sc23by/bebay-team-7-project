@@ -146,3 +146,8 @@ def notifications():
             return redirect(url_for("notifications"))
 
     return render_template('notifications.html', form=form)
+
+#Route: Manager Page
+@app.route('/manager', methods=['GET','POST'])
+def manager():
+    return render_template("managerStats.html")
