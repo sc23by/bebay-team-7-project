@@ -151,3 +151,7 @@ def notifications():
 @app.route('/manager', methods=['GET','POST'])
 def manager():
     return render_template("managerStats.html")
+
+@app.route('/manageracc',methods=['GET','POST'])
+def manageracc():
+    return render_template("managerAccounts.html")
