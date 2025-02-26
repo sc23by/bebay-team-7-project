@@ -5,6 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import app
 import pytest
+from colours import Colours
 
 '''
 Creating fixtures to test routes with
@@ -24,11 +25,11 @@ def loggedInClient(client):
     return client
 
 def test_home(client):
-    print("Testing homepage - logged out:")
+    print(f"{Colours.YELLOW}Testing homepage - logged out:{Colours.RESET}")
     response = client.get('/')
     assert response.status_code == 200
 
 def test_home_authenticated(loggedInClient):
-    print("Testing homepage - logged in:")
+    print(f"{Colours.YELLOW}Testing homepage - logged in:{Colours.RESET}")
     response = loggedInClient.get('/')
     assert response.status_code == 200
