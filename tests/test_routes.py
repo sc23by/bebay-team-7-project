@@ -68,7 +68,7 @@ def test_register_valid_user(client):
     
     # ensure redirect to login page after registering
     assert response.status_code == 200
-    assert b'Login' in response.data
+    assert b'<h1>Login</h1>' in response.data
 
 def test_register_duplicate_username(client):
     print(f"{Colours.YELLOW}Testing register page - duplicate username:{Colours.RESET}")
@@ -123,16 +123,6 @@ def test_register_password_mismatch(client):
     assert "Passwords must match." in response.data.decode()
     assert response.status_code == 200
 
-
-def test_register_already_authenticated(client):
-    print(f"{Colours.YELLOW}Testing register page - logged in already:{Colours.RESET}")
-    with client.session_transaction() as sess:
-        sess['user_id'] = 1  # Simulate a logged-in user
-
-    response = client.get('/register', follow_redirects=True)
-    assert response.status_code == 200
-    assert b'Logged In' in response.data  # Should redirect to loggedIn page
-
 '''
 Testing routes with logged out client
 '''
@@ -140,3 +130,9 @@ def test_home_authenticated(loggedInClient):
     print(f"{Colours.YELLOW}Testing homepage - logged in:{Colours.RESET}")
     response = loggedInClient.get('/')
     assert response.status_code == 200
+
+def testRegisterAuthenticated(loggedInClient):
+    print(f"{Colours.YELLOW}Testing register page - logged in:{Colours.RESET}")
+    response = loggedInClient.get('/register')
+    assert response.status_code == 200
+    assert b'<p> Now logged in </p>' in response.data  
