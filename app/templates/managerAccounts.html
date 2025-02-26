@@ -1,15 +1,40 @@
 {%extends "base.html"%}
 
 {% block content %}
-
+<!--Filter Dropdown button-->
 <div>
-    <button>filter</button>
-    <button>sort</button>
+    <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            Filter
+          </button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#">Dropdown link</a></li>
+            <li><a class="dropdown-item" href="#">Dropdown link</a></li>
+          </ul>
+        </div>
 </div>
+
+<!--Sort Dropdown button-->
+    <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            Sort
+          </button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#">Dropdown link</a></li>
+            <li><a class="dropdown-item" href="#">Dropdown link</a></li>
+          </ul>
+        </div>
+</div>
+
+<!--Search Box-->
     <div class="search-container">
         <input type="text" class="search-input" placeholder="Search...">
         <button class="search-button">🔍</button>
     </div>
+
+<!--Account cards-->
 <div class="card">
     <div class="card-body">
         <!--Need for loop for cards-->
@@ -18,5 +43,14 @@
         <span><button>set</button></span>
     </div>
 </div>
+
+
+<!--Page buttons-->
+<div>
+    <button>&laquo;</button>
+    page
+    <button>&raquo;</button>
+</div>
+
 {% endblock %}
 

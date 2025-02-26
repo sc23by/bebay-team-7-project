@@ -155,3 +155,7 @@ def manager():
 @app.route('/manageracc',methods=['GET','POST'])
 def manageracc():
     return render_template("managerAccounts.html")
+
+@app.route('/managerlistings',methods=['GET','POST'])
+def managerlist():
+    return render_template("managerListings.html")
