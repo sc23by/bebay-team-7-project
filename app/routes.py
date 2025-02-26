@@ -146,3 +146,7 @@ def notifications():
             return redirect(url_for("notifications"))
 
     return render_template('notifications.html', form=form)
+
+@app.route('/expert')
+def examplepage():
+    return render_template('expertpage.html')
