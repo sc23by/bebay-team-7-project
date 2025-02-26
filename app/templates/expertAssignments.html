@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+{% extends "expertBase.html" %}
+{% block content %}
+
+
+<h1>Authentication Assignments</h1>
+<!--Search bar searching for items to authenticate -->
+<div class="topnav">
+    <a class="active"></a>
+    <input type="text" placeholder="Search..">
+</div>
+
+
+<div>
+    <a href="{{ url_for('itemAuthentication') }}" class="btn btn-primary">Example Item</a>
+</div>
+
+
+
+{% endblock %}
+
+</html>
