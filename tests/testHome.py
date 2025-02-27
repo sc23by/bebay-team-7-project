@@ -51,7 +51,7 @@ def loggedInClientP1(client):
         'password': 'password'
     }, follow_redirects=True)
 
-    assert response.status_code == 200  # Ensure login was successful
+    assert response.status_code == 200
     return client
 
 @pytest.fixture
@@ -72,7 +72,7 @@ def loggedInClientP2(client):
         'password': 'password'
     }, follow_redirects=True)
 
-    assert response.status_code == 200  # Ensure login was successful
+    assert response.status_code == 200
     return client
 
 @pytest.fixture
@@ -93,5 +93,21 @@ def loggedInClientP3(client):
         'password': 'password'
     }, follow_redirects=True)
 
-    assert response.status_code == 200  # Ensure login was successful
+    assert response.status_code == 200
     return client
+
+'''
+Testing routes with logged out client
+'''
+def testHome(client):
+    print(f"{Colours.YELLOW}Testing homepage - logged out:{Colours.RESET}")
+    response = client.get('/')
+    assert response.status_code == 200
+
+'''
+Testing routes with logged in client
+'''
+def testHomeAuthenticated(loggedInClient):
+    print(f"{Colours.YELLOW}Testing homepage - logged in:{Colours.RESET}")
+    response = loggedInClient.get('/')
+    assert response.status_code == 200
