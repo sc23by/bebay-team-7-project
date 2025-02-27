@@ -11,7 +11,7 @@ def mainPage():
     Redirects to main page when website first opened.
     """
     if current_user.is_authenticated:
-        return redirect(redirectBasedOnPriority(user))
+        return redirectBasedOnPriority(current_user)
     return render_template('mainPage.html')
 
 # Route: Registration Page    
