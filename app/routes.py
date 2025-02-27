@@ -11,7 +11,7 @@ def mainPage():
     Redirects to main page when website first opened.
     """
     if current_user.is_authenticated:
-        return redirect(url_for('loggedIn'))
+        return redirect(redirectBasedOnPriority)
     return render_template('mainPage.html')
 
 # Route: Registration Page    
@@ -23,19 +23,20 @@ def register():
     form = RegistrationForm()
 
     if current_user.is_authenticated:
-        return redirect(url_for('loggedIn'))
+        return redirect(redirectBasedOnPriority)
 
     if form.validate_on_submit():
+
         if User.query.filter_by(username=form.username.data).first():
             flash('Username already exists. Please choose a different one.', 'danger')
             return redirect(url_for('register'))
 
         if User.query.filter_by(email=form.email.data).first():
-            flash('Username already exists. Please choose a different one.', 'danger')
+            flash('Email already exists. Please choose a different one.', 'danger')
             return redirect(url_for('register'))
 
         hashed_password = bcrypt.generate_password_hash(form.password.data)
-        user = User(username=form.username.data, email=form.email.data, password=hashed_password)
+        user = User(firstName=form.firstName.data, lastName=form.lastName.data, username=form.username.data, email=form.email.data, password=hashed_password)
         db.session.add(user)
         db.session.commit()
 
@@ -53,17 +54,54 @@ def login():
     """
     form = LoginForm()
     if current_user.is_authenticated:
-        return redirect(url_for('loggedIn'))
+        return redirectBasedOnPriority(user)
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user)
-            return redirect(url_for('loggedIn'))
+            return redirectBasedOnPriority(user)
         flash('Invalid username or password.', 'danger')
     return render_template('login.html', form=form)
 
+# Function: Redirect based on priority
+def redirectBasedOnPriority(user):
+    """
+    Function to redirect user to correct page based on their priority.
+    """
+    if user.priority == 3:  # Manager
+        return redirect(url_for('managerHome'))
+    elif user.priority == 2:  # Expert
+        return redirect(url_for('expertHome'))
+    else:  # Normal User
+        return redirect(url_for('loggedIn'))
+
+# Route: Managers Home
+@app.route('/managerHome')
+@login_required
+def managerHome():
+    """
+    Redirects to managers home page when website first opened.
+    """
+    return render_template('managerHome.html')
+
+# Route: Experts Home Page
+@app.route('/expertsHome')
+@login_required
+def expertHome():
+    """
+    Redirects to experts home page when website first opened.
+    """
+    return render_template('expertsHome.html')
+
 # Route: Logout
 @app.route('/logout')
+def logout():
+    """
+    Log the user out and redirect to the mainPage page.
+    """
+    logout_user()
+    return redirect(url_for('mainPage'))
+    
 @login_required
 def logout():
     """

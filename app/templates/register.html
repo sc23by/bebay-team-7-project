@@ -18,6 +18,25 @@
         <!-- Registration form -->
         <form method="post">
             {{ form.hidden_tag() }}
+
+            <!-- First Name input -->
+            <div>
+                {{ form.firstName.label }}
+                {{ form.firstName }}
+                {% for error in form.firstName.errors %}
+                    <small>{{ error }}</small>
+                {% endfor %}
+            </div>
+
+            <!-- Last Name input -->
+            <div>
+                {{ form.lastName.label }}
+                {{ form.lastName }}
+                {% for error in form.lastName.errors %}
+                    <small>{{ error }}</small>
+                {% endfor %}
+            </div>
+
             <!-- Username input -->
             <div>
                 {{ form.username.label }}
@@ -47,9 +66,9 @@
 
             <!-- Confirm Password input -->
             <div>
-                {{ form.confirm_password.label }}
-                {{ form.confirm_password }}
-                {% for error in form.confirm_password.errors %}
+                {{ form.confirmPassword.label }}
+                {{ form.confirmPassword }}
+                {% for error in form.confirmPassword.errors %}
                     <small>{{ error }}</small>
                 {% endfor %}
             </div>
