@@ -202,3 +202,16 @@ def notifications():
             return redirect(url_for("notifications"))
 
     return render_template('notifications.html', form=form)
+
+#Route: Manager Page
+@app.route('/manager', methods=['GET','POST'])
+def manager():
+    return render_template("managerStats.html")
+
+@app.route('/manageracc',methods=['GET','POST'])
+def manageracc():
+    return render_template("managerAccounts.html")
+
+@app.route('/managerlistings',methods=['GET','POST'])
+def managerlist():
+    return render_template("managerListings.html")
