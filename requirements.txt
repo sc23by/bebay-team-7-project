@@ -6,3 +6,4 @@ Flask-WTF
 WTForms
 email-validator
 flask-bcrypt
+flask-bcrypt
