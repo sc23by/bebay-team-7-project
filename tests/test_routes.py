@@ -123,6 +123,9 @@ def testRegisterPasswordMismatch(client):
     assert "Passwords must match." in response.data.decode()
     assert response.status_code == 200
 
+
+## test email is valid
+
 '''
 Testing routes with logged out client
 '''
