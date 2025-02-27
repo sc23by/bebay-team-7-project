@@ -64,6 +64,7 @@ class RegistrationForm(FlaskForm):
     ])
     submit = SubmitField('Register')
 
+# Form for side bar
 class SideBarForm(FlaskForm):
     """
     Buttons for navigation through profile section 
