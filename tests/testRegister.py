@@ -1,3 +1,4 @@
+#tests for the register route
 import sys
 import os
 
@@ -5,6 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import app, db, bcrypt
 from app.models import User
+from flask import url_for
 import pytest
 from colours import Colours
 
@@ -33,19 +35,30 @@ def client():
     print("\nTearing down the test client")
 
 @pytest.fixture
-def loggedInClient(client):
-    client.get('/login')
+def loggedInClientP1(client):
+    with app.app_context():
+        test_user = User(username='testuser',
+                         email='test@example.com',
+                         password=bcrypt.generate_password_hash('password'),
+                         firstName='Test', 
+                         lastName='User', 
+                         priority=1)
+        db.session.add(test_user)
+        db.session.commit()
+
+    # Log in the user
+    response = client.post('/login', data={
+        'username': 'testuser',
+        'password': 'password'
+    }, follow_redirects=True)
+
+    assert response.status_code == 200  # Ensure login was successful
     return client
 
 
 '''
 Testing routes with logged out client
 '''
-def testHome(client):
-    print(f"{Colours.YELLOW}Testing homepage - logged out:{Colours.RESET}")
-    response = client.get('/')
-    assert response.status_code == 200
-
 def testRegisterValidUser(client):
     print(f"{Colours.YELLOW}Testing register page- registering a user:{Colours.RESET}")
     response = client.post('/register', data={
@@ -135,20 +148,32 @@ def testRegisterPasswordMismatch(client):
     assert "Passwords must match." in response.data.decode()
     assert response.status_code == 200
 
+def testRegisterPasswordNotStrong(client):
+    print(f"{Colours.YELLOW}Testing register page - password not strong enough:{Colours.RESET}")
+
+    response = client.post('/register', data={
+        'firstName': 'test',
+        'lastName': 'user',
+        'username': 'Auser',
+        'email': 'email@example.com',
+        'password': 'firstpassword',
+        'confirmPassword': 'firstpassword'
+    }, follow_redirects=True)
+
+    assert "Password needs at least one uppercase letter." in response.data.decode()
+    assert response.status_code == 200
 
 #FIXME test email is valid
-#FIXME test pasword is strong enough
+#FIXME test firstname lastname and username is correct form (length ect)
 
 '''
 Testing routes with logged out client
 '''
-def testHomeAuthenticated(loggedInClient):
-    print(f"{Colours.YELLOW}Testing homepage - logged in:{Colours.RESET}")
-    response = loggedInClient.get('/')
-    assert response.status_code == 200
 
-def testRegisterAuthenticated(loggedInClient):
+def testRegisterAuthenticated(loggedInClientP1):
     print(f"{Colours.YELLOW}Testing register page - logged in:{Colours.RESET}")
-    response = loggedInClient.get('/register')
-    assert response.status_code == 200
-    assert b'<p> Now logged in </p>' in response.data  
+
+    response = loggedInClientP1.get('/register')
+    assert response.status_code == 302
+    assert b'/loggedIn' in response.data
+    
