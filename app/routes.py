@@ -218,3 +218,15 @@ def expertsMessaging():
 @app.route('/setAvailability')
 def setAvailability():
     return render_template('setAvailability.html')
+#Route: Manager Page
+@app.route('/manager', methods=['GET','POST'])
+def manager():
+    return render_template("managerStats.html")
+
+@app.route('/manageracc',methods=['GET','POST'])
+def manageracc():
+    return render_template("managerAccounts.html")
+
+@app.route('/managerlistings',methods=['GET','POST'])
+def managerlist():
+    return render_template("managerListings.html")
