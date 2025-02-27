@@ -47,12 +47,12 @@ def loggedInClient(client):
 '''
 Testing routes with logged out client
 '''
-def test_home(client):
+def testHome(client):
     print(f"{Colours.YELLOW}Testing homepage - logged out:{Colours.RESET}")
     response = client.get('/')
     assert response.status_code == 200
 
-def test_register_valid_user(client):
+def testRegisterValidUser(client):
     print(f"{Colours.YELLOW}Testing register page - logged out:{Colours.RESET}")
     response = client.post('/register', data={
         'username': 'testuser',
@@ -70,7 +70,7 @@ def test_register_valid_user(client):
     assert response.status_code == 200
     assert b'<h1>Login</h1>' in response.data
 
-def test_register_duplicate_username(client):
+def testRegisterDuplicateUsername(client):
     print(f"{Colours.YELLOW}Testing register page - duplicate username:{Colours.RESET}")
 
     # create user to compare to
@@ -91,17 +91,17 @@ def test_register_duplicate_username(client):
     assert response.status_code == 200
 
 
-def test_register_duplicate_email(client):
+def testRegisterDuplicateEmail(client):
     print(f"{Colours.YELLOW}Testing register page - duplicate email:{Colours.RESET}")
     # create user to compare to
     with app.app_context():
-        user = User(username='uniqueuser', email='test@example.com', password=bcrypt.generate_password_hash('password'))
+        user = User(username='uniqueUser', email='test@example.com', password=bcrypt.generate_password_hash('password'))
         db.session.add(user)
         db.session.commit()
 
     # register user with same email but all other details are different
     response = client.post('/register', data={
-        'username': 'newuser',
+        'username': 'newuUser',
         'email': 'test@example.com',
         'password': 'NewPassword123!',
         'confirm_password': 'NewPassword123!'
@@ -111,7 +111,7 @@ def test_register_duplicate_email(client):
     assert response.status_code == 200
 
 
-def test_register_password_mismatch(client):
+def testRegisterPasswordMismatch(client):
     print(f"{Colours.YELLOW}Testing register page - missmatched passwords:{Colours.RESET}")
     response = client.post('/register', data={
         'username': 'mismatchuser',
@@ -126,7 +126,7 @@ def test_register_password_mismatch(client):
 '''
 Testing routes with logged out client
 '''
-def test_home_authenticated(loggedInClient):
+def testHomeAuthenticated(loggedInClient):
     print(f"{Colours.YELLOW}Testing homepage - logged in:{Colours.RESET}")
     response = loggedInClient.get('/')
     assert response.status_code == 200
