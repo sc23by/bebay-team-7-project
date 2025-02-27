@@ -4,13 +4,14 @@ from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm
 from app.models import User
 
-
 # Route: Login Page
 @app.route('/')
 def mainPage():
     """
     Redirects to main page when website first opened.
     """
+    if current_user.is_authenticated:
+        return redirect(url_for('loggedIn'))
     return render_template('mainPage.html')
 
 # Route: Registration Page    
@@ -71,6 +72,7 @@ def logout():
     logout_user()
     return redirect(url_for('mainPage'))
 
+# Route: Logged In Page
 @app.route('/loggedIn')
 @login_required
 def loggedIn():
@@ -79,16 +81,20 @@ def loggedIn():
     """
     return render_template('loggedIn.html')
 
+# Route: Account
 @app.route('/account', methods=['GET', 'POST'])
+@login_required
 def account():
-
+    """
+    Redirects to account page, has buttons to other pages.
+    """
     form = SideBarForm()
 
     if form.validate_on_submit():
         if form.info.data:
             return redirect(url_for("account"))
-        elif form.listings.data:
-            return redirect(url_for("listings"))
+        elif form.myListings.data:
+            return redirect(url_for("myListings"))
         elif form.watchlist.data:
             return redirect(url_for("watchlist"))
         elif form.notifications.data:
@@ -96,16 +102,20 @@ def account():
 
     return render_template('account.html', form=form)
 
-@app.route('/listings', methods=['GET', 'POST'])
-def listings():
-
+# Route: My Listings
+@app.route('/myListings', methods=['GET', 'POST'])
+@login_required
+def myListings():
+    """
+    Redirects to my listings page, has buttons to other pages.
+    """
     form = SideBarForm()
 
     if form.validate_on_submit():
         if form.info.data:
             return redirect(url_for("account"))
-        elif form.listings.data:
-            return redirect(url_for("listings"))
+        elif form.myListings.data:
+            return redirect(url_for("myListings"))
         elif form.watchlist.data:
             return redirect(url_for("watchlist"))
         elif form.notifications.data:
@@ -113,16 +123,20 @@ def listings():
 
     return render_template('myListings.html', form=form)
 
+# Route: Watchlist
 @app.route('/watchlist', methods=['GET', 'POST'])
+@login_required
 def watchlist():
-
+    """
+    Redirects to watchlist page, has buttons to other pages.
+    """
     form = SideBarForm()
 
     if form.validate_on_submit():
         if form.info.data:
             return redirect(url_for("account"))
-        elif form.listings.data:
-            return redirect(url_for("listings"))
+        elif form.myListings.data:
+            return redirect(url_for("myListings"))
         elif form.watchlist.data:
             return redirect(url_for("watchlist"))
         elif form.notifications.data:
@@ -130,16 +144,20 @@ def watchlist():
 
     return render_template('watchlist.html', form=form)
 
+# Route: Notifications
 @app.route('/notifications', methods=['GET', 'POST'])
+@login_required
 def notifications():
-
+    """
+    Redirects to my notifications page, has buttons to other pages.
+    """
     form = SideBarForm()
 
     if form.validate_on_submit():
         if form.info.data:
             return redirect(url_for("account"))
-        elif form.listings.data:
-            return redirect(url_for("listings"))
+        elif form.myListings.data:
+            return redirect(url_for("myListings"))
         elif form.watchlist.data:
             return redirect(url_for("watchlist"))
         elif form.notifications.data:
