@@ -203,6 +203,21 @@ def notifications():
 
     return render_template('notifications.html', form=form)
 
+@app.route('/expertAssignments')
+def expertAssignments():
+    return render_template('expertAssignments.html')
+
+@app.route('/itemAuthentication')
+def itemAuthentication():
+    return render_template('itemAuthentication.html')
+
+@app.route('/expertsMessaging')
+def expertsMessaging():
+    return render_template('expertsMessaging.html')
+
+@app.route('/setAvailability')
+def setAvailability():
+    return render_template('setAvailability.html')
 #Route: Manager Page
 @app.route('/manager', methods=['GET','POST'])
 def manager():
