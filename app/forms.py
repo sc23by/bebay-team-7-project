@@ -69,7 +69,7 @@ class SideBarForm(FlaskForm):
     Buttons for navigation through profile section 
     """
     info = SubmitField('Info')
-    listings = SubmitField('My Listings')
+    myListings = SubmitField('My Listings')
     watchlist = SubmitField('My Watchlist')
     notifications = SubmitField('Notifications')
 
