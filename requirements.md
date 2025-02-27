@@ -32,4 +32,9 @@ Once installed, you can start developing with Flask and run tests using:
 ```sh
 pytest
 ```
+or
+```sh
+pytest -vs
+```
 
+for more information on tests.
