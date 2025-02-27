@@ -30,7 +30,7 @@ def register():
             return redirect(url_for('register'))
 
         if User.query.filter_by(email=form.email.data).first():
-            flash('Username already exists. Please choose a different one.', 'danger')
+            flash('Email already exists. Please choose a different one.', 'danger')
             return redirect(url_for('register'))
 
         hashed_password = bcrypt.generate_password_hash(form.password.data)
