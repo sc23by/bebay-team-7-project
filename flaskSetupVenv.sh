@@ -19,6 +19,7 @@ flask/bin/pip install flask-whooshalchemy
 flask/bin/pip install flask-wtf 
 flask/bin/pip install flask-bcrypt
 flask/bin/pip install flask-babel 
+flask/bin/pip install email_validator 
 flask/bin/pip install coverage 
 
 export FLASK_APP=run.py
