@@ -63,3 +63,13 @@ class RegistrationForm(FlaskForm):
         EqualTo('password', message="Passwords must match.")
     ])
     submit = SubmitField('Register')
+
+class SideBarForm(FlaskForm):
+    """
+    Buttons for navigation through profile section 
+    """
+    info = SubmitField('Info')
+    listings = SubmitField('My Listings')
+    watchlist = SubmitField('My Watchlist')
+    notifications = SubmitField('Notifications')
+
