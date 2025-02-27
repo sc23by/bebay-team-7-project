@@ -26,16 +26,17 @@ def register():
         return redirect(url_for('loggedIn'))
 
     if form.validate_on_submit():
+
         if User.query.filter_by(username=form.username.data).first():
             flash('Username already exists. Please choose a different one.', 'danger')
             return redirect(url_for('register'))
 
         if User.query.filter_by(email=form.email.data).first():
-            flash('Username already exists. Please choose a different one.', 'danger')
+            flash('Email already exists. Please choose a different one.', 'danger')
             return redirect(url_for('register'))
 
         hashed_password = bcrypt.generate_password_hash(form.password.data)
-        user = User(username=form.username.data, email=form.email.data, password=hashed_password)
+        user = User(firstName=form.firstName.data, lastName=form.lastName.data, username=form.username.data, email=form.email.data, password=hashed_password)
         db.session.add(user)
         db.session.commit()
 

@@ -32,8 +32,19 @@ class LoginForm(FlaskForm):
 # Registration form for users
 class RegistrationForm(FlaskForm):
     """
-    Requires valid username email, and password.
+    Requires valid username, email, first name, last name, and password.
     """
+    firstName = StringField('First Name', validators=[
+        DataRequired(), 
+        Length(min=2, max=30, message="First name must be 2-30 characters."),
+        Regexp('^[A-Za-z]+$', message="First name should only contain letters.")
+    ])
+    
+    lastName = StringField('Last Name', validators=[
+        DataRequired(), 
+        Length(min=2, max=30, message="Last name must be 2-30 characters."),
+        Regexp('^[A-Za-z]+$', message="Last name should only contain letters.")
+    ])
     username = StringField('Username', validators=[
         DataRequired(), 
         Length(min=3, max=20, message="Username must be 3-20 characters."),
@@ -47,7 +58,7 @@ class RegistrationForm(FlaskForm):
         DataRequired(),
         strong_password
     ])
-    confirm_password = PasswordField('Confirm Password', validators=[
+    confirmPassword = PasswordField('Confirm Password', validators=[
         DataRequired(),
         EqualTo('password', message="Passwords must match.")
     ])
