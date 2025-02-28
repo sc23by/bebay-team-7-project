@@ -186,7 +186,7 @@ def user_home():
 
 # Route: Account
 @app.route('/account', methods=['GET', 'POST'])
-@user_required
+@login_required
 def account():
     """
     Redirects to account page, has buttons to other pages.
