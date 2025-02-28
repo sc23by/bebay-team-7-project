@@ -10,12 +10,12 @@ Testing routes with logged out client
 def testRegisterValidUser(client):
     print(f"{Colours.YELLOW}Testing register page- registering a user:{Colours.RESET}")
     response = client.post('/register', data={
-        'firstName': 'test',
-        'lastName': 'user',
+        'first_name': 'test',
+        'last_name': 'user',
         'username': 'testuser',
         'email': 'test@example.com',
         'password': 'Test@1234',
-        'confirmPassword': 'Test@1234'
+        'confirm_password': 'Test@1234'
     }, follow_redirects=True)
 
     # check if user was added to the database
@@ -35,19 +35,19 @@ def testRegisterDuplicateUsername(client):
         user = User(username='testuser',
                     email='existing@example.com',
                     password=bcrypt.generate_password_hash('password'),
-                    firstName='firstName',
-                    lastName='lastnNme')
+                    first_name='firstname',
+                    last_name='lastname')
         db.session.add(user)
         db.session.commit() 
 
     # register user with same username but all other details are different
     response = client.post('/register', data={
-        'firstName': 'test',
-        'lastName': 'user',
+        'first_name': 'test',
+        'last_name': 'user',
         'username': 'testuser',
         'email': 'new@example.com',
         'password': 'NewPassword1!',
-        'confirmPassword': 'NewPassword1!'
+        'confirm_password': 'NewPassword1!'
     }, follow_redirects=True)
 
     assert b'Username already exists' in response.data
@@ -62,19 +62,19 @@ def testRegisterDuplicateEmail(client):
         user = User(username='testuser',
                     email='existing@example.com',
                     password=bcrypt.generate_password_hash('password'),
-                    firstName='firstName',
-                    lastName='lastnNme')
+                    first_name='firstname',
+                    last_name='lastname')
         db.session.add(user)
         db.session.commit() 
 
     # register user with same username but all other details are different
     response = client.post('/register', data={
-        'firstName': 'test',
-        'lastName': 'user',
+        'first_name': 'test',
+        'last_name': 'user',
         'username': 'Newuser',
         'email': 'existing@example.com',
         'password': 'NewPassword1!',
-        'confirmPassword': 'NewPassword1!'
+        'confirm_password': 'NewPassword1!'
     }, follow_redirects=True)
 
     assert b'Email already exists' in response.data
@@ -83,12 +83,12 @@ def testRegisterDuplicateEmail(client):
 
 def testRegisterEmailValid(client):
     response = client.post('/register', data={
-        'firstName': 'test',
-        'lastName': 'user',
+        'first_name': 'test',
+        'last_name': 'user',
         'username': 'testuser',
         'email': 'invalid@example',
         'password': 'NewPassword1!',
-        'confirmPassword': 'NewPassword1!'
+        'confirm_password': 'NewPassword1!'
     }, follow_redirects=True)
 
     assert b'Invalid email address.' in response.data
@@ -99,12 +99,12 @@ def testRegisterPasswordMismatch(client):
     print(f"{Colours.YELLOW}Testing register page - missmatched passwords:{Colours.RESET}")
 
     response = client.post('/register', data={
-        'firstName': 'test',
-        'lastName': 'user',
+        'first_name': 'test',
+        'last_name': 'user',
         'username': 'Auser',
         'email': 'email@example.com',
         'password': 'FirstPassword1!!',
-        'confirmPassword': 'SecondPassword1!'
+        'confirm_password': 'SecondPassword1!'
     }, follow_redirects=True)
 
     assert "Passwords must match." in response.data.decode()
@@ -114,24 +114,24 @@ def testRegisterPasswordNotStrong(client):
     print(f"{Colours.YELLOW}Testing register page - password not strong enough:{Colours.RESET}")
 
     response = client.post('/register', data={
-        'firstName': 'test',
-        'lastName': 'user',
+        'first_name': 'test',
+        'last_name': 'user',
         'username': 'Auser',
         'email': 'email@example.com',
         'password': 'firstpassword',
-        'confirmPassword': 'firstpassword'
+        'confirm_password': 'firstpassword'
     }, follow_redirects=True)
 
     assert "Password needs at least one uppercase letter." in response.data.decode()
     assert response.status_code == 200
 
     response = client.post('/register', data={
-        'firstName': 'test',
-        'lastName': 'user',
+        'first_name': 'test',
+        'last_name': 'user',
         'username': 'Auser',
         'email': 'email@example.com',
         'password': 'FirstPassword',
-        'confirmPassword': 'FirstPassword'
+        'confirm_password': 'FirstPassword'
     }, follow_redirects=True)
 
     assert "Password needs at least one number." in response.data.decode()
@@ -141,12 +141,12 @@ def testRegisterNamesCorrect(client):
     print(f"{Colours.YELLOW}Testing register page - names correct format:{Colours.RESET}")
 
     response = client.post('/register', data={
-        'firstName': 'testsuperextralongfirstnameeeee',
-        'lastName': 'testsuperextralonglastnameeeeee',
+        'first_name': 'testsuperextralongfirstnameeeeee',
+        'last_name': 'testsuperextralonglastnameeeeeee',
         'username': 'Auser',
         'email': 'email@example.com',
         'password': 'Firstpassword1',
-        'confirmPassword': 'Firstpassword1'
+        'confirm_password': 'Firstpassword1'
     }, follow_redirects=True)
 
     assert "First name must be 2-30 characters." in response.data.decode()
@@ -154,12 +154,12 @@ def testRegisterNamesCorrect(client):
     assert response.status_code == 200
 
     response = client.post('/register', data={
-        'firstName': 'test!',
-        'lastName': 'user!',
+        'first_name': 'test!',
+        'last_name': 'user!',
         'username': 'Auser',
         'email': 'email@example.com',
         'password': 'Firstpassword1',
-        'confirmPassword': 'Firstpassword1'
+        'confirm_password': 'Firstpassword1'
     }, follow_redirects=True)
 
     assert "First name should only contain letters." in response.data.decode()
@@ -175,5 +175,5 @@ def testRegisterAuthenticated(loggedInClientP1):
 
     response = loggedInClientP1.get('/register')
     assert response.status_code == 302
-    assert b'/loggedIn' in response.data
+    assert b'/user_home' in response.data
     

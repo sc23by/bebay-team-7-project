@@ -34,13 +34,13 @@ class RegistrationForm(FlaskForm):
     """
     Requires valid username, email, first name, last name, and password.
     """
-    firstName = StringField('First Name', validators=[
+    first_name = StringField('First Name', validators=[
         DataRequired(), 
         Length(min=2, max=30, message="First name must be 2-30 characters."),
         Regexp('^[A-Za-z]+$', message="First name should only contain letters.")
     ])
     
-    lastName = StringField('Last Name', validators=[
+    last_name = StringField('Last Name', validators=[
         DataRequired(), 
         Length(min=2, max=30, message="Last name must be 2-30 characters."),
         Regexp('^[A-Za-z]+$', message="Last name should only contain letters.")
@@ -58,7 +58,7 @@ class RegistrationForm(FlaskForm):
         DataRequired(),
         strong_password
     ])
-    confirmPassword = PasswordField('Confirm Password', validators=[
+    confirm_password = PasswordField('Confirm Password', validators=[
         DataRequired(),
         EqualTo('password', message="Passwords must match.")
     ])
@@ -70,7 +70,8 @@ class SideBarForm(FlaskForm):
     Buttons for navigation through profile section 
     """
     info = SubmitField('Info')
-    myListings = SubmitField('My Listings')
+    my_listings = SubmitField('My Listings')
     watchlist = SubmitField('My Watchlist')
     notifications = SubmitField('Notifications')
 
+    

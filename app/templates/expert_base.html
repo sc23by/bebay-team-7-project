@@ -19,7 +19,7 @@
  
     <nav class="navbar bg-body-tertiary">
         <div class="container-fluid">
-          <a class="navbar-brand" href="{{ url_for('expertAssignments')}}">Bebay</a>
+          <a class="navbar-brand" href="{{ url_for('expert_assignments')}}">Bebay</a>
           <div class="ms-auto me-2">
             <a class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bell" viewBox="0 0 16 16">
@@ -32,8 +32,8 @@
           </button>
           <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
             <div class="offcanvas-header">
-              {% if userName %}
-              <h5 class="offcanvas-title" id="offcanvasNavbarLabel">{{ userName }}</h5>
+              {% if username %}
+              <h5 class="offcanvas-title" id="offcanvasNavbarLabel">{{ username }}</h5>
               {% else %}
               <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Expert</h5>
               {% endif %}
@@ -45,10 +45,10 @@
                   <a class="nav-link active" aria-current="page" href="{{ url_for('account')}}">My Account</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link active" aria-current="page" href="{{ url_for('setAvailability')}}">Set Availability</a>
+                  <a class="nav-link active" aria-current="page" href="{{ url_for('set_availability')}}">Set Availability</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link active" aria-current="page" href="{{ url_for('expertsMessaging')}}">Messages</a>
+                  <a class="nav-link active" aria-current="page" href="{{ url_for('expert_messaging')}}">Messages</a>
                 </li>
                 <li class="nav-item">
                   <a class="nav-link" href="#">Logout</a>
