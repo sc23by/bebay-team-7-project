@@ -81,6 +81,20 @@ def testRegisterDuplicateEmail(client):
     assert response.status_code == 200
 
 
+def testRegisterEmailValid(client):
+    response = client.post('/register', data={
+        'firstName': 'test',
+        'lastName': 'user',
+        'username': 'testuser',
+        'email': 'invalid@example',
+        'password': 'NewPassword1!',
+        'confirmPassword': 'NewPassword1!'
+    }, follow_redirects=True)
+
+    assert b'Invalid email address.' in response.data
+    assert response.status_code == 200
+
+
 def testRegisterPasswordMismatch(client):
     print(f"{Colours.YELLOW}Testing register page - missmatched passwords:{Colours.RESET}")
 
@@ -111,15 +125,26 @@ def testRegisterPasswordNotStrong(client):
     assert "Password needs at least one uppercase letter." in response.data.decode()
     assert response.status_code == 200
 
-#FIXME test email is valid
-#FIXME test firstname lastname and username is correct form (length ect)
+    response = client.post('/register', data={
+        'firstName': 'test',
+        'lastName': 'user',
+        'username': 'Auser',
+        'email': 'email@example.com',
+        'password': 'FirstPassword',
+        'confirmPassword': 'FirstPassword'
+    }, follow_redirects=True)
+
+    assert "Password needs at least one number." in response.data.decode()
+    assert response.status_code == 200
+
+# FIXME - test name and lastname
 
 '''
-Testing routes with logged out client
+Testing routes with logged in client (p1)
 '''
 
 def testRegisterAuthenticated(loggedInClientP1):
-    print(f"{Colours.YELLOW}Testing register page - logged in:{Colours.RESET}")
+    print(f"{Colours.YELLOW}Testing register page - reroute to p1 homepage:{Colours.RESET}")
 
     response = loggedInClientP1.get('/register')
     assert response.status_code == 302
