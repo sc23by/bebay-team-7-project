@@ -2,14 +2,39 @@
 <!-- Params: pageTitle, userName -->
 
 <!DOCTYPE html>
-
 {% extends "userBase.html" %}
-
 {% block content %}
     <p> main page </p>
     <p><a href="{{ url_for('manager') }}">Manager Page</a></p>
     <p><a href="{{ url_for('manageracc') }}">Manager Account</a></p>
     <p><a href="{{ url_for('managerlist') }}">Manager Listings</a></p>
-{% endblock %}
 
+    <div class="row row-cols-3 row-cols-md-5 g-4">
+        <div class="col">
+          <div class="card h-100">
+            <a href="{{ url_for('register') }}">
+                <button class="fas fa-heart" type="submit"></button>
+            </a>
+            <img src="..." class="card-img-top" alt="...">
+            <div class="card-body">
+                <h5 class="card-title">Item Name</h5>
+                <p class="card-text">Time</p>
+                <p class="card-text">Price</p>
+                <a href="{{ url_for('register') }}">
+                    <input type="button" value="Bid">
+                </a>
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <!--Page buttons-->
+    <div>
+        <button>&laquo;</button>
+        page
+        <button>&raquo;</button>
+    </div>
+
+
+{% endblock %}
 </html>

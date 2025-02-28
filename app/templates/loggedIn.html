@@ -7,6 +7,29 @@
 
 {% block content %}
     <h3>Hello {{ current_user.username}}</h3>
+
+    <div class="row row-cols-3 row-cols-md-5 g-4">
+        <div class="col">
+          <div class="card h-100">
+            <span class="fa fa-heart"></span>
+            <img src="..." class="card-img-top" alt="...">
+            <div class="card-body">
+                <h5 class="card-title">Item Name</h5>
+                <p class="card-text">Time</p>
+                <p class="card-text">Price</p>
+                <input type="button" value="Bid">
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <!--Page buttons-->
+    <div>
+        <button>&laquo;</button>
+        page
+        <button>&raquo;</button>
+    </div>
+    
 {% endblock %}
 
 </html>
