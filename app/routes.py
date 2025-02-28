@@ -19,7 +19,7 @@ def guest_required(f):
         if current_user.is_authenticated:
             flash('You are already logged in.', 'info')
             # Redirect based on user priority
-            return redirectBasedOnPriority(current_user)
+            return redirect_based_on_priority(current_user)
         return f(*args, **kwargs)
     return decorated_function
 
@@ -34,10 +34,10 @@ def user_required(f):
         if not current_user.is_authenticated:
             flash("Please log in first.", "warning")
             return redirect(url_for('login'))
-        # If not an expert
+        # If not a user
         if current_user.priority != 1:
             flash("You don't have user permissions to access this page.", "danger")
-            return redirectBasedOnPriority(current_user)
+            return redirect_based_on_priority(current_user)
         return f(*args, **kwargs)
     return decorated_function
 
@@ -55,7 +55,7 @@ def expert_required(f):
         # If not an expert
         if current_user.priority != 2:
             flash("You don't have expert permissions to access this page.", "danger")
-            return redirectBasedOnPriority(current_user)
+            return redirect_based_on_priority(current_user)
         return f(*args, **kwargs)
     return decorated_function
 
@@ -73,7 +73,7 @@ def manager_required(f):
         # If not a manager
         if current_user.priority != 3:
             flash("You don't have manager permissions to access this page.", "danger")
-            return redirectBasedOnPriority(current_user)
+            return redirect_based_on_priority(current_user)
         return f(*args, **kwargs)
     return decorated_function
 
@@ -81,18 +81,18 @@ def manager_required(f):
 # Functions
 
 # Function: Redirect based on priority
-def redirectBasedOnPriority(user):
+def redirect_based_on_priority(user):
     """
     Function to redirect user to correct page based on their priority.
     """
     if user.priority == 3:  # Manager
-        return redirect(url_for('managerHome'))
+        return redirect(url_for('manager_home'))
     elif user.priority == 2:  # Expert
-        return redirect(url_for('expertHome'))
+        return redirect(url_for('exper_home'))
     elif user.priority == 1:  # Normal User
-        return redirect(url_for('loggedIn'))
+        return redirect(url_for('user_home'))
     else:  # Guest
-        return redirect(url_for('mainPage'))
+        return redirect(url_for('guest_home'))
 
 
 # Guest Pages
@@ -100,13 +100,13 @@ def redirectBasedOnPriority(user):
 # Route: Login Page
 @app.route('/')
 @guest_required
-def mainPage():
+def guest_home():
     """
     Redirects to main page when website first opened.
     """
     if current_user.is_authenticated:
-        return redirectBasedOnPriority(current_user)
-    return render_template('mainPage.html')
+        return redirect_based_on_priority(current_user)
+    return render_template('guest_home.html')
 
 
 # Route: Registration Page    
@@ -119,7 +119,7 @@ def register():
     form = RegistrationForm()
 
     if current_user.is_authenticated:
-        return redirectBasedOnPriority(current_user)
+        return redirect_based_on_priority(current_user)
 
     if form.validate_on_submit():
 
@@ -150,12 +150,12 @@ def login():
     """
     form = LoginForm()
     if current_user.is_authenticated:
-        return redirectBasedOnPriority(user)
+        return redirect_based_on_priority(user)
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user)
-            return redirectBasedOnPriority(user)
+            return redirect_based_on_priority(user)
         flash('Invalid username or password.', 'danger')
     return render_template('login.html', form=form)
 
@@ -165,22 +165,22 @@ def login():
 @login_required
 def logout():
     """
-    Log the user out and redirect to the mainPage page.
+    Log the user out and redirect to the guest_home page.
     """
     logout_user()
-    return redirect(url_for('mainPage'))
+    return redirect(url_for('guest_home'))
 
 
 # User Pages
 
 # Route: Logged In Page
-@app.route('/loggedIn')
+@app.route('/user_home')
 @user_required
-def loggedIn():
+def user_home():
     """
     Redirects to main page when website first opened.
     """
-    return render_template('loggedIn.html')
+    return render_template('user_home.html')
 
 # Route: Account
 @app.route('/account', methods=['GET', 'POST'])
@@ -194,8 +194,8 @@ def account():
     if form.validate_on_submit():
         if form.info.data:
             return redirect(url_for("account"))
-        elif form.myListings.data:
-            return redirect(url_for("myListings"))
+        elif form.my_listings.data:
+            return redirect(url_for("my_listings"))
         elif form.watchlist.data:
             return redirect(url_for("watchlist"))
         elif form.notifications.data:
@@ -204,9 +204,9 @@ def account():
     return render_template('account.html', form=form)
 
 # Route: My Listings
-@app.route('/myListings', methods=['GET', 'POST'])
+@app.route('/my_listings', methods=['GET', 'POST'])
 @user_required
-def myListings():
+def my_listings():
     """
     Redirects to my listings page, has buttons to other pages.
     """
@@ -215,14 +215,14 @@ def myListings():
     if form.validate_on_submit():
         if form.info.data:
             return redirect(url_for("account"))
-        elif form.myListings.data:
-            return redirect(url_for("myListings"))
+        elif form.my_listings.data:
+            return redirect(url_for("my_listings"))
         elif form.watchlist.data:
             return redirect(url_for("watchlist"))
         elif form.notifications.data:
             return redirect(url_for("notifications"))
 
-    return render_template('myListings.html', form=form)
+    return render_template('my_listings.html', form=form)
 
 # Route: Watchlist
 @app.route('/watchlist', methods=['GET', 'POST'])
@@ -236,8 +236,8 @@ def watchlist():
     if form.validate_on_submit():
         if form.info.data:
             return redirect(url_for("account"))
-        elif form.myListings.data:
-            return redirect(url_for("myListings"))
+        elif form.my_listings.data:
+            return redirect(url_for("my_listings"))
         elif form.watchlist.data:
             return redirect(url_for("watchlist"))
         elif form.notifications.data:
@@ -257,8 +257,8 @@ def notifications():
     if form.validate_on_submit():
         if form.info.data:
             return redirect(url_for("account"))
-        elif form.myListings.data:
-            return redirect(url_for("myListings"))
+        elif form.my_listings.data:
+            return redirect(url_for("my_listings"))
         elif form.watchlist.data:
             return redirect(url_for("watchlist"))
         elif form.notifications.data:
@@ -270,64 +270,64 @@ def notifications():
 # Expert Pages
 
 # Route: Experts Home Page
-@app.route('/expertsHome')
+@app.route('/expert_home')
 @expert_required
-def expertHome():
+def expert_home():
     """
     Redirects to experts home page when website first opened.
     """
-    return render_template('expertsHome.html')
+    return render_template('expert_home.html')
 
 #Route: Expert Assignments Page
-@app.route('/expertAssignments')
+@app.route('/expert_assignments')
 @expert_required
-def expertAssignments():
-    return render_template('expertAssignments.html')
+def expert_assignments():
+    return render_template('expert_assignments.html')
 
 #Route: Expert Authentication Page
-@app.route('/itemAuthentication')
+@app.route('/item_authentication')
 @expert_required
-def itemAuthentication():
-    return render_template('itemAuthentication.html')
+def item_authentication():
+    return render_template('item_authentication.html')
 
 #Route: Expert Messaging Page
-@app.route('/expertsMessaging')
+@app.route('/expert_messaging')
 @expert_required
-def expertsMessaging():
-    return render_template('expertsMessaging.html')
+def expert_messaging():
+    return render_template('expert_messaging.html')
 
 #Route: Expert Avaliablity Page
-@app.route('/setAvailability')
+@app.route('/set_availability')
 @expert_required
-def setAvailability():
-    return render_template('setAvailability.html')
+def set_availability():
+    return render_template('set_availability.html')
 
 
 # Manager Pages
 
 # Route: Managers Home
-@app.route('/managerHome')
+@app.route('/manager_home')
 @manager_required
-def managerHome():
+def manager_home():
     """
     Redirects to managers home page when website first opened.
     """
-    return render_template('managerHome.html')
+    return render_template('manager_home.html')
 
 #Route: Manager Stats Page
-@app.route('/manager', methods=['GET','POST'])
+@app.route('/manager_stats', methods=['GET','POST'])
 @manager_required
-def manager():
-    return render_template("managerStats.html")
+def manager_stats():
+    return render_template("manager_stats.html")
 
 #Route: Manager Account Page
-@app.route('/manageracc',methods=['GET','POST'])
+@app.route('/manager_account',methods=['GET','POST'])
 @manager_required
 def manageracc():
-    return render_template("managerAccounts.html")
+    return render_template("manager_accounts.html")
 
 #Route: Manager Listing Page
-@app.route('/managerlistings',methods=['GET','POST'])
+@app.route('/manager_listings',methods=['GET','POST'])
 @manager_required
-def managerlist():
-    return render_template("managerListings.html")
+def manager_listings():
+    return render_template("manager_listings.html")
