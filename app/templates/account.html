@@ -10,7 +10,7 @@
                     {{ form.hidden_tag() }}
 
                     <div>{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.myListings(class="btn btn-outline-secondary custom-button") }}</div>
+                    <div>{{ form.my_listings(class="btn btn-outline-secondary custom-button") }}</div>
                     <div>{{ form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
                     <div>{{ form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
                 </form>
@@ -27,14 +27,14 @@
             <div class="mb-3 row">
                 <label class="col-sm-2 col-form-label">First name</label>
                 <div class="col-sm-6">
-                    <input type="text" class="form-control" value="{{ firstname }}" readonly>
+                    <input type="text" class="form-control" value="{{ first_name }}" readonly>
                 </div>
             </div>
 
             <div class="mb-3 row">
                 <label class="col-sm-2 col-form-label">Last name</label>
                 <div class="col-sm-6">
-                    <input type="text" class="form-control" value="{{ lastname }}" readonly>
+                    <input type="text" class="form-control" value="{{ last_name }}" readonly>
                 </div>
             </div>
 
@@ -60,14 +60,14 @@
             <div class="mb-3 row">
                 <label class="col-sm-2 col-form-label">New Password</label>
                 <div class="col-sm-6">
-                    <input type="text" class="form-control" value="{{ newPassword }}" readonly>
+                    <input type="text" class="form-control" value="{{ new_password }}" readonly>
                 </div>
             </div>
 
             <div class="mb-3 row">
                 <label class="col-sm-2 col-form-label">Verify New Password</label>
                 <div class="col-sm-6">
-                    <input type="text" class="form-control" value="{{ newPassword }}" readonly>
+                    <input type="text" class="form-control" value="{{ new_password }}" readonly>
                 </div>
             </div>
 
@@ -90,7 +90,7 @@
             <div class="mb-3 row">
                 <label class="col-sm-2 col-form-label">Shipping Address</label>
                 <div class="col-sm-6">
-                    <input type="password" class="form-control" value="{{ shippingAddress}}" readonly>
+                    <input type="password" class="form-control" value="{{ shipping_address}}" readonly>
                 </div>
                 <div class="col-sm-2">
                     <button class="btn btn-outline-primary">Edit</button>

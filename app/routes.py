@@ -132,7 +132,7 @@ def register():
             return redirect(url_for('register'))
 
         hashed_password = bcrypt.generate_password_hash(form.password.data)
-        user = User(firstName=form.firstName.data, lastName=form.lastName.data, username=form.username.data, email=form.email.data, password=hashed_password)
+        user = User(first_name=form.first_name.data, last_name=form.last_name.data, username=form.username.data, email=form.email.data, password=hashed_password)
         db.session.add(user)
         db.session.commit()
 
