@@ -9,7 +9,7 @@ def testHome(client):
     print(f"{Colours.YELLOW}Testing homepage - logged out:{Colours.RESET}")
     response = client.get('/')
     assert response.status_code == 200
-    assert b'Main Page' in response.data # Potential change needed
+    assert b'Guest Home Page' in response.data # Potential change needed
 
 '''
 Testing routes with logged in client
