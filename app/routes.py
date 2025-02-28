@@ -18,7 +18,8 @@ def guest_required(f):
     def decorated_function(*args, **kwargs):
         if current_user.is_authenticated:
             flash('You are already logged in.', 'info')
-            return redirectBasedOnPriority(current_user)  # Redirect based on user priority
+            # Redirect based on user priority
+            return redirectBasedOnPriority(current_user)
         return f(*args, **kwargs)
     return decorated_function
 
@@ -33,7 +34,8 @@ def user_required(f):
         if not current_user.is_authenticated:
             flash("Please log in first.", "warning")
             return redirect(url_for('login'))
-        if current_user.priority != 1:  # If not an expert
+        # If not an expert
+        if current_user.priority != 1:
             flash("You don't have user permissions to access this page.", "danger")
             return redirectBasedOnPriority(current_user)
         return f(*args, **kwargs)
@@ -50,7 +52,8 @@ def expert_required(f):
         if not current_user.is_authenticated:
             flash("Please log in first.", "warning")
             return redirect(url_for('login'))
-        if current_user.priority != 2:  # If not an expert
+        # If not an expert
+        if current_user.priority != 2:
             flash("You don't have expert permissions to access this page.", "danger")
             return redirectBasedOnPriority(current_user)
         return f(*args, **kwargs)
@@ -67,7 +70,8 @@ def manager_required(f):
         if not current_user.is_authenticated:
             flash("Please log in first.", "warning")
             return redirect(url_for('login'))
-        if current_user.priority != 3:  # If not a manager
+        # If not a manager
+        if current_user.priority != 3:
             flash("You don't have manager permissions to access this page.", "danger")
             return redirectBasedOnPriority(current_user)
         return f(*args, **kwargs)
