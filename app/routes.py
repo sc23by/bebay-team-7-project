@@ -88,7 +88,7 @@ def redirect_based_on_priority(user):
     if user.priority == 3:  # Manager
         return redirect(url_for('manager_home'))
     elif user.priority == 2:  # Expert
-        return redirect(url_for('exper_home'))
+        return redirect(url_for('expert_home'))
     elif user.priority == 1:  # Normal User
         return redirect(url_for('user_home'))
     else:  # Guest
@@ -150,15 +150,17 @@ def login():
     """
     form = LoginForm()
     if current_user.is_authenticated:
-        return redirect_based_on_priority(user)
+        return redirect_based_on_priority(current_user)
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user)
-            return redirect_based_on_priority(user)
+            return redirect_based_on_priority(current_user)
         flash('Invalid username or password.', 'danger')
     return render_template('login.html', form=form)
 
+
+# All logged in pages
 
 # Route: Logout
 @app.route('/logout')
@@ -321,9 +323,9 @@ def manager_stats():
     return render_template("manager_stats.html")
 
 #Route: Manager Account Page
-@app.route('/manager_account',methods=['GET','POST'])
+@app.route('/manager_accounts',methods=['GET','POST'])
 @manager_required
-def manageracc():
+def manager_accounts():
     return render_template("manager_accounts.html")
 
 #Route: Manager Listing Page
