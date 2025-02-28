@@ -38,8 +38,8 @@ def loggedInClientP1(client):
         test_user = User(username='testuser',
                          email='test@example.com',
                          password=bcrypt.generate_password_hash('password'),
-                         firstName='Test', 
-                         lastName='User', 
+                         first_name='Test', 
+                         last_name='User', 
                          priority=1)
         db.session.add(test_user)
         db.session.commit()
@@ -59,8 +59,8 @@ def loggedInClientP2(client):
         test_user = User(username='testuser',
                          email='test@example.com',
                          password=bcrypt.generate_password_hash('password'),
-                         firstName='Test', 
-                         lastName='User', 
+                         first_name='Test', 
+                         last_name='User', 
                          priority=2)
         db.session.add(test_user)
         db.session.commit()
@@ -80,8 +80,8 @@ def loggedInClientP3(client):
         test_user = User(username='testuser',
                          email='test@example.com',
                          password=bcrypt.generate_password_hash('password'),
-                         firstName='Test', 
-                         lastName='User', 
+                         first_name='Test', 
+                         last_name='User', 
                          priority=3)
         db.session.add(test_user)
         db.session.commit()
