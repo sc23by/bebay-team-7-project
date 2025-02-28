@@ -85,13 +85,13 @@ def managerHome():
     return render_template('managerHome.html')
 
 # Route: Experts Home Page
-@app.route('/expertsHome')
+@app.route('/expertHome')
 @login_required
 def expertHome():
     """
     Redirects to experts home page when website first opened.
     """
-    return render_template('expertsHome.html')
+    return render_template('expertHome.html')
 
 # Route: Logout
 @app.route('/logout')
