@@ -8,3 +8,11 @@ def testRegisterValidUser(client):
     response = client.get('/account')
     assert response.status_code == 302
     assert b'/login' in response.data
+
+# FIXME - test route works for logged in pages (display correct username and information)
+# FIXME - test button redirects (4)
+
+# FIXME - test listings returns correct html
+# FIXME - test watchlist returns correct html
+# FIXME - test notifications returns correct html
+
