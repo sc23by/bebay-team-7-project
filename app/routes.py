@@ -137,6 +137,8 @@ def account():
             return redirect(url_for("watchlist"))
         elif form.notifications.data:
             return redirect(url_for("notifications"))
+        elif form.logout.data:
+            return redirect(url_for("logout"))
 
     return render_template('account.html', form=form)
 
@@ -158,6 +160,8 @@ def myListings():
             return redirect(url_for("watchlist"))
         elif form.notifications.data:
             return redirect(url_for("notifications"))
+        elif form.logout.data:
+            return redirect(url_for("logout"))
 
     return render_template('myListings.html', form=form)
 
@@ -179,7 +183,9 @@ def watchlist():
             return redirect(url_for("watchlist"))
         elif form.notifications.data:
             return redirect(url_for("notifications"))
-
+        elif form.logout.data:
+            return redirect(url_for("logout"))
+            
     return render_template('watchlist.html', form=form)
 
 # Route: Notifications
@@ -200,6 +206,8 @@ def notifications():
             return redirect(url_for("watchlist"))
         elif form.notifications.data:
             return redirect(url_for("notifications"))
+        elif form.logout.data:
+            return redirect(url_for("logout"))
 
     return render_template('notifications.html', form=form)
 
@@ -218,6 +226,7 @@ def expertsMessaging():
 @app.route('/setAvailability')
 def setAvailability():
     return render_template('setAvailability.html')
+
 #Route: Manager Page
 @app.route('/manager', methods=['GET','POST'])
 def manager():

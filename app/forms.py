@@ -73,4 +73,5 @@ class SideBarForm(FlaskForm):
     myListings = SubmitField('My Listings')
     watchlist = SubmitField('My Watchlist')
     notifications = SubmitField('Notifications')
+    logout = SubmitField('Logout')
 
