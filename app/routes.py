@@ -308,6 +308,7 @@ def set_availability():
 # Manager Pages
 
 # Route: Managers Home
+# Remove
 @app.route('/manager_home')
 @manager_required
 def manager_home():
@@ -315,6 +316,7 @@ def manager_home():
     Redirects to managers home page when website first opened.
     """
     return render_template('manager_home.html')
+
 
 #Route: Manager Stats Page
 @app.route('/manager_stats', methods=['GET','POST'])
