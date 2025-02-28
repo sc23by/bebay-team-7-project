@@ -137,7 +137,34 @@ def testRegisterPasswordNotStrong(client):
     assert "Password needs at least one number." in response.data.decode()
     assert response.status_code == 200
 
-# FIXME - test name and lastname
+def testRegisterNamesCorrect(client):
+    print(f"{Colours.YELLOW}Testing register page - names correct format:{Colours.RESET}")
+
+    response = client.post('/register', data={
+        'firstName': 'testsuperextralongfirstnameeeee',
+        'lastName': 'testsuperextralonglastnameeeeee',
+        'username': 'Auser',
+        'email': 'email@example.com',
+        'password': 'Firstpassword1',
+        'confirmPassword': 'Firstpassword1'
+    }, follow_redirects=True)
+
+    assert "First name must be 2-30 characters." in response.data.decode()
+    assert "Last name must be 2-30 characters." in response.data.decode()
+    assert response.status_code == 200
+
+    response = client.post('/register', data={
+        'firstName': 'test!',
+        'lastName': 'user!',
+        'username': 'Auser',
+        'email': 'email@example.com',
+        'password': 'Firstpassword1',
+        'confirmPassword': 'Firstpassword1'
+    }, follow_redirects=True)
+
+    assert "First name should only contain letters." in response.data.decode()
+    assert "Last name should only contain letters." in response.data.decode()
+    assert response.status_code == 200
 
 '''
 Testing routes with logged in client (p1)
