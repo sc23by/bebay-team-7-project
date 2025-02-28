@@ -1,7 +1,7 @@
 from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import login_user, current_user, login_required,logout_user
-from app.forms import RegistrationForm, LoginForm, SideBarForm
+from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm
 from app.models import User
 
 # Route: Login Page
@@ -124,23 +124,38 @@ def loggedIn():
 @login_required
 def account():
     """
-    Redirects to account page, has buttons to other pages.
+    Redirects to account page, has buttons to other pages and user information.
     """
-    form = SideBarForm()
+    sidebar_form = SideBarForm()
 
-    if form.validate_on_submit():
-        if form.info.data:
+    if sidebar_form.validate_on_submit() and 'sidebar' in request.form:
+        if sidebar_form.info.data:
             return redirect(url_for("account"))
-        elif form.myListings.data:
+        elif sidebar_form.myListings.data:
             return redirect(url_for("myListings"))
-        elif form.watchlist.data:
+        elif sidebar_form.watchlist.data:
             return redirect(url_for("watchlist"))
-        elif form.notifications.data:
+        elif sidebar_form.notifications.data:
             return redirect(url_for("notifications"))
-        elif form.logout.data:
-            return redirect(url_for("logout"))
+        elif sidebar_form.logout.data:
+            return redirect(url_for("logout")) 
 
-    return render_template('account.html', form=form)
+    info_form = UserInfoForm()
+
+    if info_form.validate_on_submit():
+        return redirect(url_for('account'))
+
+    password_form = ChangePasswordForm()
+
+    if password_form.validate_on_submit():
+        return redirect(url_for('account'))
+
+    card_form = CardInfoForm()
+
+    if card_form.validate_on_submit():
+        return redirect(url_for('account'))
+
+    return render_template('account.html', sidebar_form=sidebar_form, info_form=info_form, password_form=password_form, card_form=card_form)
 
 # Route: My Listings
 @app.route('/myListings', methods=['GET', 'POST'])
@@ -185,7 +200,7 @@ def watchlist():
             return redirect(url_for("notifications"))
         elif form.logout.data:
             return redirect(url_for("logout"))
-            
+
     return render_template('watchlist.html', form=form)
 
 # Route: Notifications
