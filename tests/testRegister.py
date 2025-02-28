@@ -1,3 +1,4 @@
+#tests for the register route
 import sys
 import os
 
@@ -5,15 +6,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import app, db, bcrypt
 from app.models import User
+from flask import url_for
 import pytest
 from colours import Colours
-from bs4 import BeautifulSoup
 
-
-def extract_errors(response):
-    """Extract form error messages from the HTML response."""
-    soup = BeautifulSoup(response.data, "html.parser")
-    return [msg.text for msg in soup.find_all("small")]
 
 '''
 Creating fixtures to test routes with
@@ -39,26 +35,39 @@ def client():
     print("\nTearing down the test client")
 
 @pytest.fixture
-def loggedInClient(client):
-    client.get('/login')
+def loggedInClientP1(client):
+    with app.app_context():
+        test_user = User(username='testuser',
+                         email='test@example.com',
+                         password=bcrypt.generate_password_hash('password'),
+                         firstName='Test', 
+                         lastName='User', 
+                         priority=1)
+        db.session.add(test_user)
+        db.session.commit()
+
+    # Log in the user
+    response = client.post('/login', data={
+        'username': 'testuser',
+        'password': 'password'
+    }, follow_redirects=True)
+
+    assert response.status_code == 200  # Ensure login was successful
     return client
 
 
 '''
 Testing routes with logged out client
 '''
-def testHome(client):
-    print(f"{Colours.YELLOW}Testing homepage - logged out:{Colours.RESET}")
-    response = client.get('/')
-    assert response.status_code == 200
-
 def testRegisterValidUser(client):
-    print(f"{Colours.YELLOW}Testing register page - logged out:{Colours.RESET}")
+    print(f"{Colours.YELLOW}Testing register page- registering a user:{Colours.RESET}")
     response = client.post('/register', data={
+        'firstName': 'test',
+        'lastName': 'user',
         'username': 'testuser',
         'email': 'test@example.com',
         'password': 'Test@1234',
-        'confirm_password': 'Test@1234'
+        'confirmPassword': 'Test@1234'
     }, follow_redirects=True)
 
     # check if user was added to the database
@@ -75,16 +84,22 @@ def testRegisterDuplicateUsername(client):
 
     # create user to compare to
     with app.app_context():
-        user = User(username='testuser', email='existing@example.com', password=bcrypt.generate_password_hash('password'))
+        user = User(username='testuser',
+                    email='existing@example.com',
+                    password=bcrypt.generate_password_hash('password'),
+                    firstName='firstName',
+                    lastName='lastnNme')
         db.session.add(user)
         db.session.commit() 
 
     # register user with same username but all other details are different
     response = client.post('/register', data={
+        'firstName': 'test',
+        'lastName': 'user',
         'username': 'testuser',
         'email': 'new@example.com',
-        'password': 'NewPassword123!',
-        'confirm_password': 'NewPassword123!'
+        'password': 'NewPassword1!',
+        'confirmPassword': 'NewPassword1!'
     }, follow_redirects=True)
 
     assert b'Username already exists' in response.data
@@ -93,18 +108,25 @@ def testRegisterDuplicateUsername(client):
 
 def testRegisterDuplicateEmail(client):
     print(f"{Colours.YELLOW}Testing register page - duplicate email:{Colours.RESET}")
+
     # create user to compare to
     with app.app_context():
-        user = User(username='uniqueUser', email='test@example.com', password=bcrypt.generate_password_hash('password'))
+        user = User(username='testuser',
+                    email='existing@example.com',
+                    password=bcrypt.generate_password_hash('password'),
+                    firstName='firstName',
+                    lastName='lastnNme')
         db.session.add(user)
-        db.session.commit()
+        db.session.commit() 
 
-    # register user with same email but all other details are different
+    # register user with same username but all other details are different
     response = client.post('/register', data={
-        'username': 'newuUser',
-        'email': 'test@example.com',
-        'password': 'NewPassword123!',
-        'confirm_password': 'NewPassword123!'
+        'firstName': 'test',
+        'lastName': 'user',
+        'username': 'Newuser',
+        'email': 'existing@example.com',
+        'password': 'NewPassword1!',
+        'confirmPassword': 'NewPassword1!'
     }, follow_redirects=True)
 
     assert b'Email already exists' in response.data
@@ -113,26 +135,45 @@ def testRegisterDuplicateEmail(client):
 
 def testRegisterPasswordMismatch(client):
     print(f"{Colours.YELLOW}Testing register page - missmatched passwords:{Colours.RESET}")
+
     response = client.post('/register', data={
-        'username': 'mismatchuser',
-        'email': 'mismatch@example.com',
-        'password': 'Password123!',
-        'confirm_password': 'DifferentPassword'
+        'firstName': 'test',
+        'lastName': 'user',
+        'username': 'Auser',
+        'email': 'email@example.com',
+        'password': 'FirstPassword1!!',
+        'confirmPassword': 'SecondPassword1!'
     }, follow_redirects=True)
 
     assert "Passwords must match." in response.data.decode()
     assert response.status_code == 200
 
+def testRegisterPasswordNotStrong(client):
+    print(f"{Colours.YELLOW}Testing register page - password not strong enough:{Colours.RESET}")
+
+    response = client.post('/register', data={
+        'firstName': 'test',
+        'lastName': 'user',
+        'username': 'Auser',
+        'email': 'email@example.com',
+        'password': 'firstpassword',
+        'confirmPassword': 'firstpassword'
+    }, follow_redirects=True)
+
+    assert "Password needs at least one uppercase letter." in response.data.decode()
+    assert response.status_code == 200
+
+#FIXME test email is valid
+#FIXME test firstname lastname and username is correct form (length ect)
+
 '''
 Testing routes with logged out client
 '''
-def testHomeAuthenticated(loggedInClient):
-    print(f"{Colours.YELLOW}Testing homepage - logged in:{Colours.RESET}")
-    response = loggedInClient.get('/')
-    assert response.status_code == 200
 
-def testRegisterAuthenticated(loggedInClient):
+def testRegisterAuthenticated(loggedInClientP1):
     print(f"{Colours.YELLOW}Testing register page - logged in:{Colours.RESET}")
-    response = loggedInClient.get('/register')
-    assert response.status_code == 200
-    assert b'<p> Now logged in </p>' in response.data  
+
+    response = loggedInClientP1.get('/register')
+    assert response.status_code == 302
+    assert b'/loggedIn' in response.data
+    

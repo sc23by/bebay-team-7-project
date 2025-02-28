@@ -30,11 +30,11 @@ The following packages will be installed:
 Once installed, you can start developing with Flask and run tests using:
 
 ```sh
-pytest
+pytest <test/filename>
 ```
 or
 ```sh
-pytest -vs
+pytest <test/filename> -vs
 ```
 
 for more information on tests.
