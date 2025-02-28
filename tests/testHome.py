@@ -1,97 +1,40 @@
 #tests for the register route
-import sys
-import os
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from app import app, db, bcrypt
-from app.models import User
-import pytest
 from colours import Colours
 
+'''
+Testing routes with logged out client
+'''
+def testHome(client):
+    print(f"{Colours.YELLOW}Testing homepage - logged out:{Colours.RESET}")
+    response = client.get('/')
+    assert response.status_code == 200
+    assert b'Main Page' in response.data
 
 '''
-Creating fixtures to test routes with
-client: unlogged in client
-loggedInClient: client who has logged in
+Testing routes with logged in client
 '''
-@pytest.fixture
-def client():
-    print("\nSetting up the test client")
-    
-    # testing mode enabled, use memory db not the real one, dissable security
-    app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    app.config['WTF_CSRF_ENABLED'] = False
-    with app.test_client() as client:
-        with app.app_context():
-            # create temp db
-            db.create_all()
-        yield client
-        with app.app_context():
-            # post test cleanup
-            db.drop_all()
-    print("\nTearing down the test client")
+def testHomeRerouteP1(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing homepage - P1 reroute:{Colours.RESET}")
+    response = loggedInClientP1.get('/')
+    assert response.status_code == 302
+    assert b'/loggedIn</a>' in response.data
 
-@pytest.fixture
-def loggedInClientP1(client):
-    with app.app_context():
-        test_user = User(username='testuser',
-                         email='test@example.com',
-                         password=bcrypt.generate_password_hash('password'),
-                         firstName='Test', 
-                         lastName='User', 
-                         priority=1)
-        db.session.add(test_user)
-        db.session.commit()
+def testHomeRerouteP2(loggedInClientP2):
+    print(f"{Colours.YELLOW}Testing homepage - P2 reroute:{Colours.RESET}")
+    response = loggedInClientP2.get('/')
+    assert response.status_code == 302
+    assert b'/expertHome</a>' in response.data
 
-    # log in the user
-    response = client.post('/login', data={
-        'username': 'testuser',
-        'password': 'password'
-    }, follow_redirects=True)
+def testHomeRerouteP3(loggedInClientP3):
+    print(f"{Colours.YELLOW}Testing homepage - P3 reroute:{Colours.RESET}")
+    response = loggedInClientP3.get('/')
+    assert response.status_code == 302
+    assert b'/managerHome</a>' in response.data
 
-    assert response.status_code == 200  # Ensure login was successful
-    return client
-
-@pytest.fixture
-def loggedInClientP2(client):
-    with app.app_context():
-        test_user = User(username='testuser',
-                         email='test@example.com',
-                         password=bcrypt.generate_password_hash('password'),
-                         firstName='Test', 
-                         lastName='User', 
-                         priority=2)
-        db.session.add(test_user)
-        db.session.commit()
-
-    # log in the user
-    response = client.post('/login', data={
-        'username': 'testuser',
-        'password': 'password'
-    }, follow_redirects=True)
-
-    assert response.status_code == 200  # Ensure login was successful
-    return client
-
-@pytest.fixture
-def loggedInClientP3(client):
-    with app.app_context():
-        test_user = User(username='testuser',
-                         email='test@example.com',
-                         password=bcrypt.generate_password_hash('password'),
-                         firstName='Test', 
-                         lastName='User', 
-                         priority=3)
-        db.session.add(test_user)
-        db.session.commit()
-
-    # log in the user
-    response = client.post('/login', data={
-        'username': 'testuser',
-        'password': 'password'
-    }, follow_redirects=True)
-
-    assert response.status_code == 200  # Ensure login was successful
-    return client
+def testLogoutRoute(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing Logout route - P1 reroute:{Colours.RESET}")
+    response = loggedInClientP1.get('/logout')
+    assert response.status_code == 302
+    # check for redirect to main page route
+    assert b'<a href="/">/</a>' in response.data
