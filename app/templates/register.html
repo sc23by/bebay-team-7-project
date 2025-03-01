@@ -1,4 +1,4 @@
-{% extends "userBase.html" %}
+{% extends "base_guest.html" %}
 {% block content %}
 <div>
     <div>
@@ -21,18 +21,18 @@
 
             <!-- First Name input -->
             <div>
-                {{ form.firstName.label }}
-                {{ form.firstName }}
-                {% for error in form.firstName.errors %}
+                {{ form.first_name.label }}
+                {{ form.first_name }}
+                {% for error in form.first_name.errors %}
                     <small>{{ error }}</small>
                 {% endfor %}
             </div>
 
             <!-- Last Name input -->
             <div>
-                {{ form.lastName.label }}
-                {{ form.lastName }}
-                {% for error in form.lastName.errors %}
+                {{ form.last_name.label }}
+                {{ form.last_name }}
+                {% for error in form.last_name.errors %}
                     <small>{{ error }}</small>
                 {% endfor %}
             </div>
@@ -66,9 +66,9 @@
 
             <!-- Confirm Password input -->
             <div>
-                {{ form.confirmPassword.label }}
-                {{ form.confirmPassword }}
-                {% for error in form.confirmPassword.errors %}
+                {{ form.confirm_password.label }}
+                {{ form.confirm_password }}
+                {% for error in form.confirm_password.errors %}
                     <small>{{ error }}</small>
                 {% endfor %}
             </div>

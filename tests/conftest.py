@@ -1,4 +1,4 @@
-#tests for the register route
+# route test setup - discovered by all route tests
 import sys
 import os
 
@@ -7,7 +7,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app import app, db, bcrypt
 from app.models import User
 import pytest
-from colours import Colours
 
 
 '''
@@ -39,8 +38,8 @@ def loggedInClientP1(client):
         test_user = User(username='testuser',
                          email='test@example.com',
                          password=bcrypt.generate_password_hash('password'),
-                         firstName='Test', 
-                         lastName='User', 
+                         first_name='Test', 
+                         last_name='User', 
                          priority=1)
         db.session.add(test_user)
         db.session.commit()
@@ -51,7 +50,7 @@ def loggedInClientP1(client):
         'password': 'password'
     }, follow_redirects=True)
 
-    assert response.status_code == 200  # Ensure login was successful
+    assert response.status_code == 200
     return client
 
 @pytest.fixture
@@ -60,8 +59,8 @@ def loggedInClientP2(client):
         test_user = User(username='testuser',
                          email='test@example.com',
                          password=bcrypt.generate_password_hash('password'),
-                         firstName='Test', 
-                         lastName='User', 
+                         first_name='Test', 
+                         last_name='User', 
                          priority=2)
         db.session.add(test_user)
         db.session.commit()
@@ -72,7 +71,7 @@ def loggedInClientP2(client):
         'password': 'password'
     }, follow_redirects=True)
 
-    assert response.status_code == 200  # Ensure login was successful
+    assert response.status_code == 200
     return client
 
 @pytest.fixture
@@ -81,8 +80,8 @@ def loggedInClientP3(client):
         test_user = User(username='testuser',
                          email='test@example.com',
                          password=bcrypt.generate_password_hash('password'),
-                         firstName='Test', 
-                         lastName='User', 
+                         first_name='Test', 
+                         last_name='User', 
                          priority=3)
         db.session.add(test_user)
         db.session.commit()
@@ -93,5 +92,5 @@ def loggedInClientP3(client):
         'password': 'password'
     }, follow_redirects=True)
 
-    assert response.status_code == 200  # Ensure login was successful
+    assert response.status_code == 200
     return client

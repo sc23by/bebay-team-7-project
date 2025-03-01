@@ -19,7 +19,7 @@
  
     <nav class="navbar bg-body-tertiary">
         <div class="container-fluid">
-          <a class="navbar-brand" href="{{ url_for('mainPage')}}">Bebay</a>
+          <a class="navbar-brand" href="{{ url_for('guest_home')}}">Bebay</a>
 
           <div class="ms-auto me-2">
             <a class="nav-item">
@@ -35,8 +35,8 @@
 
           <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
             <div class="offcanvas-header">
-              {% if userName %}
-              <h5 class="offcanvas-title" id="offcanvasNavbarLabel">{{ userName }}</h5>
+              {% if username %}
+              <h5 class="offcanvas-title" id="offcanvasNavbarLabel">{{ username }}</h5>
               {% else %}
               <h5 class="offcanvas-title" id="offcanvasNavbarLabel">User</h5>
               {% endif %}
