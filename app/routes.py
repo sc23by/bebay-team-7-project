@@ -220,7 +220,7 @@ def account():
     if card_form.validate_on_submit():
         return redirect(url_for('account'))
 
-    return render_template('account.html', sidebar_form=sidebar_form, info_form=info_form, password_form=password_form, card_form=card_form)
+    return render_template('user_account.html', sidebar_form=sidebar_form, info_form=info_form, password_form=password_form, card_form=card_form)
 
 # Route: My Listings
 @app.route('/my_listings', methods=['GET', 'POST'])
@@ -243,7 +243,7 @@ def my_listings():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    return render_template('my_listings.html', form=form)
+    return render_template('user_my_listings.html', form=form)
 
 # Route: Watchlist
 @app.route('/watchlist', methods=['GET', 'POST'])
@@ -266,7 +266,7 @@ def watchlist():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    return render_template('watchlist.html', form=form)
+    return render_template('user_watchlist.html', form=form)
 
 # Route: Notifications
 @app.route('/notifications', methods=['GET', 'POST'])
@@ -289,7 +289,7 @@ def notifications():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    return render_template('notifications.html', form=form)
+    return render_template('user_notifications.html', form=form)
 
 
 # Expert Pages
