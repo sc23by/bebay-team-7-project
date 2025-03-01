@@ -37,4 +37,4 @@ or
 pytest <test/filename> -vs
 ```
 
-for more information on tests.
+for more information on tests. (flask venv must be running first - use `source flask/bin/acivate`).
