@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base_user.html' %}
 {% block content %}
 <body class="container-fluid bg-light">
 
@@ -6,20 +6,21 @@
         <!-- Sidebar -->
         <div class="col-md-3 col-lg-2 bg-white shadow-sm p-4">
             <div class="d-grid gap-2">
-                <form action="{{ url_for('watchlist') }}" method="post" name="sidebar">
+                <form action="{{ url_for('notifications') }}" method="post" name="sidebar">
                     {{ form.hidden_tag() }}
 
                     <div>{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
                     <div>{{ form.my_listings(class="btn btn-outline-secondary custom-button") }}</div>
                     <div>{{ form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
                     <div>{{ form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
+                    <div>{{ form.logout(class="btn btn-outline-secondary custom-button") }}</div>
                 </form>
             </div>
         </div>
 
         <!-- Content Area -->
         <div class="col-md-9 col-lg-10 p-5">
-            <h2 class="mb-4">My Watchlist</h2>            
+            <h2 class="mb-4">Notifications</h2>
 
         </div>
     </div>

@@ -73,5 +73,68 @@ class SideBarForm(FlaskForm):
     my_listings = SubmitField('My Listings')
     watchlist = SubmitField('My Watchlist')
     notifications = SubmitField('Notifications')
+    logout = SubmitField('Logout')
+
+# Form for changing user information
+class UserInfoForm(FlaskForm):
+    """
+    Allows user to update user information
+    """
+    firstName = StringField('First Name', validators=[
+        DataRequired(), 
+        Length(min=2, max=30, message="First name must be 2-30 characters."),
+        Regexp('^[A-Za-z]+$', message="First name should only contain letters.")
+    ])
+
+    lastName = StringField('First Name', validators=[
+        DataRequired(), 
+        Length(min=2, max=30, message="First name must be 2-30 characters."),
+        Regexp('^[A-Za-z]+$', message="First name should only contain letters.")
+    ])
+
+    username = StringField('Username', validators=[
+        DataRequired(), 
+        Length(min=3, max=20, message="Username must be 3-20 characters."),
+        Regexp('^[A-Za-z0-9_]+$', message="Only letters, numbers, and underscores allowed.")
+    ])
+
+    email = StringField('Email', validators=[
+        DataRequired(), 
+        Email(message="Invalid email address.")
+    ])
+
+    updateInfo = SubmitField('Update Info')
+
+# Form for changing password
+class ChangePasswordForm(FlaskForm):
+    """
+    Allows user to change password
+    """
+    newPassword = PasswordField('Password', validators=[
+        DataRequired(),
+        strong_password
+    ])
+
+    confirmPassword = PasswordField('Confirm Password', validators=[
+        DataRequired(),
+        EqualTo('password', message="Passwords must match.")
+    ])
+
+    updatePrivacy = SubmitField('Change Password')
+
+# Form for changing card and shipping information
+class CardInfoForm(FlaskForm):
+    """
+    Allows user to update card information
+    """
+    cardNumber = StringField('Card Number', validators=[
+        DataRequired(), 
+    ])
+
+    shippingAddress = StringField('Shipping Address', validators=[
+        DataRequired(), 
+    ])
+
+    updateCard = SubmitField('Update Card Info')
 
     
