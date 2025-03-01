@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# install pytest
-pip install pytest
-
 # Create virtual environment
 python3 -m venv flask
 
@@ -21,6 +18,7 @@ flask/bin/pip install flask-bcrypt
 flask/bin/pip install flask-babel 
 flask/bin/pip install email_validator 
 flask/bin/pip install coverage 
+flask/bin/pip install pytest
 
 export FLASK_APP=run.py
 export FLASK_DEBUG=1
