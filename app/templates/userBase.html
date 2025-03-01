@@ -20,7 +20,7 @@
  
     {% if current_user.is_authenticated %}
         <nav class="navbar navbar-expand-sm navbar-tertiary bg-body-tertiary">
-            <a class="navbar-brand" href="{{ url_for('mainPage')}}">Bebay</a>
+            <a class="navbar-brand" href="{{ url_for('user_home')}}">Bebay</a>
 
             <!--Hides nav bar on smaller screens and creates a sidebar -->
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
@@ -57,7 +57,7 @@
         </nav>
     {% else %}
         <nav class="navbar navbar-expand-sm navbar-tertiary bg-body-tertiary">
-            <a class="navbar-brand" href="{{ url_for('mainPage')}}">Bebay</a>
+            <a class="navbar-brand" href="{{ url_for('user_home')}}">Bebay</a>
 
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
