@@ -310,10 +310,10 @@ def expert_assignments():
     return render_template('expert_assignments.html')
 
 #Route: Expert Authentication Page
-@app.route('/item_authentication')
+@app.route('/expert_item_authentication')
 @expert_required
-def item_authentication():
-    return render_template('item_authentication.html')
+def expert_item_authentication():
+    return render_template('expert_item_authentication.html')
 
 #Route: Expert Messaging Page
 @app.route('/expert_messaging')
@@ -322,10 +322,10 @@ def expert_messaging():
     return render_template('expert_messaging.html')
 
 #Route: Expert Avaliablity Page
-@app.route('/set_availability')
+@app.route('/expert_set_availability')
 @expert_required
-def set_availability():
-    return render_template('set_availability.html')
+def expert_set_availability():
+    return render_template('expert_set_availability.html')
 
 
 # Manager Pages

@@ -27,13 +27,13 @@
             <form action="{{ url_for('account') }}" method="post">
                 {{ info_form.hidden_tag() }}
                 <div class="mb-3 row">
-                    {{ info_form.firstName.label(class="col-sm-2 col-form-label")}}
-                    {{ info_form.firstName(class="col-sm-6")}}
+                    {{ info_form.first_name.label(class="col-sm-2 col-form-label")}}
+                    {{ info_form.first_name(class="col-sm-6")}}
                 </div>
     
                 <div class="mb-3 row">
-                    {{ info_form.lastName.label(class="col-sm-2 col-form-label")}}
-                    {{ info_form.lastName(class="col-sm-6")}}
+                    {{ info_form.last_name.label(class="col-sm-2 col-form-label")}}
+                    {{ info_form.last_name(class="col-sm-6")}}
                 </div>
 
                 <div class="mb-3 row">
@@ -45,7 +45,7 @@
                     {{ info_form.email.label(class="col-sm-2 col-form-label")}}
                     {{ info_form.email(class="col-sm-6")}}
                     <div class="col-sm-2">
-                        {{ info_form.updateInfo(class="btn btn-outline-primary") }}
+                        {{ info_form.update_info(class="btn btn-outline-primary") }}
                     </div>
                 </div>
             </form>
@@ -57,15 +57,15 @@
                 {{ password_form.hidden_tag() }}
 
                 <div class="mb-3 row">
-                    {{ password_form.newPassword.label(class="col-sm-2 col-form-label")}}
-                    {{ password_form.newPassword(class="col-sm-6")}}
+                    {{ password_form.new_password.label(class="col-sm-2 col-form-label")}}
+                    {{ password_form.new_password(class="col-sm-6")}}
                 </div>
 
                 <div class="mb-3 row">
-                    {{ password_form.confirmPassword.label(class="col-sm-2 col-form-label")}}
-                    {{ password_form.confirmPassword(class="col-sm-6")}}
+                    {{ password_form.confirm_password.label(class="col-sm-2 col-form-label")}}
+                    {{ password_form.confirm_password(class="col-sm-6")}}
                     <div class="col-sm-2">
-                        {{ password_form.updatePrivacy(class="btn btn-outline-primary") }}
+                        {{ password_form.update_privacy(class="btn btn-outline-primary") }}
                     </div>
                 </div>
             </form>
@@ -76,15 +76,15 @@
                 {{ card_form.hidden_tag() }}
 
                 <div class="mb-3 row">
-                    {{ card_form.cardNumber.label(class="col-sm-2 col-form-label")}}
-                    {{ card_form.cardNumber(class="col-sm-6")}}
+                    {{ card_form.card_number.label(class="col-sm-2 col-form-label")}}
+                    {{ card_form.card_number(class="col-sm-6")}}
                 </div>
 
                 <div class="mb-3 row">
-                    {{ card_form.shippingAddress.label(class="col-sm-2 col-form-label")}}
-                    {{ card_form.shippingAddress(class="col-sm-6")}}
+                    {{ card_form.shipping_address.label(class="col-sm-2 col-form-label")}}
+                    {{ card_form.shipping_address(class="col-sm-6")}}
                     <div class="col-sm-2">
-                        {{ card_form.updateCard(class="btn btn-outline-primary") }}
+                        {{ card_form.update_card(class="btn btn-outline-primary") }}
                     </div>
                 </div>
             </form>
