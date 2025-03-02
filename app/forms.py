@@ -80,13 +80,13 @@ class UserInfoForm(FlaskForm):
     """
     Allows user to update user information
     """
-    firstName = StringField('First Name', validators=[
+    first_name = StringField('First Name', validators=[
         DataRequired(), 
         Length(min=2, max=30, message="First name must be 2-30 characters."),
         Regexp('^[A-Za-z]+$', message="First name should only contain letters.")
     ])
 
-    lastName = StringField('First Name', validators=[
+    last_name = StringField('First Name', validators=[
         DataRequired(), 
         Length(min=2, max=30, message="First name must be 2-30 characters."),
         Regexp('^[A-Za-z]+$', message="First name should only contain letters.")
@@ -103,38 +103,38 @@ class UserInfoForm(FlaskForm):
         Email(message="Invalid email address.")
     ])
 
-    updateInfo = SubmitField('Update Info')
+    update_info = SubmitField('Update Info')
 
 # Form for changing password
 class ChangePasswordForm(FlaskForm):
     """
     Allows user to change password
     """
-    newPassword = PasswordField('Password', validators=[
+    new_password = PasswordField('Password', validators=[
         DataRequired(),
         strong_password
     ])
 
-    confirmPassword = PasswordField('Confirm Password', validators=[
+    confirm_password = PasswordField('Confirm Password', validators=[
         DataRequired(),
         EqualTo('password', message="Passwords must match.")
     ])
 
-    updatePrivacy = SubmitField('Change Password')
+    update_privacy = SubmitField('Change Password')
 
 # Form for changing card and shipping information
 class CardInfoForm(FlaskForm):
     """
     Allows user to update card information
     """
-    cardNumber = StringField('Card Number', validators=[
+    card_number = StringField('Card Number', validators=[
         DataRequired(), 
     ])
 
-    shippingAddress = StringField('Shipping Address', validators=[
+    shipping_address = StringField('Shipping Address', validators=[
         DataRequired(), 
     ])
 
-    updateCard = SubmitField('Update Card Info')
+    update_card = SubmitField('Update Card Info')
 
     
