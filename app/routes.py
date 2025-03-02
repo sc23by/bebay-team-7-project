@@ -358,10 +358,10 @@ def manager_stats():
 
 
 #Route: Manager Account Page
-@app.route('/manager_account',methods=['GET','POST'])
+@app.route('/manager_accounts',methods=['GET','POST'])
 @manager_required
-def manager_account():
-    return render_template("manager_account.html")
+def manager_accounts():
+    return render_template("manager_accounts.html")
 
 #Route: Manager Listing Page
 @app.route('/manager_listings',methods=['GET','POST'])
