@@ -4,6 +4,7 @@ from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm
 from app.models import User
 from functools import wraps
+import matplotlib.pyplot as plt
 
 
 # Decorators
@@ -344,14 +345,23 @@ def manager_home():
 #Route: Manager Stats Page
 @app.route('/manager_stats', methods=['GET','POST'])
 @manager_required
+def chart():
+    ration = [34,32,16,20]
+    labels = ['Generated income','Customer cost','Postal cost','Experts cost']
+
+    plt.pie(ratio, labels=labels)
+    plt.show()
+
+
 def manager_stats():
     return render_template("manager_stats.html")
 
+
 #Route: Manager Account Page
-@app.route('/manager_accounts',methods=['GET','POST'])
+@app.route('/manager_account',methods=['GET','POST'])
 @manager_required
-def manager_accounts():
-    return render_template("manager_accounts.html")
+def manager_account():
+    return render_template("manager_account.html")
 
 #Route: Manager Listing Page
 @app.route('/manager_listings',methods=['GET','POST'])
