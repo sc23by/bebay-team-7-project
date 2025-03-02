@@ -291,6 +291,16 @@ def notifications():
 
     return render_template('user_notifications.html', form=form)
 
+# Route: Logged In Page
+@app.route('/user_list_item')
+@user_required
+def user_list_item():
+    """
+    Redirects to list item page.
+    """
+    return render_template('user_list_item.html')
+
+
 
 # Expert Pages
 

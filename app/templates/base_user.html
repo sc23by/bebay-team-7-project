@@ -18,80 +18,45 @@
     <!--Bootstrap Script (global use) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
  
-    {% if current_user.is_authenticated %}
-        <nav class="navbar navbar-expand-sm navbar-tertiary bg-body-tertiary">
-            <a class="navbar-brand" href="{{ url_for('user_home')}}">Bebay</a>
 
-            <!--Hides nav bar on smaller screens and creates a sidebar -->
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+    <nav class="navbar navbar-expand-sm navbar-tertiary bg-body-tertiary">
+        <a class="navbar-brand" href="{{ url_for('user_home')}}">Bebay</a>
 
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <!--Hides nav bar on smaller screens and creates a sidebar -->
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-                <!-- Search Bar -->
-                <div class="collapse navbar-collapse d-flex justify-content-center mx-auto">
-                    <form class="form-inline">
-                        <div class="input-group">
-                            <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-                            <div class="input-group-append">
-                                <button class="fas fa-search" type="submit"></button>
-                            </div>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+
+            <!-- Search Bar -->
+            <div class="collapse navbar-collapse d-flex justify-content-center mx-auto">
+                <form class="form-inline">
+                    <div class="input-group">
+                        <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                        <div class="input-group-append">
+                            <button class="fas fa-search" type="submit"></button>
                         </div>
-                    </form>
-                </div>
-
-                <ul class="navbar-nav ms-auto">
-                    <li class="navbar-nav d-flex align-items-center nav-item">
-                        <a class="nav-link" href="{{url_for('notifications')}}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bell" viewBox="0 0 16 16">
-                                <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2M8 1.918l-.797.161A4 4 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4 4 0 0 0-3.203-3.92zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5 5 0 0 1 13 6c0 .88.32 4.2 1.22 6"/>
-                            </svg>
-                        </a>
-                    </li>                    
-                    <li class="nav-item"><a class="nav-link" href="{{url_for('account')}}">My Account</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{url_for('logout')}}">Logout</a></li>
-                </ul>
+                    </div>
+                </form>
             </div>
-        </nav>
-    {% else %}
-        <nav class="navbar navbar-expand-sm navbar-tertiary bg-body-tertiary">
-            <a class="navbar-brand" href="{{ url_for('user_home')}}">Bebay</a>
 
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <ul class="navbar-nav ms-auto">
+                <li class="navbar-nav d-flex align-items-center nav-item">
+                    <a class="nav-link" href="{{url_for('notifications')}}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bell" viewBox="0 0 16 16">
+                            <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2M8 1.918l-.797.161A4 4 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4 4 0 0 0-3.203-3.92zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5 5 0 0 1 13 6c0 .88.32 4.2 1.22 6"/>
+                        </svg>
+                    </a>
+                </li>  
+                <li class="nav-item"><a class="nav-link" href="{{url_for('user_list_item')}}">List Item</a></li>                  
+                <li class="nav-item"><a class="nav-link" href="{{url_for('account')}}">My Account</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{url_for('logout')}}">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
 
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-
-                <!-- Search Bar -->
-                <div class="collapse navbar-collapse d-flex justify-content-center mx-auto">
-                    <form class="form-inline">
-                        <div class="input-group">
-                            <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-                            <div class="input-group-append">
-                                <button class="fas fa-search" type="submit"></button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <ul class="navbar-nav ms-auto">
-                    <li class="navbar-nav d-flex align-items-center">
-                        <a class="nav-item" href="{{url_for('login')}}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bell" viewBox="0 0 16 16">
-                                <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2M8 1.918l-.797.161A4 4 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4 4 0 0 0-3.203-3.92zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5 5 0 0 1 13 6c0 .88.32 4.2 1.22 6"/>
-                            </svg>
-                        </a>
-                    </li>
-                    <li class="nav-item"><a class="nav-link" href="{{url_for('register')}}">Register</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{url_for('login')}}">Login</a></li>
-                </ul>
-            </div>
-        </nav>
-    {% endif %}
 
     <!-- Template extentions go here -->
     {% block content %}{% endblock %}
