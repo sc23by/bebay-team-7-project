@@ -5,6 +5,8 @@ from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, Ch
 from app.models import User
 from functools import wraps
 import matplotlib.pyplot as plt
+import io
+import base64
 
 
 # Decorators
@@ -345,16 +347,18 @@ def manager_home():
 #Route: Manager Stats Page
 @app.route('/manager_stats', methods=['GET','POST'])
 @manager_required
-def chart():
-    ration = [34,32,16,20]
-    labels = ['Generated income','Customer cost','Postal cost','Experts cost']
-
-    plt.pie(ratio, labels=labels)
-    plt.show()
-
-
 def manager_stats():
-    return render_template("manager_stats.html")
+    ratio = [34,32,16,20]
+    labels = ['Generated income','Customer cost','Postal cost','Experts cost']
+    colors=['red','green','blue','orange']
+
+    plt.pie(ratio, labels=labels,colors=colors,autopct=lambda p: f'{p:.1f}%\n £ {p * sum(ratio) / 100:.0f}')
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    img_base64 = base64.b64encode(img.getvalue()).decode()
+
+    return render_template('manager_stats.html',img_data=img_base64,ratio=ratio,labels=labels)
 
 
 #Route: Manager Account Page
