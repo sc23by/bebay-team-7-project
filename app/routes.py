@@ -363,6 +363,7 @@ def manager_stats():
 
 #Route: Manager Account Page
 @app.route('/manager_accounts',methods=['GET','POST'])
+@manager_required
 def manager_accounts():
     accounts = [
         {"username": "Jonghyun Kim","number": 1},
@@ -376,6 +377,10 @@ def manager_accounts():
 
 #Route: Manager Listing Page
 @app.route('/manager_listings',methods=['GET','POST'])
-@manager_required
 def manager_listings():
-    return render_template("manager_listings.html")
+    listings = [
+        {"title": "Jumper","image" : "https://image.hm.com/assets/006/35/ee/35eeb535903be97df8fcfd77b21822b91862ba2c.jpg?imwidth=1260"},
+        {"title": "Pants","image" : "https://image.hm.com/assets/hm/7a/9e/7a9e28408cddce6247b5173b6a54b9a13b98dc1c.jpg?imwidth=1260"}
+
+    ]
+    return render_template("manager_listings.html",listings=listings)
