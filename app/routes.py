@@ -363,9 +363,16 @@ def manager_stats():
 
 #Route: Manager Account Page
 @app.route('/manager_accounts',methods=['GET','POST'])
-@manager_required
 def manager_accounts():
-    return render_template("manager_accounts.html")
+    accounts = [
+        {"username": "Jonghyun Kim","number": 1},
+        {"username": "Feibi Allen","number": 2},
+        {"username": "Bellaly Yahoo","number": 1},
+        {"username": "Rammy G","number": 1},
+        {"username": "MM","number": 3},
+        {"username": "Leyna TJ","number": 1}
+    ]
+    return render_template("manager_accounts.html",accounts=accounts)
 
 #Route: Manager Listing Page
 @app.route('/manager_listings',methods=['GET','POST'])
