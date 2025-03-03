@@ -384,3 +384,47 @@ def manager_listings():
 
     ]
     return render_template("manager_listings.html",listings=listings)
+
+#Route: Manager view sorting all the authentication assignments
+@app.route('/manager_authentication_assignments')
+def manager_auth_assignments():
+    assignments = [
+        {"name": "Item A", "status": "Assigned", "role": "Expert"},
+        {"name": "Item B", "status": "Unassigned"},
+        {"name": "Item C", "status": "Assigned", "role": "Expert"},
+        {"name": "Item D", "status": "Unassigned"}
+    ]
+    return render_template('manager_authentication_assignments.html', assignments=assignments)
+
+
+#Route: Manager's view to be able to identify experts availability
+@app.route('/manager_expert_availability')
+def manager_expert_availability():
+    item = {
+        "name": "Item A",
+        "assigned_expert": "John Doe",
+        "description": "This item requires authentication by an expert."
+    }
+
+    experts = [
+        {"name": "Alice Smith", "available": "Now"},
+        {"name": "Bob Johnson", "available": "48h"},
+        {"name": "Charlie Davis", "available": "Now"},
+        {"name": "Diana Lee", "available": "48h"}
+    ]
+
+    return render_template('manager_expert_availability.html', item=item, experts=experts)
+
+
+
+#Route: Manager view of Items that are approved, recycled, and pending items
+@app.route('/manager_overview')
+def manager_dashboard():
+    return render_template('manager_overview_(approved,recycled,pending).html',
+                           userName="JohnDoe",
+                           userPriority=2,
+                           userEmail="john.doe@example.com",
+                           userCategory="Electronics",
+                           approved_items=[{"name": "Laptop"}, {"name": "Smartphone"}, {"name": "Headphones"}],
+                           rejected_items=[{"name": "Old Monitor"}, {"name": "Broken Keyboard"}],
+                           pending_items=[{"name": "Gaming Console"}, {"name": "Tablet"}])

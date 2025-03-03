@@ -1,0 +1,76 @@
+{% extends "base_manager.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card p-4 border-0 shadow-sm">
+        <h4 class="fw-bold mb-3">Authentication Assignments</h4>
+
+        <!-- Controls Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+            <!-- Filter Dropdown -->
+            <div class="dropdown">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    Filter
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#">Assigned</a></li>
+                    <li><a class="dropdown-item" href="#">Unassigned</a></li>
+                    <li><a class="dropdown-item" href="#">Experts Only</a></li>
+                </ul>
+            </div>
+
+            <!-- Search Input -->
+            <form class="d-flex">
+                <input class="form-control me-2" type="search" placeholder="Search assignments..." aria-label="Search">
+                <button class="btn btn-outline-dark" type="submit">🔍</button>
+            </form>
+        </div>
+
+        <!-- Assignments Table -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Item Name</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Expert</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in assignments %}
+                    <tr>
+                        <td>{{ item.name }}</td>
+                        <td>
+                            {% if item.status == 'Assigned' %}
+                                <span class="badge bg-success">Assigned</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Unassigned</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.role %}
+                                <span class="badge bg-secondary">{{ item.role }}</span>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-center mt-3">
+            <nav>
+                <ul class="pagination">
+                    <li class="page-item"><a class="page-link" href="#">«</a></li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">»</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+{% endblock %}
