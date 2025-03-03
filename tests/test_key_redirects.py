@@ -33,7 +33,14 @@ def test_manager_rerouteP3(loggedInClientP3):
 
 def test_logout_route(loggedInClientP1):
     print(f"{Colours.YELLOW}Testing Logout route - P1 reroute:{Colours.RESET}")
+
     response = loggedInClientP1.get('/logout')
     assert response.status_code == 302
     # check for redirect to main page route
     assert response.headers["Location"].endswith("/")
+
+    # check cant access protected pages anymore
+    response_after_logout = loggedInClientP1.get('/user/account')
+
+    assert response_after_logout.status_code == 302
+    assert "/login" in response_after_logout.headers["Location"]
