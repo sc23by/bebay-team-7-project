@@ -349,6 +349,12 @@ def user_list_item():
         
     return render_template('user_list_item.html', form=form)
 
+# Route: For clicking on an item to see more detail
+@app.route('/item/<int:item_id>')
+def item_details(item_id):
+    item = Item.query.get_or_404(item_id)  # Fetch the item or return 404
+    return render_template('item_details.html', item=item)
+
 
 # Expert Pages
 
