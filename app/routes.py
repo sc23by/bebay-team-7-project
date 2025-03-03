@@ -298,7 +298,7 @@ def notifications():
 # Expert Pages
 
 # Route: Experts Home Page
-@app.route('/expert_home')
+@app.route('/expert')
 @expert_required
 def expert_home():
     """
@@ -307,25 +307,25 @@ def expert_home():
     return render_template('expert_home.html')
 
 #Route: Expert Assignments Page
-@app.route('/expert_assignments')
+@app.route('/expert/assignments')
 @expert_required
 def expert_assignments():
     return render_template('expert_assignments.html')
 
 #Route: Expert Authentication Page
-@app.route('/item_authentication')
+@app.route('/expert/item/authentication')
 @expert_required
 def item_authentication():
     return render_template('item_authentication.html')
 
 #Route: Expert Messaging Page
-@app.route('/expert_messaging')
+@app.route('/expert/messaging')
 @expert_required
 def expert_messaging():
     return render_template('expert_messaging.html')
 
 #Route: Expert Avaliablity Page
-@app.route('/set_availability')
+@app.route('/expert/availability')
 @expert_required
 def set_availability():
     return render_template('set_availability.html')
