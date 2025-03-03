@@ -4,34 +4,34 @@ from colours import Colours
 '''
 Testing routes with logged out client
 '''
-def testHome(client):
+def test_home(client):
     print(f"{Colours.YELLOW}Testing reroute - logged out, reroute to guest page:{Colours.RESET}")
     response = client.get('/')
     assert response.status_code == 200
-    assert b'guest_home' in response.data
+    assert b'<!-- Guest Home Page, displayes listed items -->' in response.data # will need changing
 
 '''
 Testing routes with logged in client
 '''
-def testUserRerouteP1(loggedInClientP1):
+def test_user_rerouteP1(loggedInClientP1):
     print(f"{Colours.YELLOW}Testing reroute - P1 reroute:{Colours.RESET}")
     response = loggedInClientP1.get('/')
     assert response.status_code == 302
     assert response.headers["Location"].endswith("/user")
 
-def testExpertRerouteP2(loggedInClientP2):
+def test_expert_rerouteP2(loggedInClientP2):
     print(f"{Colours.YELLOW}Testing reroute - P2 reroute:{Colours.RESET}")
     response = loggedInClientP2.get('/')
     assert response.status_code == 302
     assert response.headers["Location"].endswith("/expert/assignments")
 
-def testManagerRerouteP3(loggedInClientP3):
+def test_manager_rerouteP3(loggedInClientP3):
     print(f"{Colours.YELLOW}Testing reroute - P3 reroute:{Colours.RESET}")
     response = loggedInClientP3.get('/')
     assert response.status_code == 302
     assert response.headers["Location"].endswith("/manager")
 
-def testLogoutRoute(loggedInClientP1):
+def test_logout_route(loggedInClientP1):
     print(f"{Colours.YELLOW}Testing Logout route - P1 reroute:{Colours.RESET}")
     response = loggedInClientP1.get('/logout')
     assert response.status_code == 302
