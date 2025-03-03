@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, TextAreaField
-from wtforms.validators import DataRequired, Length, EqualTo, Regexp, ValidationError, Email
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField, FloatField, TimeField, DateField, BooleanField
+from wtforms.validators import DataRequired, Length, EqualTo, Regexp, ValidationError, Email, NumberRange
+from flask_wtf.file import FileField, FileAllowed
 
 # Custom password validator
 def strong_password(form, field):
@@ -137,4 +138,47 @@ class CardInfoForm(FlaskForm):
 
     update_card = SubmitField('Update Card Info')
 
+
+class ListItemForm(FlaskForm):
+    item_name = StringField(
+        'Item Name', 
+        validators=[DataRequired(), Length(max=100)]
+    )
     
+    description = StringField(
+        'Description', 
+        validators=[DataRequired(), Length(max=500)]
+    )
+    
+    minimum_price = FloatField(
+        'Starting Price (£)', 
+        validators=[DataRequired(), NumberRange(min=0)]
+    )
+    
+    item_image = FileField(
+        'Upload Image', 
+        validators=[DataRequired(), FileAllowed({'png', 'jpg', 'jpeg', 'gif'}, 'Only images are allowed!')]
+    )
+    
+    duration = TimeField(
+        'Duration (HH:MM)', 
+        validators=[DataRequired()]
+    )
+    
+    time = TimeField(
+        'Start Time', 
+        validators=[DataRequired()]
+    )
+    
+    date = DateField(
+        'Start Date', 
+        validators=[DataRequired()]
+    )
+    
+    shipping_cost = FloatField(
+        'Shipping Cost (£)', 
+        validators=[DataRequired(), NumberRange(min=0)]
+    )
+    
+    submit = SubmitField('List Item')
+

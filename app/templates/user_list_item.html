@@ -1,0 +1,67 @@
+<!-- User List Item Page, be able to list an item -->
+<!-- Params: pageTitle, userName -->
+
+{% extends "base_user.html" %}
+
+{% block content %}
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div>
+        {% for category, message in messages %}
+            <div>{{ message }}</div>
+        {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="container mt-5">
+        <h2>List an Item</h2>
+        <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            
+            <div class="mb-3">
+                {{ form.item_name.label(class="form-label") }}
+                {{ form.item_name(class="form-control") }}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.description.label(class="form-label") }}
+                {{ form.description(class="form-control") }}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.minimum_price.label(class="form-label") }}
+                {{ form.minimum_price(class="form-control") }}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.item_image.label(class="form-label") }}
+                {{ form.item_image(class="form-control") }}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.duration.label(class="form-label") }}
+                {{ form.duration(class="form-control") }}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.time.label(class="form-label") }}
+                {{ form.time(class="form-control") }}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.date.label(class="form-label") }}
+                {{ form.date(class="form-control") }}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.shipping_cost.label(class="form-label") }}
+                {{ form.shipping_cost(class="form-control") }}
+            </div>
+            
+            <button type="submit" class="btn btn-primary">List Item</button>
+        </form>
+    </div>
+{% endblock %}
