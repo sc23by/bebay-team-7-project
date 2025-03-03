@@ -106,7 +106,6 @@ def allowed_file(filename):
 
 # Guest Pages
 
-# Route: Login Page
 @app.route('/')
 @guest_required
 def guest_home():
