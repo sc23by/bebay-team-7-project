@@ -359,7 +359,7 @@ def expert_assignments():
     return render_template('expert_assignments.html')
 
 #Route: Expert Authentication Page
-@app.route('/expert/item/authentication')
+@app.route('/expert/item_authentication')
 @expert_required
 def expert_item_authentication():
     return render_template('expert_item_authentication.html')
@@ -374,7 +374,7 @@ def expert_messaging():
 @app.route('/expert/availability')
 @expert_required
 def expert_set_availability():
-    return render_template('expert_set_availability.html')
+    return render_template('expert_availability.html')
 
 
 # Manager Pages
@@ -404,7 +404,7 @@ def manager_stats():
     img.seek(0)
     img_base64 = base64.b64encode(img.getvalue()).decode()
 
-    return render_template('manager_stats.html',img_data=img_base64,ratio=ratio,labels=labels)
+    return render_template('manager_statistics.html',img_data=img_base64,ratio=ratio,labels=labels)
 
 
 #Route: Manager Account Page
@@ -440,11 +440,11 @@ def manager_auth_assignments():
         {"name": "Item C", "status": "Assigned", "role": "Expert"},
         {"name": "Item D", "status": "Unassigned"}
     ]
-    return render_template('manager_authentication_assignments.html', assignments=assignments)
+    return render_template('manager_authentication.html', assignments=assignments)
 
 
 #Route: Manager's view to be able to identify experts availability
-@app.route('/manager/expert_dashboard')
+@app.route('/manager/expert_availability')
 def manager_expert_availability():
     item = {
         "name": "Item A",
