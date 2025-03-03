@@ -6,7 +6,7 @@ from app.models import User, Item
 from functools import wraps
 from werkzeug.utils import secure_filename
 import os
-
+import uuid
 
 # Decorators
 
@@ -309,8 +309,8 @@ def user_list_item():
 
         # Process the uploaded image
         image_file = form.item_image.data
-        if image_file:
-            filename = secure_filename(image_file.filename)
+        if image_file and allowed_file(image_file.filename):
+            filename = f"{uuid.uuid4().hex}_{secure_filename(image_file.filename)}"
             filepath = os.path.join(app.config['ITEM_IMAGE_FOLDER'], filename)
             image_file.save(filepath)
 
@@ -332,7 +332,8 @@ def user_list_item():
         db.session.commit()
         flash('Item listed successfully!', 'success')
         return redirect(url_for('user_home')) 
-    
+    else:
+        flash('Invalid file type. Only images are allowed.', 'danger')
     return render_template('user_list_item.html', form=form)
 
 
