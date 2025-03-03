@@ -93,7 +93,7 @@ def redirect_based_on_priority(user):
     if user.priority == 3:  # Manager
         return redirect(url_for('manager_home'))
     elif user.priority == 2:  # Expert
-        return redirect(url_for('expert_home'))
+        return redirect(url_for('expert_assignments'))
     elif user.priority == 1:  # Normal User
         return redirect(url_for('user_home'))
     else:  # Guest
@@ -343,15 +343,6 @@ def user_list_item():
 
 # Expert Pages
 
-# Route: Experts Home Page
-@app.route('/expert')
-@expert_required
-def expert_home():
-    """
-    Redirects to experts home page when website first opened.
-    """
-    return render_template('expert_home.html')
-
 #Route: Expert Assignments Page
 @app.route('/expert/assignments')
 @expert_required
@@ -376,6 +367,11 @@ def expert_messaging():
 def expert_set_availability():
     return render_template('expert_availability.html')
 
+#Route: Expert Account Page
+@app.route('/expert/account')
+@expert_required
+def expert_account():
+    return render_template('expert_account.html')
 
 # Manager Pages
 

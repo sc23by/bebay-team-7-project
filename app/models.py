@@ -5,7 +5,7 @@ from sqlalchemy import ForeignKey
 # User model
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
+    username = db.Column(db.String(80), nullable=False)
     password = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     first_name = db.Column(db.String(30), nullable=False)
@@ -14,10 +14,16 @@ class User(UserMixin, db.Model):
     profile_picture = db.Column(db.String(255), nullable=False, default="default_profile.jpg")
 
 # Expert model
-class Expert(db.Model):
-    expert_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, ForeignKey('user.id'), unique=True, nullable=False)  # Each expert must be a unique user
-    availability = db.Column(db.String(50), nullable=False)
+class ExpertAvailabilities(db.Model):
+    availability_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)  # Each expert must be a unique user
+    available = db.Column(db.Boolean)
+    date = db.Column(db.Date, nullable=False)
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+    duration = db.Column(db.Integer)
+    user = db.relationship('User', backref='expert_availabilities')
+
 
 # Payment Info model
 class PaymentInfo(db.Model):

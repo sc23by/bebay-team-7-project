@@ -20,11 +20,11 @@ def testHomeRerouteP1(loggedInClientP1):
     assert response.status_code == 302
     assert b'/user</a>' in response.data
 
-def testHomeRerouteP2(loggedInClientP2):
-    print(f"{Colours.YELLOW}Testing homepage - P2 reroute:{Colours.RESET}")
+def testExpertAssignmentsP2(loggedInClientP2):
+    print(f"{Colours.YELLOW}Testing Expert Assignments page - P2 reroute:{Colours.RESET}")
     response = loggedInClientP2.get('/')
     assert response.status_code == 302
-    assert b'/expert</a>' in response.data
+    assert b'/expert/assignments</a>' in response.data
 
 def testHomeRerouteP3(loggedInClientP3):
     print(f"{Colours.YELLOW}Testing homepage - P3 reroute:{Colours.RESET}")
