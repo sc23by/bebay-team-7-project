@@ -18,19 +18,19 @@ def testHomeRerouteP1(loggedInClientP1):
     print(f"{Colours.YELLOW}Testing homepage - P1 reroute:{Colours.RESET}")
     response = loggedInClientP1.get('/')
     assert response.status_code == 302
-    assert b'/user_home</a>' in response.data
+    assert b'/user</a>' in response.data
 
 def testHomeRerouteP2(loggedInClientP2):
     print(f"{Colours.YELLOW}Testing homepage - P2 reroute:{Colours.RESET}")
     response = loggedInClientP2.get('/')
     assert response.status_code == 302
-    assert b'/expert_home</a>' in response.data
+    assert b'/expert</a>' in response.data
 
 def testHomeRerouteP3(loggedInClientP3):
     print(f"{Colours.YELLOW}Testing homepage - P3 reroute:{Colours.RESET}")
     response = loggedInClientP3.get('/')
     assert response.status_code == 302
-    assert b'/manager_home</a>' in response.data
+    assert b'/manager</a>' in response.data
 
 def testLogoutRoute(loggedInClientP1):
     print(f"{Colours.YELLOW}Testing Logout route - P1 reroute:{Colours.RESET}")

@@ -4,6 +4,9 @@ from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm, ListItemForm
 from app.models import User, Item
 from functools import wraps
+import matplotlib.pyplot as plt
+import io
+import base64
 from werkzeug.utils import secure_filename
 import os
 import uuid
@@ -182,7 +185,7 @@ def logout():
 # User Pages
 
 # Route: Logged In Page
-@app.route('/user_home')
+@app.route('/user')
 @user_required
 def user_home():
     """
@@ -192,7 +195,7 @@ def user_home():
     return render_template('user_home.html', items = items)
 
 # Route: Account
-@app.route('/account', methods=['GET', 'POST'])
+@app.route('/user/account', methods=['GET', 'POST'])
 @login_required
 def account():
     """
@@ -230,7 +233,7 @@ def account():
     return render_template('user_account.html', sidebar_form=sidebar_form, info_form=info_form, password_form=password_form, card_form=card_form)
 
 # Route: My Listings
-@app.route('/my_listings', methods=['GET', 'POST'])
+@app.route('/user/my_listings', methods=['GET', 'POST'])
 @user_required
 def my_listings():
     """
@@ -253,7 +256,7 @@ def my_listings():
     return render_template('user_my_listings.html', form=form)
 
 # Route: Watchlist
-@app.route('/watchlist', methods=['GET', 'POST'])
+@app.route('/user/watchlist', methods=['GET', 'POST'])
 @user_required
 def watchlist():
     """
@@ -276,7 +279,7 @@ def watchlist():
     return render_template('user_watchlist.html', form=form)
 
 # Route: Notifications
-@app.route('/notifications', methods=['GET', 'POST'])
+@app.route('/user/notifications', methods=['GET', 'POST'])
 @user_required
 def notifications():
     """
@@ -299,7 +302,7 @@ def notifications():
     return render_template('user_notifications.html', form=form)
 
 # Route: List Item Page
-@app.route('/user_list_item', methods=['GET', 'POST'])
+@app.route('/user/list_item', methods=['GET', 'POST'])
 @user_required
 def user_list_item():
     form = ListItemForm()
@@ -341,7 +344,7 @@ def user_list_item():
 # Expert Pages
 
 # Route: Experts Home Page
-@app.route('/expert_home')
+@app.route('/expert')
 @expert_required
 def expert_home():
     """
@@ -350,35 +353,35 @@ def expert_home():
     return render_template('expert_home.html')
 
 #Route: Expert Assignments Page
-@app.route('/expert_assignments')
+@app.route('/expert/assignments')
 @expert_required
 def expert_assignments():
     return render_template('expert_assignments.html')
 
 #Route: Expert Authentication Page
-@app.route('/expert_item_authentication')
+@app.route('/expert/item_authentication')
 @expert_required
 def expert_item_authentication():
     return render_template('expert_item_authentication.html')
 
 #Route: Expert Messaging Page
-@app.route('/expert_messaging')
+@app.route('/expert/messaging')
 @expert_required
 def expert_messaging():
     return render_template('expert_messaging.html')
 
 #Route: Expert Avaliablity Page
-@app.route('/expert_set_availability')
+@app.route('/expert/availability')
 @expert_required
 def expert_set_availability():
-    return render_template('expert_set_availability.html')
+    return render_template('expert_availability.html')
 
 
 # Manager Pages
 
 # Route: Managers Home
 # Remove
-@app.route('/manager_home')
+@app.route('/manager')
 @manager_required
 def manager_home():
     """
@@ -388,19 +391,86 @@ def manager_home():
 
 
 #Route: Manager Stats Page
-@app.route('/manager_stats', methods=['GET','POST'])
+@app.route('/manager/statistics', methods=['GET','POST'])
 @manager_required
 def manager_stats():
-    return render_template("manager_stats.html")
+    ratio = [34,32,16,20]
+    labels = ['Generated income','Customer cost','Postal cost','Experts cost']
+    colors=['red','green','blue','orange']
+
+    plt.pie(ratio, labels=labels,colors=colors,autopct=lambda p: f'{p:.1f}%\n £ {p * sum(ratio) / 100:.0f}')
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    img_base64 = base64.b64encode(img.getvalue()).decode()
+
+    return render_template('manager_statistics.html',img_data=img_base64,ratio=ratio,labels=labels)
+
 
 #Route: Manager Account Page
-@app.route('/manager_accounts',methods=['GET','POST'])
+@app.route('/manager/accounts',methods=['GET','POST'])
 @manager_required
 def manager_accounts():
-    return render_template("manager_accounts.html")
+    accounts = [
+        {"username": "Jonghyun Kim","number": 1},
+        {"username": "Feibi Allen","number": 2},
+        {"username": "Bellaly Yahoo","number": 1},
+        {"username": "Rammy G","number": 1},
+        {"username": "MM","number": 3},
+        {"username": "Leyna TJ","number": 1}
+    ]
+    return render_template("manager_accounts.html",accounts=accounts)
 
 #Route: Manager Listing Page
-@app.route('/manager_listings',methods=['GET','POST'])
-@manager_required
+@app.route('/manager/listings',methods=['GET','POST'])
 def manager_listings():
-    return render_template("manager_listings.html")
+    listings = [
+        {"title": "Jumper","image" : "https://image.hm.com/assets/006/35/ee/35eeb535903be97df8fcfd77b21822b91862ba2c.jpg?imwidth=1260"},
+        {"title": "Pants","image" : "https://image.hm.com/assets/hm/7a/9e/7a9e28408cddce6247b5173b6a54b9a13b98dc1c.jpg?imwidth=1260"}
+
+    ]
+    return render_template("manager_listings.html",listings=listings)
+
+#Route: Manager view sorting all the authentication assignments
+@app.route('/manager/authentication')
+def manager_auth_assignments():
+    assignments = [
+        {"name": "Item A", "status": "Assigned", "role": "Expert"},
+        {"name": "Item B", "status": "Unassigned"},
+        {"name": "Item C", "status": "Assigned", "role": "Expert"},
+        {"name": "Item D", "status": "Unassigned"}
+    ]
+    return render_template('manager_authentication.html', assignments=assignments)
+
+
+#Route: Manager's view to be able to identify experts availability
+@app.route('/manager/expert_availability')
+def manager_expert_availability():
+    item = {
+        "name": "Item A",
+        "assigned_expert": "John Doe",
+        "description": "This item requires authentication by an expert."
+    }
+
+    experts = [
+        {"name": "Alice Smith", "available": "Now"},
+        {"name": "Bob Johnson", "available": "48h"},
+        {"name": "Charlie Davis", "available": "Now"},
+        {"name": "Diana Lee", "available": "48h"}
+    ]
+
+    return render_template('manager_expert_availability.html', item=item, experts=experts)
+
+
+
+#Route: Manager view of Items that are approved, recycled, and pending items
+@app.route('/manager_overview')
+def manager_dashboard():
+    return render_template('manager/overview).html',
+                           userName="JohnDoe",
+                           userPriority=2,
+                           userEmail="john.doe@example.com",
+                           userCategory="Electronics",
+                           approved_items=[{"name": "Laptop"}, {"name": "Smartphone"}, {"name": "Headphones"}],
+                           rejected_items=[{"name": "Old Monitor"}, {"name": "Broken Keyboard"}],
+                           pending_items=[{"name": "Gaming Console"}, {"name": "Tablet"}])

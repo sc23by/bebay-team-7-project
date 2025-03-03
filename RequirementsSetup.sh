@@ -19,6 +19,7 @@ flask/bin/pip install flask-babel
 flask/bin/pip install email_validator 
 flask/bin/pip install coverage 
 flask/bin/pip install pytest
+flask/bin/pip install matplotlib
 
 export FLASK_APP=run.py
 export FLASK_DEBUG=1
