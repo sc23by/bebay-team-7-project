@@ -179,7 +179,7 @@ def logout():
 # User Pages
 
 # Route: Logged In Page
-@app.route('/user_home')
+@app.route('/user')
 @user_required
 def user_home():
     """
@@ -226,7 +226,7 @@ def account():
     return render_template('user_account.html', sidebar_form=sidebar_form, info_form=info_form, password_form=password_form, card_form=card_form)
 
 # Route: My Listings
-@app.route('/my_listings', methods=['GET', 'POST'])
+@app.route('/listings', methods=['GET', 'POST'])
 @user_required
 def my_listings():
     """
