@@ -195,7 +195,7 @@ def user_home():
     return render_template('user_home.html', items = items)
 
 # Route: Account
-@app.route('/account', methods=['GET', 'POST'])
+@app.route('/user/account', methods=['GET', 'POST'])
 @login_required
 def account():
     """
@@ -233,7 +233,7 @@ def account():
     return render_template('user_account.html', sidebar_form=sidebar_form, info_form=info_form, password_form=password_form, card_form=card_form)
 
 # Route: My Listings
-@app.route('/listings', methods=['GET', 'POST'])
+@app.route('/user/my_listings', methods=['GET', 'POST'])
 @user_required
 def my_listings():
     """
@@ -256,7 +256,7 @@ def my_listings():
     return render_template('user_my_listings.html', form=form)
 
 # Route: Watchlist
-@app.route('/watchlist', methods=['GET', 'POST'])
+@app.route('/user/watchlist', methods=['GET', 'POST'])
 @user_required
 def watchlist():
     """
@@ -279,7 +279,7 @@ def watchlist():
     return render_template('user_watchlist.html', form=form)
 
 # Route: Notifications
-@app.route('/notifications', methods=['GET', 'POST'])
+@app.route('/user/notifications', methods=['GET', 'POST'])
 @user_required
 def notifications():
     """
@@ -302,7 +302,7 @@ def notifications():
     return render_template('user_notifications.html', form=form)
 
 # Route: List Item Page
-@app.route('/user_list_item', methods=['GET', 'POST'])
+@app.route('/user/list_item', methods=['GET', 'POST'])
 @user_required
 def user_list_item():
     form = ListItemForm()
