@@ -186,9 +186,10 @@ def logout():
 @user_required
 def user_home():
     """
-    Redirects to main page when website first opened.
+    Redirects to main page when website first opened. Displays all items.
     """
-    return render_template('user_home.html')
+    items = Item.query.all()  # Fetch all items from the database
+    return render_template('user_home.html', items = items)
 
 # Route: Account
 @app.route('/account', methods=['GET', 'POST'])
