@@ -1,6 +1,6 @@
 from app import db
 from flask_login import UserMixin
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Numeric
 
 # User model
 class User(UserMixin, db.Model):
@@ -45,16 +45,22 @@ class Item(db.Model):
     item_id = db.Column(db.Integer, primary_key=True)
     seller_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
     item_name = db.Column(db.String(100), nullable=False)  # Removed unique constraint so same name can be reused
-    minimum_price = db.Column(db.Float, nullable=False)
+    minimum_price = db.Column(db.Numeric(10,2), nullable=False)
     description = db.Column(db.String(500), nullable=False)
     item_image = db.Column(db.String(500), nullable=False)
-    duration = db.Column(db.Time, nullable=False)
-    time = db.Column(db.Time, nullable=False)
-    date = db.Column(db.Date, nullable=False)
+    date_time = db.Column(db.DateTime, nullable=False)
+    days = db.Column(db.Integer, nullable=False)  # Store days separately
+    hours = db.Column(db.Integer, nullable=False)  # Store hours separately
+    minutes = db.Column(db.Integer, nullable=False)  # Store minutes separately
     approved = db.Column(db.Boolean, default=False)
-    shipping_cost = db.Column(db.Float, nullable=False)
+    shipping_cost = db.Column(db.Numeric(10,2), nullable=False)
     expert_payment_percentage = db.Column(db.Float, nullable=False, default=0.1) # Default can be changed by managers
     
+    @property
+    def expiration_time(self):
+        """Calculate the expiration time dynamically."""
+        return self.date_time + timedelta(days=self.days, hours=self.hours, minutes=self.minutes)
+
     def get_image_url(self):
         return url_for('static', filename=f'images/items/{self.item_image}')
 

@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, TextAreaField, FloatField, TimeField, DateField, BooleanField
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField, FloatField, TimeField, DateField, BooleanField, SelectField
 from wtforms.validators import DataRequired, Length, EqualTo, Regexp, ValidationError, Email, NumberRange
 from flask_wtf.file import FileField, FileAllowed
 
@@ -160,18 +160,22 @@ class ListItemForm(FlaskForm):
         validators=[DataRequired(), FileAllowed({'png', 'jpg', 'jpeg', 'gif'}, 'Only images are allowed!')]
     )
     
-    duration = TimeField(
-        'Duration (HH:MM)', 
+    # Dropdowns for duration selection
+    days = SelectField(
+        'Days', 
+        choices=[(str(i), f"{i} day{'s' if i != 1 else ''}") for i in range(6)], 
         validators=[DataRequired()]
     )
     
-    time = TimeField(
-        'Start Time', 
+    hours = SelectField(
+        'Hours', 
+        choices=[(str(i), f"{i} hour{'s' if i != 1 else ''}") for i in range(24)], 
         validators=[DataRequired()]
     )
-    
-    date = DateField(
-        'Start Date', 
+
+    minutes = SelectField(
+        'Minutes', 
+        choices=[(str(i), f"{i} minute{'s' if i != 1 else ''}") for i in range(0, 60, 5)], 
         validators=[DataRequired()]
     )
     

@@ -12,8 +12,10 @@
                      class="card-img-top" alt="{{ item.item_name }}">
                 <div class="card-body">
                     <h5 class="card-title">{{ item.item_name }}</h5>
-                    <p class="card-text">Start Time: {{ item.time.strftime('%H:%M') }}</p>
+                    <p class="card-text">Description: £{{ item.description }}</p>
+                    <p class="card-text">Duration: {{ item.duration }}</p>
                     <p class="card-text">Price: £{{ item.minimum_price }}</p>
+                    <p class="card-text">Shipping Price: £{{ item.shipping_cost }}</p>
                     <input type="button" value="Bid">
                 </div>
             </div>

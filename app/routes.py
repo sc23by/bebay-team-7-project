@@ -318,6 +318,10 @@ def user_list_item():
             filepath = os.path.join(app.config['ITEM_IMAGE_FOLDER'], filename)
             image_file.save(filepath)
 
+        # Formatting for prices
+        #minimum_price = float(f"{form.minimum_price.data:.2f}")
+        #shipping_cost = float(f"{form.shipping_cost.data:.2f}")
+
         # Store filename in DB (relative path)
         new_item = Item(
             seller_id=current_user.id,
@@ -325,9 +329,10 @@ def user_list_item():
             description=form.description.data,
             minimum_price=form.minimum_price.data,
             item_image=filename,  # Store filename only
-            duration=form.duration.data,
-            time=form.time.data,
-            date=form.date.data,
+            date_time=datetime.utcnow(),  # Set listing time to now
+            days=int(form.days.data),
+            hours=int(form.hours.data),
+            minutes=int(form.minutes.data),
             shipping_cost=form.shipping_cost.data,
             approved=False
         )
@@ -336,8 +341,8 @@ def user_list_item():
         db.session.commit()
         flash('Item listed successfully!', 'success')
         return redirect(url_for('user_home')) 
-    else:
-        flash('Invalid file type. Only images are allowed.', 'danger')
+        else:
+            flash('Invalid file type. Only images are allowed.', 'danger')
     return render_template('user_list_item.html', form=form)
 
 
