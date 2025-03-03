@@ -10,6 +10,7 @@ import base64
 from werkzeug.utils import secure_filename
 import os
 import uuid
+import json
 
 # Decorators
 
@@ -192,6 +193,14 @@ def user_home():
     Redirects to main page when website first opened. Displays all items.
     """
     items = Item.query.all()  # Fetch all items from the database
+
+    # # Ajax
+    # user_id = request.get_json('user_id')
+    # user = User.query.get(user_id)
+    # item = Item.query.get(item_id)
+
+    # watch_item = 
+        
     return render_template('user_home.html', items = items)
 
 # Route: Account
