@@ -1,13 +1,15 @@
 from app import app, db, bcrypt
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, current_user, login_required,logout_user
-from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm
-from app.models import User
+from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm, ListItemForm
+from app.models import User, Item
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
 import base64
-
+from werkzeug.utils import secure_filename
+import os
+import uuid
 
 # Decorators
 
@@ -97,6 +99,10 @@ def redirect_based_on_priority(user):
     else:  # Guest
         return redirect(url_for('guest_home'))
 
+# Function: Allow only certain filename endings for images
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
 
 # Guest Pages
 
@@ -183,9 +189,10 @@ def logout():
 @user_required
 def user_home():
     """
-    Redirects to main page when website first opened.
+    Redirects to main page when website first opened. Displays all items.
     """
-    return render_template('user_home.html')
+    items = Item.query.all()  # Fetch all items from the database
+    return render_template('user_home.html', items = items)
 
 # Route: Account
 @app.route('/account', methods=['GET', 'POST'])
@@ -294,6 +301,45 @@ def notifications():
 
     return render_template('user_notifications.html', form=form)
 
+# Route: List Item Page
+@app.route('/user_list_item', methods=['GET', 'POST'])
+@user_required
+def user_list_item():
+    form = ListItemForm()
+    
+    if form.validate_on_submit():
+        # Ensure the upload folder exists
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+        # Process the uploaded image
+        image_file = form.item_image.data
+        if image_file and allowed_file(image_file.filename):
+            filename = f"{uuid.uuid4().hex}_{secure_filename(image_file.filename)}"
+            filepath = os.path.join(app.config['ITEM_IMAGE_FOLDER'], filename)
+            image_file.save(filepath)
+
+        # Store filename in DB (relative path)
+        new_item = Item(
+            seller_id=current_user.id,
+            item_name=form.item_name.data,
+            description=form.description.data,
+            minimum_price=form.minimum_price.data,
+            item_image=filename,  # Store filename only
+            duration=form.duration.data,
+            time=form.time.data,
+            date=form.date.data,
+            shipping_cost=form.shipping_cost.data,
+            approved=False
+        )
+        
+        db.session.add(new_item)
+        db.session.commit()
+        flash('Item listed successfully!', 'success')
+        return redirect(url_for('user_home')) 
+    else:
+        flash('Invalid file type. Only images are allowed.', 'danger')
+    return render_template('user_list_item.html', form=form)
+
 
 # Expert Pages
 
@@ -315,8 +361,8 @@ def expert_assignments():
 #Route: Expert Authentication Page
 @app.route('/expert/item/authentication')
 @expert_required
-def item_authentication():
-    return render_template('item_authentication.html')
+def expert_item_authentication():
+    return render_template('expert_item_authentication.html')
 
 #Route: Expert Messaging Page
 @app.route('/expert/messaging')
@@ -327,8 +373,8 @@ def expert_messaging():
 #Route: Expert Avaliablity Page
 @app.route('/expert/availability')
 @expert_required
-def set_availability():
-    return render_template('set_availability.html')
+def expert_set_availability():
+    return render_template('expert_set_availability.html')
 
 
 # Manager Pages

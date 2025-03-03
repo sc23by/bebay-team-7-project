@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, TextAreaField
-from wtforms.validators import DataRequired, Length, EqualTo, Regexp, ValidationError, Email
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField, FloatField, TimeField, DateField, BooleanField
+from wtforms.validators import DataRequired, Length, EqualTo, Regexp, ValidationError, Email, NumberRange
+from flask_wtf.file import FileField, FileAllowed
 
 # Custom password validator
 def strong_password(form, field):
@@ -80,13 +81,13 @@ class UserInfoForm(FlaskForm):
     """
     Allows user to update user information
     """
-    firstName = StringField('First Name', validators=[
+    first_name = StringField('First Name', validators=[
         DataRequired(), 
         Length(min=2, max=30, message="First name must be 2-30 characters."),
         Regexp('^[A-Za-z]+$', message="First name should only contain letters.")
     ])
 
-    lastName = StringField('First Name', validators=[
+    last_name = StringField('First Name', validators=[
         DataRequired(), 
         Length(min=2, max=30, message="First name must be 2-30 characters."),
         Regexp('^[A-Za-z]+$', message="First name should only contain letters.")
@@ -103,38 +104,81 @@ class UserInfoForm(FlaskForm):
         Email(message="Invalid email address.")
     ])
 
-    updateInfo = SubmitField('Update Info')
+    update_info = SubmitField('Update Info')
 
 # Form for changing password
 class ChangePasswordForm(FlaskForm):
     """
     Allows user to change password
     """
-    newPassword = PasswordField('Password', validators=[
+    new_password = PasswordField('Password', validators=[
         DataRequired(),
         strong_password
     ])
 
-    confirmPassword = PasswordField('Confirm Password', validators=[
+    confirm_password = PasswordField('Confirm Password', validators=[
         DataRequired(),
         EqualTo('password', message="Passwords must match.")
     ])
 
-    updatePrivacy = SubmitField('Change Password')
+    update_privacy = SubmitField('Change Password')
 
 # Form for changing card and shipping information
 class CardInfoForm(FlaskForm):
     """
     Allows user to update card information
     """
-    cardNumber = StringField('Card Number', validators=[
+    card_number = StringField('Card Number', validators=[
         DataRequired(), 
     ])
 
-    shippingAddress = StringField('Shipping Address', validators=[
+    shipping_address = StringField('Shipping Address', validators=[
         DataRequired(), 
     ])
 
-    updateCard = SubmitField('Update Card Info')
+    update_card = SubmitField('Update Card Info')
 
+
+class ListItemForm(FlaskForm):
+    item_name = StringField(
+        'Item Name', 
+        validators=[DataRequired(), Length(max=100)]
+    )
     
+    description = StringField(
+        'Description', 
+        validators=[DataRequired(), Length(max=500)]
+    )
+    
+    minimum_price = FloatField(
+        'Starting Price (£)', 
+        validators=[DataRequired(), NumberRange(min=0)]
+    )
+    
+    item_image = FileField(
+        'Upload Image', 
+        validators=[DataRequired(), FileAllowed({'png', 'jpg', 'jpeg', 'gif'}, 'Only images are allowed!')]
+    )
+    
+    duration = TimeField(
+        'Duration (HH:MM)', 
+        validators=[DataRequired()]
+    )
+    
+    time = TimeField(
+        'Start Time', 
+        validators=[DataRequired()]
+    )
+    
+    date = DateField(
+        'Start Date', 
+        validators=[DataRequired()]
+    )
+    
+    shipping_cost = FloatField(
+        'Shipping Cost (£)', 
+        validators=[DataRequired(), NumberRange(min=0)]
+    )
+    
+    submit = SubmitField('List Item')
+
