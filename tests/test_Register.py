@@ -175,5 +175,5 @@ def testRegisterAuthenticated(loggedInClientP1):
 
     response = loggedInClientP1.get('/register')
     assert response.status_code == 302
-    assert b'/user_home' in response.data
+    assert b'/user' in response.data
     

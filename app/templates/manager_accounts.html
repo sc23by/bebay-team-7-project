@@ -9,8 +9,9 @@
             Filter
           </button>
           <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">Dropdown link</a></li>
-            <li><a class="dropdown-item" href="#">Dropdown link</a></li>
+            <li><a class="dropdown-item" href="#">Priority 1</a></li>
+            <li><a class="dropdown-item" href="#">Priority 2</a></li>
+            <li><a class="dropdown-item" href="#">Priority 3</a></li>
           </ul>
         </div>
 </div>
@@ -22,8 +23,8 @@
             Sort
           </button>
           <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">Dropdown link</a></li>
-            <li><a class="dropdown-item" href="#">Dropdown link</a></li>
+            <li><a class="dropdown-item" href="#">Alphabet Low-High</a></li>
+            <li><a class="dropdown-item" href="#">Alphabet High-Low</a></li>
           </ul>
         </div>
 </div>
@@ -35,14 +36,17 @@
     </div>
 
 <!--Account cards-->
+{% if accounts %}
+{% for account in accounts %}
 <div class="card">
     <div class="card-body">
-        <!--Need for loop for cards-->
-        <span>Account</span>
-        <span>1</span>
-        <span><button>set</button></span>
+            <span>{{ account.username }} {{account.number}}<button>Set</button><br></span>
     </div>
+{% endfor %}
 </div>
+{% else %}
+<p>No accounts found.</p>
+{% endif %}
 
 
 <!--Page buttons-->
