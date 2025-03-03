@@ -88,7 +88,7 @@ def redirect_based_on_priority(user):
     if user.priority == 3:  # Manager
         return redirect(url_for('manager_home'))
     elif user.priority == 2:  # Expert
-        return redirect(url_for('expert_home'))
+        return redirect(url_for('expert_assignments'))
     elif user.priority == 1:  # Normal User
         return redirect(url_for('user_home'))
     else:  # Guest
@@ -293,15 +293,6 @@ def notifications():
 
 
 # Expert Pages
-
-# Route: Experts Home Page
-@app.route('/expert_home')
-@expert_required
-def expert_home():
-    """
-    Redirects to experts home page when website first opened.
-    """
-    return render_template('expert_home.html')
 
 #Route: Expert Assignments Page
 @app.route('/expert_assignments')
