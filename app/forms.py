@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, TextAreaField, FloatField, TimeField, DateField, BooleanField
 from wtforms.validators import DataRequired, Length, EqualTo, Regexp, ValidationError, Email, NumberRange
+from flask_wtf.file import FileField, FileAllowed
 
 # Custom password validator
 def strong_password(form, field):
@@ -137,11 +138,6 @@ class CardInfoForm(FlaskForm):
 
     update_card = SubmitField('Update Card Info')
 
-# List item form for users
-class ListItem(FlaskForm):
-    """
-    Name, Description, Starting (minimum) Price, Item Image, Duration, 
-    """
 
 class ListItemForm(FlaskForm):
     item_name = StringField(
@@ -155,17 +151,17 @@ class ListItemForm(FlaskForm):
     )
     
     minimum_price = FloatField(
-        'Starting Price ($)', 
+        'Starting Price (£)', 
         validators=[DataRequired(), NumberRange(min=0)]
     )
     
     item_image = FileField(
         'Upload Image', 
-        validators=[DataRequired()]
+        validators=[DataRequired(), FileAllowed({'png', 'jpg', 'jpeg', 'gif'}, 'Only images are allowed!')]
     )
     
     duration = TimeField(
-        'Duration (HH:MM:SS)', 
+        'Duration (HH:MM)', 
         validators=[DataRequired()]
     )
     

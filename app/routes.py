@@ -1,9 +1,11 @@
 from app import app, db, bcrypt
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, current_user, login_required,logout_user
-from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm
-from app.models import User
+from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm, ListItemForm
+from app.models import User, Item
 from functools import wraps
+from werkzeug.utils import secure_filename
+import os
 
 
 # Decorators
@@ -93,6 +95,10 @@ def redirect_based_on_priority(user):
         return redirect(url_for('user_home'))
     else:  # Guest
         return redirect(url_for('guest_home'))
+
+# Function: Allow only certain filename endings for images
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 
 # Guest Pages
@@ -291,15 +297,43 @@ def notifications():
 
     return render_template('user_notifications.html', form=form)
 
-# Route: Logged In Page
-@app.route('/user_list_item')
+# Route: List Item Page
+@app.route('/user_list_item', methods=['GET', 'POST'])
 @user_required
 def user_list_item():
-    """
-    Redirects to list item page.
-    """
-    return render_template('user_list_item.html')
+    form = ListItemForm()
+    
+    if form.validate_on_submit():
+        # Ensure the upload folder exists
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+        # Process the uploaded image
+        image_file = form.item_image.data
+        if image_file:
+            filename = secure_filename(image_file.filename)
+            filepath = os.path.join(app.config['ITEM_IMAGE_FOLDER'], filename)
+            image_file.save(filepath)
+
+        # Store filename in DB (relative path)
+        new_item = Item(
+            seller_id=current_user.id,
+            item_name=form.item_name.data,
+            description=form.description.data,
+            minimum_price=form.minimum_price.data,
+            item_image=filename,  # Store filename only
+            duration=form.duration.data,
+            time=form.time.data,
+            date=form.date.data,
+            shipping_cost=form.shipping_cost.data,
+            approved=False
+        )
+        
+        db.session.add(new_item)
+        db.session.commit()
+        flash('Item listed successfully!', 'success')
+        return redirect(url_for('user_home')) 
+    
+    return render_template('user_list_item.html', form=form)
 
 
 # Expert Pages
