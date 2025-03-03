@@ -10,6 +10,9 @@ import base64
 from werkzeug.utils import secure_filename
 import os
 import uuid
+from datetime import datetime, timedelta
+
+
 
 # Decorators
 
@@ -317,6 +320,8 @@ def user_list_item():
             filename = f"{uuid.uuid4().hex}_{secure_filename(image_file.filename)}"
             filepath = os.path.join(app.config['ITEM_IMAGE_FOLDER'], filename)
             image_file.save(filepath)
+        else:
+            flash('Invalid file type. Only images are allowed.', 'danger')
 
         # Formatting for prices
         #minimum_price = float(f"{form.minimum_price.data:.2f}")
@@ -328,8 +333,8 @@ def user_list_item():
             item_name=form.item_name.data,
             description=form.description.data,
             minimum_price=form.minimum_price.data,
-            item_image=filename,  # Store filename only
-            date_time=datetime.utcnow(),  # Set listing time to now
+            item_image=filename,
+            date_time=datetime.utcnow(), 
             days=int(form.days.data),
             hours=int(form.hours.data),
             minutes=int(form.minutes.data),
@@ -341,8 +346,7 @@ def user_list_item():
         db.session.commit()
         flash('Item listed successfully!', 'success')
         return redirect(url_for('user_home')) 
-        else:
-            flash('Invalid file type. Only images are allowed.', 'danger')
+        
     return render_template('user_list_item.html', form=form)
 
 

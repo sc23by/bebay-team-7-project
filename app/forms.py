@@ -163,7 +163,7 @@ class ListItemForm(FlaskForm):
     # Dropdowns for duration selection
     days = SelectField(
         'Days', 
-        choices=[(str(i), f"{i} day{'s' if i != 1 else ''}") for i in range(6)], 
+        choices=[(str(i), f"{i} day{'s' if i != 1 else ''}") for i in range(5)], 
         validators=[DataRequired()]
     )
     

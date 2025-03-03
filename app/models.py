@@ -1,6 +1,7 @@
 from app import db
 from flask_login import UserMixin
 from sqlalchemy import ForeignKey, Numeric
+from datetime import datetime, timedelta
 
 # User model
 class User(UserMixin, db.Model):
@@ -63,6 +64,12 @@ class Item(db.Model):
 
     def get_image_url(self):
         return url_for('static', filename=f'images/items/{self.item_image}')
+
+    @property
+    def time_left(self):
+        """Calculate remaining time from now until expiration."""
+        remaining = self.expiration_time - datetime.utcnow()
+        return max(remaining, timedelta(0))  # Ensure it doesn't go negative
 
 # Bids model
 class Bids(db.Model):
