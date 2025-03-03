@@ -335,7 +335,7 @@ def set_availability():
 
 # Route: Managers Home
 # Remove
-@app.route('/manager_home')
+@app.route('/manager')
 @manager_required
 def manager_home():
     """
@@ -345,7 +345,7 @@ def manager_home():
 
 
 #Route: Manager Stats Page
-@app.route('/manager_stats', methods=['GET','POST'])
+@app.route('/manager/statistics', methods=['GET','POST'])
 @manager_required
 def manager_stats():
     ratio = [34,32,16,20]
@@ -362,7 +362,7 @@ def manager_stats():
 
 
 #Route: Manager Account Page
-@app.route('/manager_accounts',methods=['GET','POST'])
+@app.route('/manager/accounts',methods=['GET','POST'])
 @manager_required
 def manager_accounts():
     accounts = [
@@ -376,7 +376,7 @@ def manager_accounts():
     return render_template("manager_accounts.html",accounts=accounts)
 
 #Route: Manager Listing Page
-@app.route('/manager_listings',methods=['GET','POST'])
+@app.route('/manager/listings',methods=['GET','POST'])
 def manager_listings():
     listings = [
         {"title": "Jumper","image" : "https://image.hm.com/assets/006/35/ee/35eeb535903be97df8fcfd77b21822b91862ba2c.jpg?imwidth=1260"},
@@ -386,7 +386,7 @@ def manager_listings():
     return render_template("manager_listings.html",listings=listings)
 
 #Route: Manager view sorting all the authentication assignments
-@app.route('/manager_authentication_assignments')
+@app.route('/manager/authentication')
 def manager_auth_assignments():
     assignments = [
         {"name": "Item A", "status": "Assigned", "role": "Expert"},
@@ -398,7 +398,7 @@ def manager_auth_assignments():
 
 
 #Route: Manager's view to be able to identify experts availability
-@app.route('/manager_expert_availability')
+@app.route('/manager/expert_dashboard')
 def manager_expert_availability():
     item = {
         "name": "Item A",
@@ -420,7 +420,7 @@ def manager_expert_availability():
 #Route: Manager view of Items that are approved, recycled, and pending items
 @app.route('/manager_overview')
 def manager_dashboard():
-    return render_template('manager_overview_(approved,recycled,pending).html',
+    return render_template('manager/overview).html',
                            userName="JohnDoe",
                            userPriority=2,
                            userEmail="john.doe@example.com",
