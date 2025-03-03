@@ -16,7 +16,7 @@ class User(UserMixin, db.Model):
 # Expert model
 class ExpertAvailabilities(db.Model):
     availability_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, ForeignKey('user.id'), unique=True, nullable=False)  # Each expert must be a unique user
+    user_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)  # Each expert must be a unique user
     available = db.Column(db.Boolean)
     date = db.Column(db.Date, nullable=False)
     start_time = db.Column(db.Time, nullable=False)
