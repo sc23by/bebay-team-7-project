@@ -2,6 +2,13 @@ from app import db
 from flask_login import UserMixin
 from sqlalchemy import ForeignKey
 
+# Association model between watched item and user
+watched_item = db.Table(
+    'watched_item',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('item_id', db.Integer, db.ForeignKey('item.item_id'), primary_key=True)
+)
+
 # User model
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -12,6 +19,8 @@ class User(UserMixin, db.Model):
     last_name = db.Column(db.String(30), nullable=False)
     priority = db.Column(db.Integer, nullable=False, default=1)
     profile_picture = db.Column(db.String(255), nullable=False, default="default_profile.jpg")
+    watchlist = db.relationship('Item', secondary=watched_item, backref='watched_by') # allows user to watch multiple items
+
 
 # Expert model
 class ExpertAvailabilities(db.Model):
@@ -40,7 +49,7 @@ class Solditem(db.Model):
     buyer_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
     price = db.Column(db.Float, nullable=False)
 
-# item model
+# Item model
 class Item(db.Model):
     item_id = db.Column(db.Integer, primary_key=True)
     seller_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
@@ -66,3 +75,4 @@ class Bids(db.Model):
     bid_amount = db.Column(db.Float, nullable=False)  # Allows precise bid values
     bid_time = db.Column(db.Time, nullable=False)
     bid_date = db.Column(db.Date, nullable=False)
+

@@ -7,7 +7,6 @@
         {% for item in items %}
         <div class="col">
             <div class="card h-100">
-                <span class="fa fa-heart"></span>
                 <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
                      class="card-img-top" alt="{{ item.item_name }}">
                 <div class="card-body">
@@ -15,16 +14,17 @@
                     <p class="card-text">Start Time: {{ item.time.strftime('%H:%M') }}</p>
                     <p class="card-text">Price: £{{ item.minimum_price }}</p>
                     <input type="button" value="Bid">
+                    <span class="fa fa-heart"></span>
                 </div>
             </div>
         </div>
         {% endfor %}
     </div>
 
-    <!-- Pagination buttons (optional) -->
+    <!-- Pagination buttons (optional)
     <div>
         <button>&laquo;</button>
         page
         <button>&raquo;</button>
-    </div>
+    </div> -->
 {% endblock %}
