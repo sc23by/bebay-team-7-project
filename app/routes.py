@@ -318,6 +318,15 @@ def expert_messaging():
 def expert_set_availability():
     return render_template('expert_set_availability.html')
 
+#Route: Expert Account Page
+@app.route('/expert_account')
+@expert_required
+def expert_account():
+    return render_template('expert_account.html')
+
+
+
+
 
 # Manager Pages
 
