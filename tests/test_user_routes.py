@@ -105,7 +105,3 @@ def test_user_notifications_redirect(loggedInClientP1):
 
 
 # FIXME - test route works for logged in pages (display correct username and information)
-# FIXME - test listings returns correct html
-# FIXME - test watchlist returns correct html
-# FIXME - test notifications returns correct html
-
