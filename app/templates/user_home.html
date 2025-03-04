@@ -11,9 +11,26 @@
                      class="card-img-top" alt="{{ item.item_name }}">
                 <div class="card-body">
                     <h5 class="card-title">{{ item.item_name }}</h5>
-                    <p class="card-text">Start Time: {{ item.time.strftime('%H:%M') }}</p>
+                    <p class="card-text">Description: £{{ item.description }}</p>
+                    <p class="card-text">Duration: {{ item.duration }}</p>
                     <p class="card-text">Price: £{{ item.minimum_price }}</p>
-                    <input type="button" value="Bid">
+                    <p class="card-text">Shipping Price: £{{ item.shipping_cost }}</p>
+                    <p class="card-text">Listing Time: {{ item.date_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    <p class="card-text">Expires On: {{ item.expiration_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    <p>Time Left: 
+                        {% if item.time_left.total_seconds() > 0 %}
+                            {{ item.time_left.days }} days,
+                            {{ item.time_left.seconds // 3600 }} hours,
+                            {{ (item.time_left.seconds // 60) % 60 }} minutes,
+                            {{ item.time_left.seconds % 60 }} seconds
+                        {% else %}
+                            Expired
+                        {% endif %}
+                    </p>
+                    
+                    <a href="{{ url_for('item_details', item_id=item.item_id) }}" class="btn btn-primary">
+                        View Details
+                    </a>
                     {% if item in current_user.watchlist %}
                         <span class="fa fa-heart selected" data-value="{{ current_user.watchlist | default(0) }}"
                             data-item-id="{{ item.item_id }}"></span>
@@ -25,6 +42,8 @@
                         <input type="hidden" id="heart_Value" name="watch" value="0">
                         <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
                     {% endif %}
+
+                    <input type="button" value="Bid">
                 </div>
             </div>
         </div>

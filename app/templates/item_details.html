@@ -1,0 +1,34 @@
+{% extends "base_user.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>{{ item.item_name }}</h2>
+    <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
+         class="img-fluid" alt="{{ item.item_name }}">
+    
+    <p>Description: {{ item.description }}</p>
+    <p>Minimum Price: £{{ item.minimum_price }}</p>
+    <p>Shipping Price: £{{ item.shipping_cost }}</p>
+    <p>Listing Time: {{ item.date_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+    <p>Expires On: {{ item.expiration_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+
+    <p>Time Left: 
+        {% if item.time_left.total_seconds() > 0 %}
+            {{ item.time_left.days }} days,
+            {{ item.time_left.seconds // 3600 }} hours,
+            {{ (item.time_left.seconds // 60) % 60 }} minutes,
+            {{ item.time_left.seconds % 60 }} seconds
+        {% else %}
+            Expired
+        {% endif %}
+    </p>
+
+    <form>
+        <label for="bid_amount">Enter your bid (£):</label>
+        <input type="number" name="bid_amount" step="0.01" required>
+        <button type="submit" class="btn btn-success">Place Bid</button>
+    </form>
+
+    <a href="{{ url_for('user_home') }}" class="btn btn-secondary">Back to Listings</a>
+</div>
+{% endblock %}
