@@ -1,8 +1,8 @@
 from app import app, db, bcrypt
-from flask import render_template, redirect, url_for, flash, request, current_app
+from flask import render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm, ListItemForm
-from app.models import User, Item
+from app.models import User, Item, watched_item
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -10,7 +10,7 @@ import base64
 from werkzeug.utils import secure_filename
 import os
 import uuid
-# Allows for ajax
+# Parses data sent by JS
 import json
 
 # Decorators
@@ -194,15 +194,34 @@ def user_home():
     Redirects to main page when website first opened. Displays all items.
     """
     items = Item.query.all()  # Fetch all items from the database
-
-    # # Ajax
-    # user_id = request.get_json('user_id')
-    # user = User.query.get(user_id)
-    # item = Item.query.get(item_id)
-
-    # watch_item = 
         
     return render_template('user_home.html', items = items)
+
+# Route: Watch
+@app.route('/user/watch', methods=['POST'])
+def watch():
+    """
+    Handles AJAX request for watchlist
+    """
+    # Gets item id and if heart was clicked from json data
+    data = request.get_json()
+    print(f"Received data: {data}")
+    watch = data.get('watch')
+    item_id = data.get('item_id')
+
+    item = Item.query.get(item_id)
+    user = User.query.get(current_user.id)
+
+    if watch == 1:
+        # adds liked item to watchlist
+        if item not in user.watchlist:
+            user.watchlist.append(item)
+        # allows for item to be unliked
+        else:
+            user.watchlist.remove(item)
+    db.session.commit()
+    
+    return jsonify({'status':'OK','watch': watch}), 200
 
 # Route: Account
 @app.route('/user/account', methods=['GET', 'POST'])

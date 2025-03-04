@@ -14,7 +14,17 @@
                     <p class="card-text">Start Time: {{ item.time.strftime('%H:%M') }}</p>
                     <p class="card-text">Price: £{{ item.minimum_price }}</p>
                     <input type="button" value="Bid">
-                    <span class="fa fa-heart" ></span>
+                    {% if item in current_user.watchlist %}
+                        <span class="fa fa-heart selected" data-value="{{ current_user.watchlist | default(0) }}"
+                            data-item-id="{{ item.item_id }}"></span>
+                        <input type="hidden" id="heart_Value" name="watch" value="1">
+                        <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
+                    {% else %}
+                        <span class="fa fa-heart " data-value="{{ current_user.watchlist | default(0) }}"
+                            data-item-id="{{ item.item_id }}"></span>
+                        <input type="hidden" id="heart_Value" name="watch" value="0">
+                        <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
+                    {% endif %}
                 </div>
             </div>
         </div>
