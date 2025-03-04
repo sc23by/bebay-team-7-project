@@ -25,14 +25,46 @@
         <thead>
             <tr>
                 <th></th>
-                <th>Sunday</th>
-                <th>Monday</th>
-                <th>Tuesday</th>
-                <th>Wednesday</th>
-                <th>Thursday</th>
-                <th>Friday</th>
-                <th>Saturday</th>
+                <th id="sunday-date"></th>
+                <th id="monday-date"></th>
+                <th id="tuesday-date"></th>
+                <th id="wednesday-date"></th>
+                <th id="thursday-date"></th>
+                <th id="friday-date"></th>
+                <th id="saturday-date"></th>
             </tr>
         </thead>
     </table>
+
+<script>
+
+        //Works out the dates of the current week to display on the header rows of the availability table.
+
+        window.onload = function() {
+
+            const today = new Date(); 
+
+
+            weekdays = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"]
+            weekdaysCapitalised = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
+
+            for(day=0;day<7;day++){
+                document.getElementById(weekdays[day]+'-date').textContent = `${weekdaysCapitalised[day]}`;
+            }
+            
+        }
+
+
+//Save button
+//Delete all records for each day and replace with new set for the week
+        
+</script>
+
+
+
+
+
+
+
+
 {% endblock %}
