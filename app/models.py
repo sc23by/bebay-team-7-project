@@ -1,6 +1,7 @@
 from app import db
 from flask_login import UserMixin
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Numeric
+from datetime import datetime, timedelta
 
 # User model
 class User(UserMixin, db.Model):
@@ -45,18 +46,23 @@ class Item(db.Model):
     item_id = db.Column(db.Integer, primary_key=True)
     seller_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
     item_name = db.Column(db.String(100), nullable=False)  # Removed unique constraint so same name can be reused
-    minimum_price = db.Column(db.Float, nullable=False)
+    minimum_price = db.Column(db.Numeric(10,2), nullable=False)
     description = db.Column(db.String(500), nullable=False)
     item_image = db.Column(db.String(500), nullable=False)
-    duration = db.Column(db.Time, nullable=False)
-    time = db.Column(db.Time, nullable=False)
-    date = db.Column(db.Date, nullable=False)
+    date_time = db.Column(db.DateTime, nullable=False)
+    expiration_time = db.Column(db.DateTime, nullable=False)  
     approved = db.Column(db.Boolean, default=False)
-    shipping_cost = db.Column(db.Float, nullable=False)
+    shipping_cost = db.Column(db.Numeric(10,2), nullable=False)
     expert_payment_percentage = db.Column(db.Float, nullable=False, default=0.1) # Default can be changed by managers
     
     def get_image_url(self):
         return url_for('static', filename=f'images/items/{self.item_image}')
+
+    @property
+    def time_left(self):
+        """Calculate remaining time from now until expiration."""
+        remaining = self.expiration_time - datetime.utcnow()
+        return max(remaining, timedelta(0))  # Ensure it doesn't go negative
 
 # Bids model
 class Bids(db.Model):
@@ -64,5 +70,5 @@ class Bids(db.Model):
     item_id = db.Column(db.Integer, ForeignKey('item.item_id'), nullable=False)
     user_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
     bid_amount = db.Column(db.Float, nullable=False)  # Allows precise bid values
-    bid_time = db.Column(db.Time, nullable=False)
-    bid_date = db.Column(db.Date, nullable=False)
+    bid_date_time = db.Column(db.DateTime, nullable=False)
+
