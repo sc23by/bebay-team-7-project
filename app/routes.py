@@ -205,7 +205,6 @@ def watch():
     """
     # Gets item id and if heart was clicked from json data
     data = request.get_json()
-    print(f"Received data: {data}")
     watch = data.get('watch')
     item_id = data.get('item_id')
 
@@ -232,7 +231,7 @@ def account():
     """
     sidebar_form = SideBarForm()
 
-    if sidebar_form.validate_on_submit() and 'sidebar' in request.form:
+    if sidebar_form.validate_on_submit():
         if sidebar_form.info.data:
             return redirect(url_for("account"))
         elif sidebar_form.my_listings.data:
@@ -305,7 +304,10 @@ def watchlist():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    return render_template('user_watchlist.html', form=form)
+    user = User.query.get(current_user.id)
+    watched_items = user.watchlist
+
+    return render_template('user_watchlist.html', form=form, watched_items = watched_items)
 
 # Route: Notifications
 @app.route('/user/notifications', methods=['GET', 'POST'])

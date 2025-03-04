@@ -26,10 +26,6 @@ $(document).ready(function () {
         // gets value of item id that was liked
         var item_id = clicked_obj.data('item-id');
 
-        // Debug log to check the payload
-        console.log("📩 Sending AJAX request: ", { item_id: item_id, watch: watch });
-
-
         $.ajax({
             url: '/user/watch',
             type: 'POST',
@@ -39,10 +35,6 @@ $(document).ready(function () {
             success: function (response) {
                 console.log("✅ AJAX success: ", response);
             },
-            error: function (xhr, status, error) {
-                console.error("❌ AJAX Error:", status, error);
-                console.log("Response Text: ", xhr.responseText);  // Check the error message
-            }
         });
 
     });
