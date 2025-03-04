@@ -104,7 +104,10 @@ def redirect_based_on_priority(user):
 
 # Function: Allow only certain filename endings for images
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+    if not filename or '.' not in filename:
+        return False  # Ensure empty or invalid filenames fail early
+    ext = filename.rsplit('.', 1)[1].lower()
+    return ext in app.config['ALLOWED_EXTENSIONS']
 
 
 # Guest Pages
@@ -308,7 +311,7 @@ def notifications():
 @user_required
 def user_list_item():
     form = ListItemForm()
-    
+
     if form.validate_on_submit():
         # Ensure the upload folder exists
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -319,12 +322,10 @@ def user_list_item():
             filename = f"{uuid.uuid4().hex}_{secure_filename(image_file.filename)}"
             filepath = os.path.join(app.config['ITEM_IMAGE_FOLDER'], filename)
             image_file.save(filepath)
-        else:
+        elif image_file and not allowed_file(image_file.filename):
             flash('Invalid file type. Only images are allowed.', 'danger')
+            return redirect(url_for('user_list_item', form=form))
 
-        # Formatting for prices
-        #minimum_price = float(f"{form.minimum_price.data:.2f}")
-        #shipping_cost = float(f"{form.shipping_cost.data:.2f}")
         listing_time = datetime.utcnow()
         
         # Store filename in DB (relative path)

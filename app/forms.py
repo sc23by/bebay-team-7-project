@@ -159,7 +159,7 @@ class ListItemForm(FlaskForm):
     
     item_image = FileField(
         'Upload Image', 
-        validators=[DataRequired(), FileAllowed({'png', 'jpg', 'jpeg', 'gif'}, 'Only images are allowed!')]
+        validators=[DataRequired()]
     )
     
     # Dropdowns for duration selection
