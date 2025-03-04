@@ -51,21 +51,6 @@
     </form>
     
     
-    <h3>Bid History</h3>
-    <ul>
-        {% for bid in item.bids.all %}
-            <li>
-                {{ bid.user.username }} 
-                bid £{{ bid.bid_amount }} 
-                at {{ bid.bid_date_time.strftime('%Y-%m-%d %H:%M:%S') }}
-            </li>
-        {% endfor %}
-        
-        {% if item.bids.all|length == 0 %}
-            <li>No bids yet.</li>
-        {% endif %}
-    </ul>
-
 
 
     <a href="{{ url_for('user_home') }}" class="btn btn-secondary">Back to Listings</a>
