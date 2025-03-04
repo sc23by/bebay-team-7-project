@@ -4,7 +4,7 @@ from colours import Colours
 '''
 Testing routes with logged out client
 '''
-def test_home(client):
+def test_guest_redirect(client):
     print(f"{Colours.YELLOW}Testing reroute - logged out, reroute to guest page:{Colours.RESET}")
     response = client.get('/')
     assert response.status_code == 200
