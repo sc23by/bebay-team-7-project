@@ -321,6 +321,7 @@ def user_list_item():
             image_file.save(filepath)
         else:
             flash('Invalid file type. Only images are allowed.', 'danger')
+            return redirect(url_for('/user/list_item'))
 
         # Formatting for prices
         #minimum_price = float(f"{form.minimum_price.data:.2f}")

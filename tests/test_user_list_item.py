@@ -57,7 +57,7 @@ def test_list_item(loggedInClientP1):
     def create_form_data():
         data = {
             "item_name": "Test Item",
-            "description": "A great test item!",
+            "description": "Wow what an item",
             "minimum_price": 10.99,
             "shipping_cost": 5.50,
             "days": 3,
@@ -80,4 +80,43 @@ def test_list_item(loggedInClientP1):
     response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=True)
     assert response.status_code == 200
     assert b"Item listed successfully!" in response.data
+
+def test_invalid_list_item(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing list items page - test incorrect data upload error:{Colours.RESET}")
+
+    with app.app_context():
+        initial_count = db.session.query(Item).count()
+
+    # create fake item listing data
+    def create_form_data():
+        data = {
+            "item_name": "Test Item",
+            "description": "A great test item!",
+            "minimum_price": 10.99,
+            "shipping_cost": 5.50,
+            "days": 3,
+            "hours": 2,
+            "minutes": 30,
+            "item_image": FileStorage(
+                stream=io.BytesIO(b"Fake image data"),
+                filename="test_image.txt", # text file is invalid
+                content_type="image/jpeg"
+            )
+        }
+        return data
+
+    # check for correct redirect and item is not added 
+    response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=True)
+    
+    """
+    debugging tests and code, remove print statements once bug is resloved
+    """
+    # with loggedInClientP1.session_transaction() as session:
+    #     messages = session.get('_flashes', [])
+    #     print("Flashed Messages:", messages)
+    print(response.data.decode())
+
+    assert response.status_code == 200
+    assert b"Invalid file type. Only images are allowed." in response.data
+    assert db.session.query(Item).count() == initial_count
 
