@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, TextAreaField, FloatField, TimeField, DateField, BooleanField
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField, FloatField, TimeField, DateField, BooleanField, SelectField, DecimalField
 from wtforms.validators import DataRequired, Length, EqualTo, Regexp, ValidationError, Email, NumberRange
 from flask_wtf.file import FileField, FileAllowed
 
@@ -150,9 +150,11 @@ class ListItemForm(FlaskForm):
         validators=[DataRequired(), Length(max=500)]
     )
     
-    minimum_price = FloatField(
-        'Starting Price (£)', 
-        validators=[DataRequired(), NumberRange(min=0)]
+    minimum_price = DecimalField(
+        'Starting Price (£)',
+        places=2, 
+        validators=[DataRequired(), NumberRange(min=0)],
+        render_kw={"step": "0.01", "min": "0", "class": "currency-input"}
     )
     
     item_image = FileField(
@@ -160,24 +162,30 @@ class ListItemForm(FlaskForm):
         validators=[DataRequired(), FileAllowed({'png', 'jpg', 'jpeg', 'gif'}, 'Only images are allowed!')]
     )
     
-    duration = TimeField(
-        'Duration (HH:MM)', 
+    # Dropdowns for duration selection
+    days = SelectField(
+        'Days', 
+        choices=[(str(i), f"{i} day{'s' if i != 1 else ''}") for i in range(5)], 
         validators=[DataRequired()]
     )
     
-    time = TimeField(
-        'Start Time', 
+    hours = SelectField(
+        'Hours', 
+        choices=[(str(i), f"{i} hour{'s' if i != 1 else ''}") for i in range(24)], 
+        validators=[DataRequired()]
+    )
+
+    minutes = SelectField(
+        'Minutes', 
+        choices=[(str(i), f"{i} minute{'s' if i != 1 else ''}") for i in range(0, 60, 5)], 
         validators=[DataRequired()]
     )
     
-    date = DateField(
-        'Start Date', 
-        validators=[DataRequired()]
-    )
-    
-    shipping_cost = FloatField(
+    shipping_cost = DecimalField(
         'Shipping Cost (£)', 
-        validators=[DataRequired(), NumberRange(min=0)]
+        places=2, 
+        validators=[DataRequired(), NumberRange(min=0)],
+        render_kw={"step": "0.01", "min": "0", "class": "currency-input"}
     )
     
     submit = SubmitField('List Item')

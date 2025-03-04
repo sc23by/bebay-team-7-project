@@ -10,6 +10,9 @@ import base64
 from werkzeug.utils import secure_filename
 import os
 import uuid
+from datetime import datetime, timedelta
+
+
 
 # Decorators
 
@@ -316,17 +319,27 @@ def user_list_item():
             filename = f"{uuid.uuid4().hex}_{secure_filename(image_file.filename)}"
             filepath = os.path.join(app.config['ITEM_IMAGE_FOLDER'], filename)
             image_file.save(filepath)
+        else:
+            flash('Invalid file type. Only images are allowed.', 'danger')
 
+        # Formatting for prices
+        #minimum_price = float(f"{form.minimum_price.data:.2f}")
+        #shipping_cost = float(f"{form.shipping_cost.data:.2f}")
+        listing_time = datetime.utcnow()
+        
         # Store filename in DB (relative path)
         new_item = Item(
             seller_id=current_user.id,
             item_name=form.item_name.data,
             description=form.description.data,
             minimum_price=form.minimum_price.data,
-            item_image=filename,  # Store filename only
-            duration=form.duration.data,
-            time=form.time.data,
-            date=form.date.data,
+            item_image=filename,
+            date_time=datetime.utcnow(), 
+            expiration_time=listing_time + timedelta(
+                days=int(form.days.data),
+                hours=int(form.hours.data),
+                minutes=int(form.minutes.data)
+                ),
             shipping_cost=form.shipping_cost.data,
             approved=False
         )
@@ -335,9 +348,14 @@ def user_list_item():
         db.session.commit()
         flash('Item listed successfully!', 'success')
         return redirect(url_for('user_home')) 
-    else:
-        flash('Invalid file type. Only images are allowed.', 'danger')
+        
     return render_template('user_list_item.html', form=form)
+
+# Route: For clicking on an item to see more detail
+@app.route('/item/<int:item_id>')
+def item_details(item_id):
+    item = Item.query.get_or_404(item_id)  # Fetch the item or return 404
+    return render_template('item_details.html', item=item)
 
 
 # Expert Pages
