@@ -358,7 +358,7 @@ def user_item_details(item_id):
     item = Item.query.get_or_404(item_id)  # Fetch the item or return 404
     form=BidForm()
 
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
     
     return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
 
