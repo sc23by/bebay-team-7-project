@@ -51,7 +51,13 @@ def test_list_item(loggedInClientP1):
 
     with app.app_context():
         initial_count = db.session.query(Item).count()
-        
+    
+
+    image = FileStorage(
+            stream=io.BytesIO(b"Fake image data"),
+            filename="test_image.jpg",
+            content_type="image/jpeg"
+        )
     data = {
             "item_name": "Test Item",
             "description": "A great test item!",
@@ -61,16 +67,9 @@ def test_list_item(loggedInClientP1):
             "hours": 2,
             "minutes": 30
         }
-    image = FileStorage(
-            stream=io.BytesIO(b"Fake image data"),
-            filename="test_image.jpg",
-            content_type="image/jpeg"
-        )
     data["item_image"] = image
 
     response = loggedInClientP1.post('/user/list_item', data=data, follow_redirects=True)
 
     assert response.status_code == 200
-    assert b"Item listed successfully!" in response.data
-
-
+    assert b"Item listed successfully!" in response.data 
