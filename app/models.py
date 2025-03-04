@@ -50,18 +50,11 @@ class Item(db.Model):
     description = db.Column(db.String(500), nullable=False)
     item_image = db.Column(db.String(500), nullable=False)
     date_time = db.Column(db.DateTime, nullable=False)
-    days = db.Column(db.Integer, nullable=False)  # Store days separately
-    hours = db.Column(db.Integer, nullable=False)  # Store hours separately
-    minutes = db.Column(db.Integer, nullable=False)  # Store minutes separately
+    expiration_time = db.Column(db.DateTime, nullable=False)  
     approved = db.Column(db.Boolean, default=False)
     shipping_cost = db.Column(db.Numeric(10,2), nullable=False)
     expert_payment_percentage = db.Column(db.Float, nullable=False, default=0.1) # Default can be changed by managers
     
-    @property
-    def expiration_time(self):
-        """Calculate the expiration time dynamically."""
-        return self.date_time + timedelta(days=self.days, hours=self.hours, minutes=self.minutes)
-
     def get_image_url(self):
         return url_for('static', filename=f'images/items/{self.item_image}')
 
@@ -77,5 +70,5 @@ class Bids(db.Model):
     item_id = db.Column(db.Integer, ForeignKey('item.item_id'), nullable=False)
     user_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
     bid_amount = db.Column(db.Float, nullable=False)  # Allows precise bid values
-    bid_time = db.Column(db.Time, nullable=False)
-    bid_date = db.Column(db.Date, nullable=False)
+    bid_date_time = db.Column(db.DateTime, nullable=False)
+

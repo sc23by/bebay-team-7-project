@@ -326,7 +326,8 @@ def user_list_item():
         # Formatting for prices
         #minimum_price = float(f"{form.minimum_price.data:.2f}")
         #shipping_cost = float(f"{form.shipping_cost.data:.2f}")
-
+        listing_time = datetime.utcnow()
+        
         # Store filename in DB (relative path)
         new_item = Item(
             seller_id=current_user.id,
@@ -335,9 +336,11 @@ def user_list_item():
             minimum_price=form.minimum_price.data,
             item_image=filename,
             date_time=datetime.utcnow(), 
-            days=int(form.days.data),
-            hours=int(form.hours.data),
-            minutes=int(form.minutes.data),
+            expiration_time=listing_time + timedelta(
+                days=int(form.days.data),
+                hours=int(form.hours.data),
+                minutes=int(form.minutes.data)
+                ),
             shipping_cost=form.shipping_cost.data,
             approved=False
         )

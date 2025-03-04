@@ -31,10 +31,14 @@
                 {{ form.description(class="form-control") }}
             </div>
             
-            <div class="mb-3">
-                {{ form.minimum_price.label(class="form-label") }}
-                {{ form.minimum_price(class="form-control") }}
+            <div class="form-group">
+                <label for="minimum_price">Starting price</label>
+                <div class="input-group">
+                    <span class="input-group-text">£</span>
+                    {{ form.minimum_price(class="form-control", id="minimum_price", placeholder="0.00") }}
+                </div>
             </div>
+            
             
             <div class="mb-3">
                 {{ form.item_image.label(class="form-label") }}
@@ -56,9 +60,12 @@
                 {{ form.minutes(class="form-select") }}
             </div>            
             
-            <div class="mb-3">
-                {{ form.shipping_cost.label(class="form-label") }}
-                {{ form.shipping_cost(class="form-control") }}
+            <div class="form-group">
+                <label for="shipping_cost">Shipping cost</label>
+                <div class="input-group">
+                    <span class="input-group-text">£</span>
+                    {{ form.shipping_cost(class="form-control", id="shipping_cost", placeholder="0.00") }}
+                </div>
             </div>
             
             <button type="submit" class="btn btn-primary">List Item</button>
