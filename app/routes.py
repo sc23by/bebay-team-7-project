@@ -362,6 +362,7 @@ def user_item_details(item_id):
     
     return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
 
+# Route: Placing a bid
 @app.route('/item/<int:item_id>/bid', methods=['GET', 'POST'])
 @user_required
 def place_bid(item_id):
