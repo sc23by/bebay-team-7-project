@@ -69,6 +69,6 @@ class Bids(db.Model):
     bid_id = db.Column(db.Integer, primary_key=True)
     item_id = db.Column(db.Integer, ForeignKey('item.item_id'), nullable=False)
     user_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
-    bid_amount = db.Column(db.Float, nullable=False)  # Allows precise bid values
+    bid_amount = db.Column(db.Numeric(10, 2), nullable=False)  # Allows precise bid values
     bid_date_time = db.Column(db.DateTime, nullable=False)
 

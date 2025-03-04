@@ -190,3 +190,6 @@ class ListItemForm(FlaskForm):
     
     submit = SubmitField('List Item')
 
+class BiddingForm(FlaskForm):
+    bid_amount = DecimalField("Your Bid (£)", validators=[DataRequired(), NumberRange(min=0.01)])
+    submit = SubmitField("Place Bid")

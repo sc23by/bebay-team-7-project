@@ -354,9 +354,44 @@ def user_list_item():
 
 # Route: For clicking on an item to see more detail
 @app.route('/item/<int:item_id>')
-def item_details(item_id):
+def user_item_details(item_id):
     item = Item.query.get_or_404(item_id)  # Fetch the item or return 404
-    return render_template('item_details.html', item=item)
+    return render_template('user_item_details.html', item=item)
+
+@app.route('/item/<int:item_id>/bid', methods=['GET', 'POST'])
+@login_required
+def place_bid(item_id):
+    item = Item.query.get_or_404(item_id)
+    form = BidForm()
+
+    # Check if the auction has expired
+    if datetime.utcnow() > item.expiration_time:
+        flash("Bidding has ended for this item.", "danger")
+        return redirect(url_for('item_details', item_id=item_id))
+
+    # Get the current highest bid
+    highest_bid = db.session.query(db.func.max(Bids.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+
+    if form.validate_on_submit():
+        bid_amount = form.bid_amount.data
+
+        # Check if bid is valid
+        if bid_amount <= highest_bid:
+            flash("Your bid must be higher than the current highest bid!", "danger")
+        else:
+            new_bid = Bids(
+                item_id=item_id,
+                user_id=current_user.id,
+                bid_amount=bid_amount,
+                bid_date_time=datetime.utcnow()
+            )
+            db.session.add(new_bid)
+            db.session.commit()
+            flash("Bid placed successfully!", "success")
+            return redirect(url_for('user_item_details', item_id=item_id))
+
+    return render_template('place_bid.html', form=form, item=item, highest_bid=highest_bid)
+
 
 
 # Expert Pages
