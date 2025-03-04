@@ -46,30 +46,38 @@ def test_list_item_page_access(loggedInClientP1):
     assert response.status_code == 200
     assert b'List an Item' in response.data
 
+
 def test_list_item(loggedInClientP1):
     print(f"{Colours.YELLOW}Testing list items page - correctly listing item:{Colours.RESET}")
 
     with app.app_context():
         initial_count = db.session.query(Item).count()
-    
 
-    image = FileStorage(
-            stream=io.BytesIO(b"Fake image data"),
-            filename="test_image.jpg",
-            content_type="image/jpeg"
-        )
-    data = {
+    # create fake item listing data
+    def create_form_data():
+        data = {
             "item_name": "Test Item",
             "description": "A great test item!",
             "minimum_price": 10.99,
             "shipping_cost": 5.50,
             "days": 3,
             "hours": 2,
-            "minutes": 30
+            "minutes": 30,
+            "item_image": FileStorage(
+                stream=io.BytesIO(b"Fake image data"),
+                filename="test_image.jpg",
+                content_type="image/jpeg"
+            )
         }
-    data["item_image"] = image
+        return data
 
-    response = loggedInClientP1.post('/user/list_item', data=data, follow_redirects=True)
+    # check for correct redirect and item is added
+    response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=False)
+    assert response.status_code == 302
+    assert db.session.query(Item).count() == initial_count + 1
 
+    # check for message flash
+    response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=True)
     assert response.status_code == 200
-    assert b"Item listed successfully!" in response.data 
+    assert b"Item listed successfully!" in response.data
+
