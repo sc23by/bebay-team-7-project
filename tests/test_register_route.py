@@ -7,7 +7,7 @@ from colours import Colours
 '''
 Testing routes with logged out client
 '''
-def testRegisterValidUser(client):
+def test_register_validUser(client):
     print(f"{Colours.YELLOW}Testing register page- registering a user:{Colours.RESET}")
     response = client.post('/register', data={
         'first_name': 'test',
@@ -27,7 +27,7 @@ def testRegisterValidUser(client):
     assert response.status_code == 200
     assert b'<h1>Login</h1>' in response.data
 
-def testRegisterDuplicateUsername(client):
+def test_register_duplicate_username(client):
     print(f"{Colours.YELLOW}Testing register page - duplicate username:{Colours.RESET}")
 
     # create user to compare to
@@ -54,7 +54,7 @@ def testRegisterDuplicateUsername(client):
     assert response.status_code == 200
 
 
-def testRegisterDuplicateEmail(client):
+def test_register_duplicate_email(client):
     print(f"{Colours.YELLOW}Testing register page - duplicate email:{Colours.RESET}")
 
     # create user to compare to
@@ -81,7 +81,7 @@ def testRegisterDuplicateEmail(client):
     assert response.status_code == 200
 
 
-def testRegisterEmailValid(client):
+def test_register_email_valid(client):
     response = client.post('/register', data={
         'first_name': 'test',
         'last_name': 'user',
@@ -95,7 +95,7 @@ def testRegisterEmailValid(client):
     assert response.status_code == 200
 
 
-def testRegisterPasswordMismatch(client):
+def test_register_rassword_mismatch(client):
     print(f"{Colours.YELLOW}Testing register page - missmatched passwords:{Colours.RESET}")
 
     response = client.post('/register', data={
@@ -110,7 +110,7 @@ def testRegisterPasswordMismatch(client):
     assert "Passwords must match." in response.data.decode()
     assert response.status_code == 200
 
-def testRegisterPasswordNotStrong(client):
+def test_register_password_not_strong(client):
     print(f"{Colours.YELLOW}Testing register page - password not strong enough:{Colours.RESET}")
 
     response = client.post('/register', data={
@@ -137,7 +137,7 @@ def testRegisterPasswordNotStrong(client):
     assert "Password needs at least one number." in response.data.decode()
     assert response.status_code == 200
 
-def testRegisterNamesCorrect(client):
+def test_register_names_correct(client):
     print(f"{Colours.YELLOW}Testing register page - names correct format:{Colours.RESET}")
 
     response = client.post('/register', data={
@@ -170,10 +170,10 @@ def testRegisterNamesCorrect(client):
 Testing routes with logged in client (p1)
 '''
 
-def testRegisterAuthenticated(loggedInClientP1):
+def test_register_authenticated(loggedInClientP1):
     print(f"{Colours.YELLOW}Testing register page - reroute to p1 homepage:{Colours.RESET}")
 
     response = loggedInClientP1.get('/register')
     assert response.status_code == 302
-    assert b'/user' in response.data
+    assert response.headers["Location"].endswith("/user")
     
