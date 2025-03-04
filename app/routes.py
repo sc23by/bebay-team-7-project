@@ -10,6 +10,7 @@ import base64
 from werkzeug.utils import secure_filename
 import os
 import uuid
+# Allows for ajax
 import json
 
 # Decorators
