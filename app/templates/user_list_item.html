@@ -5,17 +5,6 @@
 
 {% block content %}
 
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        <div>
-        {% for category, message in messages %}
-            <div>{{ message }}</div>
-        {% endfor %}
-        </div>
-    {% endif %}
-    {% endwith %}
-
     <div class="container mt-5">
         <h2>List an Item</h2>
         <form method="POST" enctype="multipart/form-data">
