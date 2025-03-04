@@ -1,8 +1,8 @@
 from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, current_user, login_required,logout_user
-from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm, ListItemForm
-from app.models import User, Item
+from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
+from app.models import User, Item, Bid
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -356,10 +356,14 @@ def user_list_item():
 @app.route('/item/<int:item_id>')
 def user_item_details(item_id):
     item = Item.query.get_or_404(item_id)  # Fetch the item or return 404
-    return render_template('user_item_details.html', item=item)
+    form=BidForm()
+
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+    
+    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
 
 @app.route('/item/<int:item_id>/bid', methods=['GET', 'POST'])
-@login_required
+@user_required
 def place_bid(item_id):
     item = Item.query.get_or_404(item_id)
     form = BidForm()
@@ -367,10 +371,10 @@ def place_bid(item_id):
     # Check if the auction has expired
     if datetime.utcnow() > item.expiration_time:
         flash("Bidding has ended for this item.", "danger")
-        return redirect(url_for('item_details', item_id=item_id))
+        return redirect(url_for('user_item_details', item_id=item_id))
 
     # Get the current highest bid
-    highest_bid = db.session.query(db.func.max(Bids.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
 
     if form.validate_on_submit():
         bid_amount = form.bid_amount.data
@@ -379,7 +383,7 @@ def place_bid(item_id):
         if bid_amount <= highest_bid:
             flash("Your bid must be higher than the current highest bid!", "danger")
         else:
-            new_bid = Bids(
+            new_bid = Bid(
                 item_id=item_id,
                 user_id=current_user.id,
                 bid_amount=bid_amount,
@@ -388,9 +392,13 @@ def place_bid(item_id):
             db.session.add(new_bid)
             db.session.commit()
             flash("Bid placed successfully!", "success")
-            return redirect(url_for('user_item_details', item_id=item_id))
+            return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
 
-    return render_template('place_bid.html', form=form, item=item, highest_bid=highest_bid)
+
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+    
+    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
+
 
 
 
@@ -515,7 +523,7 @@ def manager_expert_availability():
 #Route: Manager view of Items that are approved, recycled, and pending items
 @app.route('/manager_overview')
 def manager_dashboard():
-    return render_template('manager/overview).html',
+    return render_template('manager_overview.html',
                            userName="JohnDoe",
                            userPriority=2,
                            userEmail="john.doe@example.com",

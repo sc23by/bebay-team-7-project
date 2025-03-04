@@ -2,6 +2,16 @@
 
 {% block content %}
 <div class="container">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div>
+        {% for category, message in messages %}
+            <div>{{ message }}</div>
+        {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
     <h2>{{ item.item_name }}</h2>
     <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
          class="img-fluid" alt="{{ item.item_name }}">
@@ -24,19 +34,39 @@
         {% endif %}
     </p>
 
-    <form method="POST">
+    <form method="POST" action="{{ url_for('place_bid', item_id=item.item_id) }}">
         {{ form.hidden_tag() }}
-        <label for="bid_amount">Enter Bid:</label>
-        {{ form.bid_amount() }}
-        {{ form.submit() }}
+    
+        <div class="form-group">
+            <label for="bid_amount">Enter Bid</label>
+            <div class="input-group">
+                <span class="input-group-text">£</span>
+                {{ form.bid_amount(class="form-control", id="bid_amount", placeholder="0.00") }}
+            </div>
+        </div>
+    
+        <div class="mt-2">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
     </form>
-
+    
+    
     <h3>Bid History</h3>
     <ul>
-        {% for bid in item.bids %}
-            <li>{{ bid.user.username }} bid £{{ bid.bid_amount }} at {{ bid.bid_date_time.strftime('%Y-%m-%d %H:%M:%S') }}</li>
+        {% for bid in item.bids.all %}
+            <li>
+                {{ bid.user.username }} 
+                bid £{{ bid.bid_amount }} 
+                at {{ bid.bid_date_time.strftime('%Y-%m-%d %H:%M:%S') }}
+            </li>
         {% endfor %}
+        
+        {% if item.bids.all|length == 0 %}
+            <li>No bids yet.</li>
+        {% endif %}
     </ul>
+
+
 
     <a href="{{ url_for('user_home') }}" class="btn btn-secondary">Back to Listings</a>
 </div>
