@@ -418,13 +418,20 @@ def manager_accounts():
     return render_template("manager_accounts.html",accounts=accounts)
 
 @app.route('/manager/accounts/<username>/<int:update_number>',methods=['GET','POST'])
-def update_number(username,update_number):
+def manager_accounts_update_number(username,update_number):
     for account in accounts:
         if account['username'] == username:
             account['number'] = update_number
             break
 
     return redirect(url_for('manager_accounts'))
+
+@app.route('/manager/accounts/sort/low_high',methods=['GET','POST'])
+def manager_accounts_sort_low_high():
+    accounts.sort(key = lambda x: x['username'])
+    return redirect(url_for('manager_accounts'))
+
+
 
 #Route: Manager Listing Page
 @app.route('/manager/listings',methods=['GET','POST'])
