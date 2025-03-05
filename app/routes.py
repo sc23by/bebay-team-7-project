@@ -432,10 +432,19 @@ def manager_accounts_sort_low_high():
     return redirect(url_for('manager_accounts'))
 
 @app.route('/manager/accounts/sort/high_low',methods=['GET','POST'])
-def manager_accounts_sort_low_high():
+def manager_accounts_sort_high_low():
     accounts.sort(key = lambda x: x['username'],reverse=True)
     return redirect(url_for('manager_accounts'))
 
+@app.route('/manager/accounts/filter/<int:filter_number>',methods=['GET','POST'])
+def manager_accounts_filter(filter_number):
+    filtered_accounts = []
+    
+    for account in accounts:
+        if account['number'] == filter_number:
+            filtered_accounts.append(account)
+
+    return render_template("manager_accounts.html",accounts = filtered_accounts)   
 
 
 #Route: Manager Listing Page
