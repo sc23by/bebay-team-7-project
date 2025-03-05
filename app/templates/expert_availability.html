@@ -21,25 +21,25 @@
 <body>
     <h1>Expert Availability</h1>
 
+        
+        <table id="availability-table">
+            <thead>
+                <tr>
+                    <th> Timeslot</th>
+                    <th id="sunday-date"></th>
+                    <th id="monday-date"></th>
+                    <th id="tuesday-date"></th>
+                    <th id="wednesday-date"></th>
+                    <th id="thursday-date"></th>
+                    <th id="friday-date"></th>
+                    <th id="saturday-date"></th>
+                </tr>
+            </thead>
 
-    <table id="availability-table">
-        <thead>
-            <tr>
-                <th> Timeslot</th>
-                <th id="sunday-date"></th>
-                <th id="monday-date"></th>
-                <th id="tuesday-date"></th>
-                <th id="wednesday-date"></th>
-                <th id="thursday-date"></th>
-                <th id="friday-date"></th>
-                <th id="saturday-date"></th>
-            </tr>
-        </thead>
+        <tbody>
 
-    <tbody>
-
-    </tbody>
-</table>
+        </tbody>
+    </table>
 
 <button id="resetButton">Unavailable for the week</button>
 <button id="saveButton">Save</button>
@@ -70,8 +70,7 @@
                     let cell = document.createElement("td");
                     cell.dataset.row = i;
                     cell.dataset.col = j;
-                    cell.addEventListener("mousedown", function () { mouseDown(cell); });
-                    cell.addEventListener("mouseover", function () { mouseOver(cell); });
+                    cell.onclick = function () { toggleTimeSlotCellColour(this); }; 
                     row.appendChild(cell);
                 }
                 document.getElementById("availability-table").appendChild(row);
@@ -79,24 +78,6 @@
         });
 
         document.getElementById("resetButton").addEventListener("click", resetCells);
-
-
-        let isMouseDown = false; 
-
-        function mouseDown(cell) {
-            isMouseDown = true;
-            toggleTimeSlotCellColour(cell);  
-        }
-
-        function mouseOver(cell) {
-            if (isMouseDown) {
-                toggleTimeSlotCellColour(cell); 
-            }
-        }
-
-        function mouseUp() {
-            isMouseDown = false; 
-        }
 
         function toggleTimeSlotCellColour(timeSlotCell) {
             timeSlotCell.classList.toggle("filled");
@@ -116,10 +97,6 @@
             }
         `;
         document.head.appendChild(timeSlotColour);
-
-        document.addEventListener("mouseup", function () {
-            isMouseDown = false;
-        });
        
         /*
         Converts a Javascript Date object into a formatted dd/mm/yy string so it can be displayed.
@@ -157,17 +134,13 @@
             }
         }
 
+        document.getElementById("saveButton").addEventListener("click", saveState);
 
-        
+
+
 //Save button
 //Delete all records for each day and replace with new set for the week
 </script>
-
-
-
-
-
-
 
 
 {% endblock %}
