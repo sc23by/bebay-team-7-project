@@ -189,4 +189,3 @@ class ListItemForm(FlaskForm):
     )
     
     submit = SubmitField('List Item')
-

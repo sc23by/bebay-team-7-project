@@ -22,8 +22,14 @@
         <!-- Content Area -->
         <div class="col-md-9 col-lg-10 p-5">
             <h2 class="mb-4">My Watchlist</h2>
+            <!-- Sort items dynamically using js -->
+            <select id="sort_dropdown" class="form-select">
+                <option value="all">Show All</option>
+                <option value="min_price">Price: Low to High</option>
+                <option value="name_asc">Name: A-Z</option>
+            </select>
 
-            <div class="row row-cols-3 row-cols-md-5 g-4">
+            <div id="items_sort" class="row row-cols-3 row-cols-md-5 g-4">
                 {% for item in watched_items %}
                 <div class="col">
                     <div class="card h-100">
@@ -50,8 +56,6 @@
                 </div>
                 {% endfor %}
             </div>
-          
-
         </div>
     </div>
 

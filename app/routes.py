@@ -199,6 +199,7 @@ def user_home():
 
 # Route: Watch
 @app.route('/user/watch', methods=['POST'])
+@user_required
 def watch():
     """
     Handles AJAX request for watchlist
@@ -292,6 +293,9 @@ def watchlist():
     """
     form = SideBarForm()
 
+    user = User.query.get(current_user.id)
+    watched_items = user.watchlist
+
     if form.validate_on_submit():
         if form.info.data:
             return redirect(url_for("account"))
@@ -304,10 +308,39 @@ def watchlist():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    user = User.query.get(current_user.id)
-    watched_items = user.watchlist
-
     return render_template('user_watchlist.html', form=form, watched_items = watched_items)
+
+# Route: Sort watchlist items
+@app.route('/user/sort', methods=['GET'])
+@user_required
+def sort():
+    """
+    Handles json request to allow dynamic sort feature to sort items
+    """
+    # if user selects the sort function
+    sort_by = request.args.get('sort', 'all')
+
+    # query the items in the user's watchlist
+    items = db.session.query(Item).join(watched_item).filter(watched_item.c.user_id == current_user.id)
+
+    if sort_by == "min_price":
+        sorted_items = items.order_by(Item.minimum_price.asc()).all()
+    elif sort_by == "name_asc":
+        sorted_items = items.order_by(Item.item_name.asc()).all()
+    else:
+        sorted_items = items.all()
+
+    # Convert to JSON format
+    watched_items = [{
+        "item_id": item.item_id,
+        "item_name": item.item_name,
+        "minimum_price": str(item.minimum_price),  # Convert Decimal to string
+        "date_time": item.date_time.strftime('%H:%M'),
+        "item_image": item.item_image,
+        "is_watched": True
+    } for item in sorted_items]
+
+    return jsonify(watched_items)
 
 # Route: Notifications
 @app.route('/user/notifications', methods=['GET', 'POST'])
