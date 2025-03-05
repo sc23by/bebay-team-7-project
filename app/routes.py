@@ -431,6 +431,11 @@ def manager_accounts_sort_low_high():
     accounts.sort(key = lambda x: x['username'])
     return redirect(url_for('manager_accounts'))
 
+@app.route('/manager/accounts/sort/high_low',methods=['GET','POST'])
+def manager_accounts_sort_low_high():
+    accounts.sort(key = lambda x: x['username'],reverse=True)
+    return redirect(url_for('manager_accounts'))
+
 
 
 #Route: Manager Listing Page
