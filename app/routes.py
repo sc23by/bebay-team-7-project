@@ -402,27 +402,29 @@ def manager_stats():
 
     return render_template('manager_statistics.html',img_data=img_base64,ratio=ratio,labels=labels)
 
+accounts = [
+        {"username": "Jonghyun","number": 1},
+        {"username": "Feibi","number": 2},
+        {"username": "Bellaly","number": 1},
+        {"username": "Rammy","number": 1},
+        {"username": "MM","number": 3},
+        {"username": "Leyna","number": 1}
+    ]
+
 
 #Route: Manager Account Page
 @app.route('/manager/accounts',methods=['GET','POST'])
 def manager_accounts():
-    accounts = [
-        {"username": "Jonghyun Kim","number": 1},
-        {"username": "Feibi Allen","number": 2},
-        {"username": "Bellaly Yahoo","number": 1},
-        {"username": "Rammy G","number": 1},
-        {"username": "MM","number": 3},
-        {"username": "Leyna TJ","number": 1}
-    ]
     return render_template("manager_accounts.html",accounts=accounts)
 
-@app.route('/manager/accounts/<username>/<int:update_number>')
+@app.route('/manager/accounts/<username>/<int:update_number>',methods=['GET','POST'])
 def update_number(username,update_number):
     for account in accounts:
         if account['username'] == username:
             account['number'] = update_number
             break
-    return redirect(url_for(manager_accounts))
+
+    return redirect(url_for('manager_accounts'))
 
 #Route: Manager Listing Page
 @app.route('/manager/listings',methods=['GET','POST'])
