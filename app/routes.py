@@ -453,13 +453,13 @@ def manager_accounts_search():
     empty_accounts = []
 
     if not search_query:
-        return render_template("manager_accounts.html",empty_accounts=[])
+        return render_template("manager_accounts.html",accounts = empty_accounts)
 
     for account in accounts:
-        if search_query.lower() in account['username'].lower():
+        if search_query.lower() == account['username'].lower():
             filtered_accounts.append(account)
     
-    render_template("manager_accounts.html",accounts=filtered_accounts)
+    return render_template("manager_accounts.html",accounts=filtered_accounts)
 
 #Route: Manager Listing Page
 @app.route('/manager/listings',methods=['GET','POST'])
