@@ -57,25 +57,58 @@
                     "16:00-17:00", "17:00-18:00", "18:00-19:00", "19:00-20:00"
             ];
 
-
-
             for (let i = 0; i < rows; i++) {
                 let row = document.createElement("tr");
 
                 let timeSlotCell = document.createElement("td");
-                timeSlotCell.textContent = timeSlots[i];  // Set the time slot label
+                timeSlotCell.textContent = timeSlots[i]; 
                 row.appendChild(timeSlotCell);
 
                 for (let j = 0; j < cols - 1; j++) {
                     let cell = document.createElement("td");
                     cell.dataset.row = i;
                     cell.dataset.col = j;
+                    cell.addEventListener("mousedown", function () { mouseDown(cell); });
+                    cell.addEventListener("mouseover", function () { mouseOver(cell); });
                     row.appendChild(cell);
                 }
                 document.getElementById("availability-table").appendChild(row);
             }
         });
 
+        let isMouseDown = false; 
+
+        function mouseDown(cell) {
+            isMouseDown = true;
+            toggleTimeSlotCellColour(cell);  
+        }
+
+        function mouseOver(cell) {
+            if (isMouseDown) {
+                toggleTimeSlotCellColour(cell); 
+            }
+        }
+
+        function mouseUp() {
+            isMouseDown = false; 
+        }
+
+        function toggleTimeSlotCellColour(timeSlotCell) {
+            timeSlotCell.classList.toggle("filled");
+        }
+
+        const timeSlotColour = document.createElement('style');
+        timeSlotColour.innerHTML = `
+            .filled {
+                background-color: lightblue;  
+            }
+        `;
+        document.head.appendChild(timeSlotColour);
+
+        document.addEventListener("mouseup", function () {
+            isMouseDown = false;
+        });
+       
         /*
         Converts a Javascript Date object into a formatted dd/mm/yy string so it can be displayed.
 
