@@ -2,12 +2,23 @@
 
 {% block content %}
 <div class="container">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div>
+        {% for category, message in messages %}
+            <div>{{ message }}</div>
+        {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
     <h2>{{ item.item_name }}</h2>
     <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
          class="img-fluid" alt="{{ item.item_name }}">
     
     <p>Description: {{ item.description }}</p>
-    <p>Minimum Price: £{{ item.minimum_price }}</p>
+    <p>Starting Price: £{{ item.minimum_price }}</p>
+    <p>Current Highest Bid: £{{ highest_bid }}</p>
     <p>Shipping Price: £{{ item.shipping_cost }}</p>
     <p>Listing Time: {{ item.date_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
     <p>Expires On: {{ item.expiration_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
@@ -23,12 +34,22 @@
         {% endif %}
     </p>
 
-    <form>
-        <label for="bid_amount">Enter your bid (£):</label>
-        <input type="number" name="bid_amount" step="0.01" required>
-        <button type="submit" class="btn btn-success">Place Bid</button>
+    <form method="POST" action="{{ url_for('place_bid', item_id=item.item_id) }}">
+        {{ form.hidden_tag() }}
+    
+        <div class="form-group">
+            <label for="bid_amount">Enter Bid</label>
+            <div class="input-group">
+                <span class="input-group-text">£</span>
+                {{ form.bid_amount(class="form-control", id="bid_amount", placeholder="0.00") }}
+            </div>
+        </div>
+    
+        <div class="mt-2">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
     </form>
-
+   
     <a href="{{ url_for('user_home') }}" class="btn btn-secondary">Back to Listings</a>
 </div>
 {% endblock %}
