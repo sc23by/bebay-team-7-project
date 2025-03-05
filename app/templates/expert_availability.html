@@ -41,6 +41,8 @@
     </tbody>
 </table>
 
+<button id="resetButton">Unavailable for the week</button>
+<button id="saveButton">Save</button>
 
 <script>
 
@@ -76,6 +78,9 @@
             }
         });
 
+        document.getElementById("resetButton").addEventListener("click", resetCells);
+
+
         let isMouseDown = false; 
 
         function mouseDown(cell) {
@@ -95,6 +100,13 @@
 
         function toggleTimeSlotCellColour(timeSlotCell) {
             timeSlotCell.classList.toggle("filled");
+        }
+
+        function resetCells() {
+            const allCells = document.querySelectorAll("#availability-table td");
+            allCells.forEach(cell => {
+                cell.classList.remove("filled");
+            });
         }
 
         const timeSlotColour = document.createElement('style');
@@ -144,12 +156,11 @@
                 document.getElementById(weekdays[day]+'-date').textContent = `${weekdaysCapitalised[day]} ${formatDate(currentDate)}`;
             }
         }
+
+
         
 //Save button
 //Delete all records for each day and replace with new set for the week
-
-
-
 </script>
 
 
