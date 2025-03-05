@@ -118,7 +118,7 @@ class ChangePasswordForm(FlaskForm):
 
     confirm_password = PasswordField('Confirm Password', validators=[
         DataRequired(),
-        EqualTo('password', message="Passwords must match.")
+        EqualTo('new_password', message="Passwords must match.")
     ])
 
     update_privacy = SubmitField('Change Password')

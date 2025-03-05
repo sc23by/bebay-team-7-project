@@ -269,8 +269,23 @@ def account():
     Redirects to account page, has buttons to other pages and user information.
     """
     sidebar_form = SideBarForm()
+    info_form = UserInfoForm()
+    password_form = ChangePasswordForm()
+    card_form = CardInfoForm()
 
-    if sidebar_form.validate_on_submit():
+    user = User.query.get(current_user.id)
+    # find users payment and shipping info from PaymentInfo table 
+    payment_info = PaymentInfo.query.filter(PaymentInfo.user_id == user.id).first()
+
+    # Only access attributes if payment_info is not None
+    if payment_info:  
+        payment_type = payment_info.payment_type
+        shipping_info = payment_info.shipping_address
+    else:
+        payment_type = None
+        shipping_info = None
+
+    if sidebar_form.validate_on_submit() :
         if sidebar_form.info.data:
             return redirect(url_for("account"))
         elif sidebar_form.my_listings.data:
@@ -281,42 +296,60 @@ def account():
             return redirect(url_for("notifications"))
         elif sidebar_form.logout.data:
             return redirect(url_for("logout")) 
+    
+    # if user info is updated, update in db
+    if info_form.update_info.data and info_form.validate_on_submit():
+        user.first_name=info_form.first_name.data
+        user.last_name=info_form.last_name.data
+        db.session.commit()
+        if User.query.filter_by(username=info_form.username.data).first():
+            flash('Username already exists. Please choose a different one.', 'danger')
+        else:
+            user.username=info_form.username.data
+            db.session.commit()
+            flash('Username updated successfully!', 'success')
 
-    user = User.query.get(current_user.id)
-    info_form = UserInfoForm()
-    password_form = ChangePasswordForm()
-    card_form = CardInfoForm()
+        if User.query.filter_by(email=info_form.email.data).first():
+            flash('Email already exists. Please choose a different one.', 'danger')
+        else:
+            user.email=info_form.email.data
+            db.session.commit()
+            flash('Email updated successfully!', 'success')
+
+    # if password is updated, update in db
+    if password_form.update_privacy.data and password_form.validate_on_submit():
+        if password_form.new_password.data != password_form.confirm_password.data:
+            flash('Passwords do not match.', 'danger')
+        else:
+            hashed_password = bcrypt.generate_password_hash(password_form.new_password.data)
+            user.password = hashed_password
+            db.session.commit()
+            flash('Password updated successfully!', 'success')
+
+    # if payment info is updated, update in db
+    if card_form.update_card.data and card_form.validate_on_submit():
+        # Update existing payment info for current user
+        payment_info.payment_type = card_form.card_number.data
+        payment_info.shipping_address = card_form.shipping_address.data
+
+        db.session.commit()
+        flash('Payment info updated successfully!', 'success')
 
     # populate forms with user information
-    if request.method == 'GET':
+    if request.method == 'GET' or not info_form.validate_on_submit() or not card_form.validate_on_submit() or not password_form.validate_on_submit():
+        # user info
         info_form.first_name.data = user.first_name
         info_form.last_name.data = user.last_name
         info_form.username.data = user.username
         info_form.email.data = user.email
 
-        # find users payment and shipping info from PaymentInfo table 
-        payment_info = PaymentInfo.query.filter(PaymentInfo.user_id == user.id).first().payment_type
-        shipping_info = PaymentInfo.query.filter(PaymentInfo.user_id == user.id).first().shipping_address
-
         # if info then print in form else dont print anything
         if payment_info:
             card_form.card_number.data = payment_info.payment_type
+            card_form.shipping_address.data = payment_info.shipping_address
         else:
             card_form.card_number.data = None
-
-        if shipping_info:
-            card_form.shipping_address.data = payment_info.payment_type
-        else:
             card_form.shipping_address.data = None
-        
-    if info_form.validate_on_submit():
-        return redirect(url_for('account'))
-
-    if password_form.validate_on_submit():
-        return redirect(url_for('account'))
-
-    if card_form.validate_on_submit():
-        return redirect(url_for('account'))
 
     return render_template('user_account.html', sidebar_form=sidebar_form, info_form=info_form, password_form=password_form, card_form=card_form)
 

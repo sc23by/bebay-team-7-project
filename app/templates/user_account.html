@@ -60,11 +60,17 @@
                 <div class="mb-3 row">
                     {{ password_form.new_password.label(class="col-sm-2 col-form-label")}}
                     {{ password_form.new_password(class="col-sm-6")}}
+                    {% for error in password_form.new_password.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
                 </div>
 
                 <div class="mb-3 row">
                     {{ password_form.confirm_password.label(class="col-sm-2 col-form-label")}}
                     {{ password_form.confirm_password(class="col-sm-6")}}
+                    {% for error in password_form.confirm_password.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
                     <div class="col-sm-2">
                         {{ password_form.update_privacy(class="btn btn-outline-primary") }}
                     </div>
