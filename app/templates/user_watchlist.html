@@ -31,7 +31,7 @@
                              class="card-img-top" alt="{{ item.item_name }}">
                         <div class="card-body">
                             <h5 class="card-title">{{ item.item_name }}</h5>
-                            <p class="card-text">Start Time: {{ item.time.strftime('%H:%M') }}</p>
+                            <p class="card-text">Start Time: {{ item.date_time.strftime('%H:%M') }}</p>
                             <p class="card-text">Price: £{{ item.minimum_price }}</p>
                             <input type="button" value="Bid">
                             {% if item in current_user.watchlist %}
