@@ -21,10 +21,11 @@
 <body>
     <h1>Expert Availability</h1>
 
-    <table>
+
+    <table id="availability-table">
         <thead>
             <tr>
-                <th></th>
+                <th> Timeslot</th>
                 <th id="sunday-date"></th>
                 <th id="monday-date"></th>
                 <th id="tuesday-date"></th>
@@ -34,10 +35,33 @@
                 <th id="saturday-date"></th>
             </tr>
         </thead>
-    </table>
+
+    <tbody>
+
+    </tbody>
+</table>
+
 
 <script>
-    
+
+        //Creates the table dynamically once the html has been generaetd for the window
+
+        document.addEventListener("DOMContentLoaded", function () {
+            
+            const rows = 13;
+            const cols = 8;
+            for (let i = 0; i < rows; i++) {
+                let row = document.createElement("tr");
+                for (let j = 0; j < cols; j++) {
+                    let cell = document.createElement("td");
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    row.appendChild(cell);
+                }
+                document.getElementById("availability-table").appendChild(row);
+            }
+        });
+
         /*
         Converts a Javascript Date object into a formatted dd/mm/yy string so it can be displayed.
 
@@ -73,9 +97,12 @@
                 document.getElementById(weekdays[day]+'-date').textContent = `${weekdaysCapitalised[day]} ${formatDate(currentDate)}`;
             }
         }
+        
 //Save button
 //Delete all records for each day and replace with new set for the week
-        
+
+
+
 </script>
 
 
