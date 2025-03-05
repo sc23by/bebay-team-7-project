@@ -223,6 +223,37 @@ def watch():
     
     return jsonify({'status':'OK','watch': watch}), 200
 
+# Route: Sort items on main page
+@app.route('/user/sort_items', methods=['GET'])
+@user_required
+def sort_items():
+    """
+    Handles json request to allow dynamic sort feature to sort items
+    """
+    # if user selects the sort function
+    sort_by = request.args.get('sort', 'all')
+
+    # query the items on the main page
+    if sort_by == "min_price":
+        sorted_items = Item.query.order_by(Item.minimum_price.asc()).all()
+    elif sort_by == "name_asc":
+        sorted_items = Item.query.order_by(Item.item_name.asc()).all()
+    else:
+        sorted_items = Item.query.all()
+
+    # Convert to JSON format
+    items = [{
+        "item_id": item.item_id,
+        "item_name": item.item_name,
+        "description": item.description,
+        "minimum_price": str(item.minimum_price),  # Convert Decimal to string
+        "shipping_cost": str(item.shipping_cost), 
+        "item_image": item.item_image,
+        "is_watched": True
+    } for item in sorted_items]
+
+    return jsonify(items)
+
 # Route: Account
 @app.route('/user/account', methods=['GET', 'POST'])
 @login_required
@@ -311,9 +342,9 @@ def watchlist():
     return render_template('user_watchlist.html', form=form, watched_items = watched_items)
 
 # Route: Sort watchlist items
-@app.route('/user/sort', methods=['GET'])
+@app.route('/user/sort_watchlist', methods=['GET'])
 @user_required
-def sort():
+def sort_watchlist():
     """
     Handles json request to allow dynamic sort feature to sort items
     """
