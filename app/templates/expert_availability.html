@@ -47,12 +47,26 @@
         //Creates the table dynamically once the html has been generaetd for the window
 
         document.addEventListener("DOMContentLoaded", function () {
-            
-            const rows = 13;
+
+            const rows = 12;
             const cols = 8;
+
+            const timeSlots = [
+                    "08:00-09:00", "09:00-10:00", "10:00-11:00", "11:00-12:00",
+                    "12:00-13:00", "13:00-14:00", "14:00-15:00", "15:00-16:00",
+                    "16:00-17:00", "17:00-18:00", "18:00-19:00", "19:00-20:00"
+            ];
+
+
+
             for (let i = 0; i < rows; i++) {
                 let row = document.createElement("tr");
-                for (let j = 0; j < cols; j++) {
+
+                let timeSlotCell = document.createElement("td");
+                timeSlotCell.textContent = timeSlots[i];  // Set the time slot label
+                row.appendChild(timeSlotCell);
+
+                for (let j = 0; j < cols - 1; j++) {
                     let cell = document.createElement("td");
                     cell.dataset.row = i;
                     cell.dataset.col = j;
