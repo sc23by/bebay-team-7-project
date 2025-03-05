@@ -81,6 +81,7 @@ def test_list_item(loggedInClientP1):
     assert response.status_code == 200
     assert b"Item listed successfully!" in response.data
 
+
 def test_invalid_list_item(loggedInClientP1):
     print(f"{Colours.YELLOW}Testing list items page - test incorrect data upload error:{Colours.RESET}")
 
@@ -105,18 +106,120 @@ def test_invalid_list_item(loggedInClientP1):
         }
         return data
 
-    # check for correct redirect and item is not added 
     response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=True)
-    
-    """
-    debugging tests and code, remove print statements once bug is resloved
-    """
-    # with loggedInClientP1.session_transaction() as session:
-    #     messages = session.get('_flashes', [])
-    #     print("Flashed Messages:", messages)
-    print(response.data.decode())
 
     assert response.status_code == 200
     assert b"Invalid file type. Only images are allowed." in response.data
     assert db.session.query(Item).count() == initial_count
+
+
+def test_invalid_price(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing list items page - test price too small:{Colours.RESET}")
+
+    with app.app_context():
+        initial_count = db.session.query(Item).count()
+
+    # create fake item listing data
+    def create_form_data():
+        data = {
+            "item_name": "Test Item",
+            "description": "A great test item!",
+            "minimum_price": -1,
+            "shipping_cost": 5.50,
+            "days": 3,
+            "hours": 2,
+            "minutes": 30,
+            "item_image": FileStorage(
+                stream=io.BytesIO(b"Fake image data"),
+                filename="test_image.jpeg",
+                content_type="image/jpeg"
+            )
+        }
+        return data
+
+    # check for correct redirect and item is not added 
+    response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=True)
+
+def test_boundry_price(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing list items page - test allowed price:{Colours.RESET}")
+
+    with app.app_context():
+        initial_count = db.session.query(Item).count()
+
+    # create fake item listing data
+    def create_form_data():
+        data = {
+            "item_name": "Test Item",
+            "description": "A great test item!",
+            "minimum_price": -1,
+            "shipping_cost": 5.50,
+            "days": 3,
+            "hours": 2,
+            "minutes": 30,
+            "item_image": FileStorage(
+                stream=io.BytesIO(b"Fake image data"),
+                filename="test_image.jpeg",
+                content_type="image/jpeg"
+            )
+        }
+        return data
+
+    # check for correct redirect and item is not added 
+    response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=True)
+
+
+def test_invalid_time(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing list items page - time too small:{Colours.RESET}")
+
+    with app.app_context():
+        initial_count = db.session.query(Item).count()
+
+    # create fake item listing data
+    def create_form_data():
+        data = {
+            "item_name": "Test Item",
+            "description": "A great test item!",
+            "minimum_price": -1,
+            "shipping_cost": 5.50,
+            "days": 3,
+            "hours": 2,
+            "minutes": 30,
+            "item_image": FileStorage(
+                stream=io.BytesIO(b"Fake image data"),
+                filename="test_image.jpeg",
+                content_type="image/jpeg"
+            )
+        }
+        return data
+
+    # check for correct redirect and item is not added 
+    response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=True)
+
+
+def test_boundry_time(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing list items page - test allowed time:{Colours.RESET}")
+
+    with app.app_context():
+        initial_count = db.session.query(Item).count()
+
+    # create fake item listing data
+    def create_form_data():
+        data = {
+            "item_name": "Test Item",
+            "description": "A great test item!",
+            "minimum_price": -1,
+            "shipping_cost": 5.50,
+            "days": 3,
+            "hours": 2,
+            "minutes": 30,
+            "item_image": FileStorage(
+                stream=io.BytesIO(b"Fake image data"),
+                filename="test_image.jpeg",
+                content_type="image/jpeg"
+            )
+        }
+        return data
+
+    # check for correct redirect and item is not added 
+    response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=True)
 
