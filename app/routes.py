@@ -416,6 +416,14 @@ def manager_accounts():
     ]
     return render_template("manager_accounts.html",accounts=accounts)
 
+@app.route('/manager/accounts/<username>/<int:update_number>')
+def update_number(username,update_number):
+    for account in accounts:
+        if account['username'] == username:
+            account['number'] = update_number
+            break
+    return redirect(url_for(manager_accounts))
+
 #Route: Manager Listing Page
 @app.route('/manager/listings',methods=['GET','POST'])
 @manager_required
