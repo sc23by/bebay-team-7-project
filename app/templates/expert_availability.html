@@ -37,24 +37,42 @@
     </table>
 
 <script>
+    
+        /*
+        Converts a Javascript Date object into a formatted dd/mm/yy string so it can be displayed.
+
+        Parameters:
+        var (date): The Javascript date
+
+        Returns:
+        str: The dd/mm/yy string
+        */
+
+        function formatDate(date){
+
+            const day = String(date.getDate()).padStart(2, '0'); 
+            const month = String(date.getMonth() + 1).padStart(2, '0'); 
+            const year = String(date.getFullYear()).slice(-2);         
+            return `${day}/${month}/${year}`;
+        }
 
         //Works out the dates of the current week to display on the header rows of the availability table.
 
         window.onload = function() {
 
-            const today = new Date(); 
-
+            const today = new Date();
+            const weekDay = today.getDay();
+            const currentDay = today.getDate();
 
             weekdays = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"]
             weekdaysCapitalised = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
 
             for(day=0;day<7;day++){
-                document.getElementById(weekdays[day]+'-date').textContent = `${weekdaysCapitalised[day]}`;
+                let currentDate = new Date(today)
+                currentDate.setDate(today.getDate() - weekDay + day)
+                document.getElementById(weekdays[day]+'-date').textContent = `${weekdaysCapitalised[day]} ${formatDate(currentDate)}`;
             }
-            
         }
-
-
 //Save button
 //Delete all records for each day and replace with new set for the week
         
