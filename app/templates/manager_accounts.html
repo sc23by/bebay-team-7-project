@@ -40,7 +40,15 @@
 {% for account in accounts %}
 <div class="card">
     <div class="card-body">
-            <span>{{ account.username }} {{account.number}}<button>Set</button><br></span>
+            <span>{{ account.username }} {{account.number}}          
+              <button type="button" class="btn btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+              Set
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#">Priority 1</a></li>
+              <li><a class="dropdown-item" href="#">Priority 2</a></li>
+              <li><a class="dropdown-item" href="#">Priority 3</a></li>
+            </ul><br></span>
     </div>
 {% endfor %}
 </div>

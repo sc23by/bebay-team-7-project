@@ -405,7 +405,6 @@ def manager_stats():
 
 #Route: Manager Account Page
 @app.route('/manager/accounts',methods=['GET','POST'])
-@manager_required
 def manager_accounts():
     accounts = [
         {"username": "Jonghyun Kim","number": 1},
@@ -419,6 +418,7 @@ def manager_accounts():
 
 #Route: Manager Listing Page
 @app.route('/manager/listings',methods=['GET','POST'])
+@manager_required
 def manager_listings():
     listings = [
         {"title": "Jumper","image" : "https://image.hm.com/assets/006/35/ee/35eeb535903be97df8fcfd77b21822b91862ba2c.jpg?imwidth=1260"},
@@ -426,6 +426,7 @@ def manager_listings():
 
     ]
     return render_template("manager_listings.html",listings=listings)
+
 
 #Route: Manager view sorting all the authentication assignments
 @app.route('/manager/authentication')
