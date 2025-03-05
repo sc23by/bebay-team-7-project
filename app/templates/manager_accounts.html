@@ -30,9 +30,10 @@
 </div>
 
 <!--Search Box-->
+<form action="{{url_for('manager_accounts_search')}}" method = "GET">
     <div class="search-container">
-        <input type="text" class="search-input" placeholder="Search...">
-        <button class="search-button">🔍</button>
+        <input type="text" class="search-input" name="query" placeholder="Search...">
+        <button class="search-button" type="submit">🔍</button>
     </div>
 
 <!--Account cards-->

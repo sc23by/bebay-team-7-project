@@ -446,6 +446,20 @@ def manager_accounts_filter(filter_number):
 
     return render_template("manager_accounts.html",accounts = filtered_accounts)   
 
+@app.route('/manager/accounts/search',methods = ['GET'])
+def manager_accounts_search():
+    search_query = request.args.get('query', '')
+    filtered_accounts = []
+    empty_accounts = []
+
+    if not search_query:
+        return render_template("manager_accounts.html",empty_accounts=[])
+
+    for account in accounts:
+        if search_query.lower() in account['username'].lower():
+            filtered_accounts.append(account)
+    
+    render_template("manager_accounts.html",accounts=filtered_accounts)
 
 #Route: Manager Listing Page
 @app.route('/manager/listings',methods=['GET','POST'])
@@ -457,7 +471,6 @@ def manager_listings():
 
     ]
     return render_template("manager_listings.html",listings=listings)
-
 
 #Route: Manager view sorting all the authentication assignments
 @app.route('/manager/authentication')
@@ -488,7 +501,6 @@ def manager_expert_availability():
     ]
 
     return render_template('manager_expert_availability.html', item=item, experts=experts)
-
 
 
 #Route: Manager view of Items that are approved, recycled, and pending items
