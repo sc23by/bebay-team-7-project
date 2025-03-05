@@ -38,8 +38,8 @@ class ExpertAvailabilities(db.Model):
 class PaymentInfo(db.Model):
     payment_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, ForeignKey('user.id'), unique=True, nullable=False)  # One user should have one payment info
-    payment_type = db.Column(db.String(30), nullable=False)
-    shipping_address = db.Column(db.String(500), nullable=False)
+    payment_type = db.Column(db.String(30), nullable=True)
+    shipping_address = db.Column(db.String(500), nullable=True)
 
 # Sold item model
 class Solditem(db.Model):

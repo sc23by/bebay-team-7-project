@@ -2,7 +2,7 @@ from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm, ListItemForm
-from app.models import User, Item, watched_item
+from app.models import User, Item, watched_item, PaymentInfo
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -144,9 +144,16 @@ def register():
 
         hashed_password = bcrypt.generate_password_hash(form.password.data)
         user = User(first_name=form.first_name.data, last_name=form.last_name.data, username=form.username.data, email=form.email.data, password=hashed_password)
+
         db.session.add(user)
         db.session.commit()
 
+        # set up user ID in payment info table so that info can be updated later 
+        payment_info = PaymentInfo(user_id=user.id)
+
+        db.session.add(payment_info)
+        db.session.commit()
+        
         return redirect(url_for('login'))
     elif form.errors:
         flash('There were errors in the form. Please correct them.', 'danger')
@@ -275,17 +282,38 @@ def account():
         elif sidebar_form.logout.data:
             return redirect(url_for("logout")) 
 
+    user = User.query.get(current_user.id)
     info_form = UserInfoForm()
+    password_form = ChangePasswordForm()
+    card_form = CardInfoForm()
 
+    # populate forms with user information
+    if request.method == 'GET':
+        info_form.first_name.data = user.first_name
+        info_form.last_name.data = user.last_name
+        info_form.username.data = user.username
+        info_form.email.data = user.email
+
+        # find users payment and shipping info from PaymentInfo table 
+        payment_info = PaymentInfo.query.filter(PaymentInfo.user_id == user.id).first().payment_type
+        shipping_info = PaymentInfo.query.filter(PaymentInfo.user_id == user.id).first().shipping_address
+
+        # if info then print in form else dont print anything
+        if payment_info:
+            card_form.card_number.data = payment_info.payment_type
+        else:
+            card_form.card_number.data = None
+
+        if shipping_info:
+            card_form.shipping_address.data = payment_info.payment_type
+        else:
+            card_form.shipping_address.data = None
+        
     if info_form.validate_on_submit():
         return redirect(url_for('account'))
 
-    password_form = ChangePasswordForm()
-
     if password_form.validate_on_submit():
         return redirect(url_for('account'))
-
-    card_form = CardInfoForm()
 
     if card_form.validate_on_submit():
         return redirect(url_for('account'))
