@@ -504,16 +504,11 @@ def manager_auth_assignments():
 @app.route('/manager/expert_availability')
 def manager_expert_availability():
     item = {
-        "name": "Item A",
-        "assigned_expert": "John Doe",
-        "description": "This item requires authentication by an expert."
+
     }
 
     experts = [
-        {"name": "Alice Smith", "available": "Now"},
-        {"name": "Bob Johnson", "available": "48h"},
-        {"name": "Charlie Davis", "available": "Now"},
-        {"name": "Diana Lee", "available": "48h"}
+
     ]
 
     return render_template('manager_expert_availability.html', item=item, experts=experts)
