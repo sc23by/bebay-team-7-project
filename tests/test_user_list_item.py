@@ -142,6 +142,7 @@ def test_invalid_price(loggedInClientP1):
     response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=True)
 
     assert response.status_code == 200
+    # message is shown but not flashed (handled by flask), this has been tested
     #assert b'Number must be at least 0.' in response.data
     assert db.session.query(Item).count() == initial_count
 
