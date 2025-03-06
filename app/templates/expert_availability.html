@@ -45,9 +45,8 @@
 <form id="availabilityForm" method="POST" action="/expert/availability" style="display:none;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="user_id" value="1">
-    <input type="hidden" name="date" id="dateInput">
-    <input type="hidden" name="start_time" id="startTimeInput">
-    <input type="hidden" name="duration" id="durationInput">
+    <input type="hidden" name="date" id="date">
+    <input type="hidden" name="start_time" id="start_time">
 </form>
 
 <script>
@@ -65,7 +64,7 @@
             "12:00-13:00", "13:00-14:00", "14:00-15:00", "15:00-16:00",
             "16:00-17:00", "17:00-18:00", "18:00-19:00", "19:00-20:00"
         ];
-
+        
         filledCells.forEach(cell => {
             const rowIndex = cell.dataset.row;  
             const colIndex = cell.dataset.col; 
@@ -83,6 +82,16 @@
         });
 
         alert('Selected timeslots to submit:\n' + selectedTimeslots.map(ts => `Date: ${ts.date}, Start Time: ${ts.start_time}`).join('\n'));
+
+        form.querySelector('[name="date"]').value = "";
+        form.querySelector('[name="start_time"]').value = "";
+
+        selectedTimeslots.forEach((timeslot, index) => {
+        form.querySelector('[name="date"]').value += timeslot.date + (index < selectedTimeslots.length - 1 ? ',' : '');  // Append dates
+        form.querySelector('[name="start_time"]').value += timeslot.start_time + (index < selectedTimeslots.length - 1 ? ',' : '');  // Append start times
+    });
+        alert(`Date: ${document.getElementById('date').value}\n` + `Start Time: ${document.getElementById('start_time').value}\n`);
+        
         form.submit();
     }
 

@@ -1,5 +1,5 @@
 from app import app, db, bcrypt
-from flask import render_template, redirect, url_for, flash, request, current_app
+from flask import render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm, ListItemForm
 from app.models import User, Item, ExpertAvailabilities
@@ -379,10 +379,56 @@ def expert_messaging():
     return render_template('expert_messaging.html')
 
 #Route: Expert Avaliablity Page
-@app.route('/expert/availability')
+@app.route('/expert/availability',methods=['POST','GET'])
 @expert_required
 def expert_availability():
-    return render_template('expert_availability.html')
+
+    user_id = current_user.id
+    if request.method == "POST":
+
+        dates = request.form.get('date')
+        start_times = request.form.get('start_time')
+
+        ExpertAvailabilities.query.filter_by(user_id=user_id).delete()
+        
+        if not dates and not start_times:
+            return redirect(url_for('expert_availability'))
+
+        splitDates = dates.split(",")
+        splitStartTimes =start_times.split(",")
+
+        for date, start_time, in zip(splitDates, splitStartTimes, ):
+            date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+
+            start_time_obj = datetime.strptime(start_time, '%H:%M').time()
+
+            availability = ExpertAvailabilities(
+                user_id=user_id,
+                date=date_obj,
+                start_time=start_time_obj,
+                duration=1
+            )
+
+            db.session.add(availability)
+
+        db.session.commit()
+        return redirect(url_for('expert_availability'))
+
+    else:
+        
+        availabilities = ExpertAvailabilities.query.filter_by(user_id=user_id).all()
+        timeslots = []
+        for availability in availabilities:
+            timeslots.append({
+                'date': availability.date.strftime('%Y-%m-%d'),
+                'start_time': availability.start_time.strftime('%H:%M'),
+            })
+
+        return render_template('expert_availability.html',timeslots=timeslots)
+
+
+
+
 
 #Route: Expert Account Page
 @app.route('/expert/account')
