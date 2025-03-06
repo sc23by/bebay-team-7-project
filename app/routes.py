@@ -404,12 +404,12 @@ def manager_stats():
     return render_template('manager_statistics.html',img_data=img_base64,ratio=ratio,labels=labels)
 
 accounts = [
-        {"username": "Jonghyun","number": 1},
-        {"username": "Feibi","number": 2},
-        {"username": "Bellaly","number": 1},
-        {"username": "Rammy","number": 1},
-        {"username": "MM","number": 3},
-        {"username": "Leyna","number": 1}
+        {"user_id": 1,"username": "Jonghyun","number": 1},
+        {"user_id": 2,"username": "Feibi","number": 2},
+        {"user_id": 3,"username": "Bellaly","number": 1},
+        {"user_id": 4,"username": "Rammy","number": 1},
+        {"user_id": 5,"username": "MM","number": 3},
+        {"user_id": 6,"username": "Leyna","number": 1}
     ]
 
 
@@ -463,15 +463,21 @@ def manager_accounts_search():
     return render_template("manager_accounts.html",accounts=filtered_accounts)
 
 #Route: Manager Listing Page
-@app.route('/manager/listings',methods=['GET','POST'])
-@manager_required
+@app.route('/manager/listings/',methods=['GET','POST'])
 def manager_listings():
-    listings = [
-        {"title": "Jumper","image" : "https://image.hm.com/assets/006/35/ee/35eeb535903be97df8fcfd77b21822b91862ba2c.jpg?imwidth=1260"},
-        {"title": "Pants","image" : "https://image.hm.com/assets/hm/7a/9e/7a9e28408cddce6247b5173b6a54b9a13b98dc1c.jpg?imwidth=1260"}
+    user_id = request.args.get('user_id',type=int)
+    user_account = None
 
-    ]
-    return render_template("manager_listings.html",listings=listings)
+    for account in accounts:
+        if account["user_id"] == user_id:
+            user_account = account
+            break
+
+    if user_account:
+        return render_template("manager_listings.html",account=user_account)
+    else:
+        return "User not found", 404
+
 
 #Route: Manager view sorting all the authentication assignments
 @app.route('/manager/authentication')
