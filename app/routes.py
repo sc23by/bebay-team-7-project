@@ -516,15 +516,6 @@ def manager_dashboard():
                            rejected_items=[{"name": "Old Monitor"}, {"name": "Broken Keyboard"}],
                            pending_items=[{"name": "Gaming Console"}, {"name": "Tablet"}])
 
-
-
-
-
-
-
-
-
-
 # Route for Manager to Update Fees
 @app.route('/manager/fees', methods=['GET', 'POST'])
 def manager_fees():
@@ -540,7 +531,7 @@ def manager_fees():
             db.session.commit()
             print(f"Updated Fees: Site - {fee_config.site_fee_percentage}%, Expert - {fee_config.expert_fee_percentage}%")  # Debugging
             flash("Fees updated successfully!", "success")
-
+            
     return render_template("manager_fees.html", fee_config=fee_config)
 
 
