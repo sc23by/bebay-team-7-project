@@ -404,12 +404,12 @@ def manager_stats():
     return render_template('manager_statistics.html',img_data=img_base64,ratio=ratio,labels=labels)
 
 accounts = [
-        {"user_id": 1,"username": "Jonghyun","number": 1},
-        {"user_id": 2,"username": "Feibi","number": 2},
-        {"user_id": 3,"username": "Bellaly","number": 1},
-        {"user_id": 4,"username": "Rammy","number": 1},
-        {"user_id": 5,"username": "MM","number": 3},
-        {"user_id": 6,"username": "Leyna","number": 1}
+        {"user_id": 1,"username": "Jonghyun","number": 1,"email":"jonghyun.kim99@gmail.com"},
+        {"user_id": 2,"username": "Feibi","number": 2,"email":"feibi@gmail.com"},
+        {"user_id": 3,"username": "Bellaly","number": 1,"email":"belal@gmail.com"},
+        {"user_id": 4,"username": "Rammy","number": 1,"email":"ramit@gmail.com"},
+        {"user_id": 5,"username": "MM","number": 3,"email":"mario9@gmail.com"},
+        {"user_id": 6,"username": "Leyna","number": 1,"email":"leyna@gmail.com"}
     ]
 
 
