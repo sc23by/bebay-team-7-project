@@ -78,4 +78,12 @@ class FeeConfig(db.Model):
     site_fee_percentage = db.Column(db.Float, nullable=False, default=1.0)  # Default 1%
     expert_fee_percentage = db.Column(db.Float, nullable=False, default=4.0)  # Default 4%
 
+    @staticmethod
+    def get_current_fees():
+        fee = FeeConfig.query.first()
+        if not fee:
+            fee = FeeConfig(site_fee_percentage=1.0, expert_fee_percentage=4.0)
+            db.session.add(fee)
+            db.session.commit()
+        return fee
 
