@@ -478,6 +478,15 @@ def manager_listings():
     else:
         return "User not found", 404
 
+@app.route('/manager/listings/<username>/<int:update_number>',methods=['GET','POST'])
+def manager_listings_update_number(username,update_number):
+    for account in accounts:
+        if account['username'] == username:
+            account['number'] = update_number
+            break
+
+    return render_template("manager_listings.html",account=user_account)
+
 
 #Route: Manager view sorting all the authentication assignments
 @app.route('/manager/authentication')
