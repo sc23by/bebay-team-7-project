@@ -2,7 +2,7 @@ from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm, ListItemForm
-from app.models import User, Item
+from app.models import User, Item, ExpertAvailabilities
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -381,7 +381,7 @@ def expert_messaging():
 #Route: Expert Avaliablity Page
 @app.route('/expert/availability')
 @expert_required
-def expert_set_availability():
+def expert_availability():
     return render_template('expert_availability.html')
 
 #Route: Expert Account Page
