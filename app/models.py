@@ -44,7 +44,7 @@ class Solditem(db.Model):
 class Item(db.Model):
     item_id = db.Column(db.Integer, primary_key=True)
     seller_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
-    item_name = db.Column(db.String(100), nullable=False)  # Removed unique constraint so same name can be reused
+    item_name = db.Column(db.String(100), nullable=False)
     minimum_price = db.Column(db.Float, nullable=False)
     description = db.Column(db.String(500), nullable=False)
     item_image = db.Column(db.String(500), nullable=False)
@@ -53,10 +53,15 @@ class Item(db.Model):
     date = db.Column(db.Date, nullable=False)
     approved = db.Column(db.Boolean, default=False)
     shipping_cost = db.Column(db.Float, nullable=False)
-    expert_payment_percentage = db.Column(db.Float, nullable=False, default=0.1) # Default can be changed by managers
-    
-    def get_image_url(self):
-        return url_for('static', filename=f'images/items/{self.item_image}')
+
+    # Store the fixed fees at the time of listing
+    site_fee_percentage = db.Column(db.Float, nullable=False)
+    expert_fee_percentage = db.Column(db.Float, nullable=False)
+
+    def calculate_fee(self, final_price, expert_approved=False):
+        if expert_approved:
+            return final_price * ((self.site_fee_percentage + self.expert_fee_percentage) / 100)
+        return final_price * (self.site_fee_percentage / 100)
 
 # Bids model
 class Bids(db.Model):
@@ -66,3 +71,4 @@ class Bids(db.Model):
     bid_amount = db.Column(db.Float, nullable=False)  # Allows precise bid values
     bid_time = db.Column(db.Time, nullable=False)
     bid_date = db.Column(db.Date, nullable=False)
+
