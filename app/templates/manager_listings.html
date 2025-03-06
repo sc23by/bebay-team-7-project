@@ -2,22 +2,34 @@
 
 {% block content %}
 <div>
-  <span>Username:    {{}}</span>
+  <span>
+    {% if account %}
+      Username :{{ account.username }}
+    {% else %}
+      <p>No user selected</p>
+  </span>
+  {% endif %}
   <div>
     <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
         <div class="btn-group" role="group">
           <button type="button" class="btn btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-            Change
+            Set
           </button>
           <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">Priority 1</a></li>
-            <li><a class="dropdown-item" href="#">Priority 2</a></li>
-            <li><a class="dropdown-item" href="#">Priority 3</a></li>
-          </ul>
+            <li><a class="dropdown-item" href="{{url_for('manager_accounts_update_number',username=account.username, update_number = 1)}}">Priority 1</a></li>
+            <li><a class="dropdown-item" href="{{url_for('manager_accounts_update_number',username=account.username,update_number = 2)}}">Priority 2</a></li>
+            <li><a class="dropdown-item" href="{{url_for('manager_accounts_update_number',username=account.username,update_number = 3)}}">Priority 3</a></li>
+          </ul><br></span>
         </div>
   </div>
 </div>
-<p>Email</p>
+<span>
+  {% if account %}
+    Email: {{ account.email }}
+  {% else %}
+    <p>No user selected</p>
+</span>
+{% endif %}
 <p>Listings</p>
 
 {% if listings %}
