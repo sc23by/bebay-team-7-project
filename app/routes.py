@@ -515,16 +515,16 @@ def manager_expert_availability():
 
 
 #Route: Manager view of Items that are approved, recycled, and pending items
-@app.route('/manager_overview')
-def manager_dashboard():
-    return render_template('manager/overview).html',
-                           userName="JohnDoe",
-                           userPriority=2,
-                           userEmail="john.doe@example.com",
-                           userCategory="Electronics",
-                           approved_items=[{"name": "Laptop"}, {"name": "Smartphone"}, {"name": "Headphones"}],
-                           rejected_items=[{"name": "Old Monitor"}, {"name": "Broken Keyboard"}],
-                           pending_items=[{"name": "Gaming Console"}, {"name": "Tablet"}])
+@app.route('/manager/overview')
+def manager_overview():
+    return render_template('manager_overview.html',
+                           userName="",
+                           userPriority="",
+                           userEmail="",
+                           userCategory="",
+                           approved_items=[],
+                           rejected_items=[],
+                           pending_items=[])
 
 # Route for Manager to Update Fees
 @app.route('/manager/fees', methods=['GET', 'POST'])
