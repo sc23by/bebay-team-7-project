@@ -485,7 +485,15 @@ def manager_listings_update_number(username,update_number):
             account['number'] = update_number
             break
 
-    return render_template("manager_listings.html",account=user_account)
+    user_account = None
+
+    for account in accounts:
+        if account["user_id"] == user_id:
+            user_account = account
+            break
+
+    if user_account:
+        return render_template("manager_listings.html",account=user_account)
 
 
 #Route: Manager view sorting all the authentication assignments
