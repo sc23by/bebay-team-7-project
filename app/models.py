@@ -72,3 +72,10 @@ class Bids(db.Model):
     bid_time = db.Column(db.Time, nullable=False)
     bid_date = db.Column(db.Date, nullable=False)
 
+# Fee Configuration Model (New)
+class FeeConfig(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    site_fee_percentage = db.Column(db.Float, nullable=False, default=1.0)  # Default 1%
+    expert_fee_percentage = db.Column(db.Float, nullable=False, default=4.0)  # Default 4%
+
+
