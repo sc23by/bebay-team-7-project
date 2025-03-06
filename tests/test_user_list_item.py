@@ -246,6 +246,7 @@ def test_boundry_shipping_cost(loggedInClientP1):
     response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=True)
     assert response.status_code == 200
     assert b"Item listed successfully!" in response.data
+    assert db.session.query(Item).count() == initial_count + 2
 
 def test_missing_data(loggedInClientP1):
     print(f"{Colours.YELLOW}Testing list items page - test data not inputted:{Colours.RESET}")
