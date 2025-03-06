@@ -80,6 +80,7 @@ def test_list_item(loggedInClientP1):
     response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=True)
     assert response.status_code == 200
     assert b"Item listed successfully!" in response.data
+    assert db.session.query(Item).count() == initial_count + 2
 
 
 def test_invalid_list_item(loggedInClientP1):
@@ -124,7 +125,7 @@ def test_invalid_price(loggedInClientP1):
         data = {
             "item_name": "Test Item",
             "description": "A great test item!",
-            "minimum_price": -1,
+            "minimum_price": -0.10,
             "shipping_cost": 5.50,
             "days": 3,
             "hours": 2,
@@ -139,6 +140,10 @@ def test_invalid_price(loggedInClientP1):
 
     # check for correct redirect and item is not added 
     response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=True)
+
+    assert response.status_code == 200
+    #assert b'Number must be at least 0.' in response.data
+    assert db.session.query(Item).count() == initial_count
 
 def test_boundry_price(loggedInClientP1):
     print(f"{Colours.YELLOW}Testing list items page - test allowed price:{Colours.RESET}")
@@ -151,7 +156,7 @@ def test_boundry_price(loggedInClientP1):
         data = {
             "item_name": "Test Item",
             "description": "A great test item!",
-            "minimum_price": -1,
+            "minimum_price": 0.00,
             "shipping_cost": 5.50,
             "days": 3,
             "hours": 2,
@@ -164,12 +169,20 @@ def test_boundry_price(loggedInClientP1):
         }
         return data
 
-    # check for correct redirect and item is not added 
+    # check for correct redirect and item is added
+    response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=False)
+
+    assert response.status_code == 302
+    assert db.session.query(Item).count() == initial_count + 1
+
+    # check for message flash
     response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Item listed successfully!" in response.data
+    assert db.session.query(Item).count() == initial_count + 2
 
-
-def test_invalid_time(loggedInClientP1):
-    print(f"{Colours.YELLOW}Testing list items page - time too small:{Colours.RESET}")
+def test_invalid_shipping_cost(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing list items page - shipping cost too small:{Colours.RESET}")
 
     with app.app_context():
         initial_count = db.session.query(Item).count()
@@ -179,9 +192,9 @@ def test_invalid_time(loggedInClientP1):
         data = {
             "item_name": "Test Item",
             "description": "A great test item!",
-            "minimum_price": -1,
-            "shipping_cost": 5.50,
-            "days": 3,
+            "minimum_price": 5.00,
+            "shipping_cost": -0.10,
+            "days": 1,
             "hours": 2,
             "minutes": 30,
             "item_image": FileStorage(
@@ -195,9 +208,13 @@ def test_invalid_time(loggedInClientP1):
     # check for correct redirect and item is not added 
     response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=True)
 
+    assert response.status_code == 200
+    #assert b'Number must be at least 0.' in response.data
+    assert db.session.query(Item).count() == initial_count
 
-def test_boundry_time(loggedInClientP1):
-    print(f"{Colours.YELLOW}Testing list items page - test allowed time:{Colours.RESET}")
+
+def test_boundry_shipping_cost(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing list items page - shipping cost too small:{Colours.RESET}")
 
     with app.app_context():
         initial_count = db.session.query(Item).count()
@@ -207,8 +224,42 @@ def test_boundry_time(loggedInClientP1):
         data = {
             "item_name": "Test Item",
             "description": "A great test item!",
-            "minimum_price": -1,
-            "shipping_cost": 5.50,
+            "minimum_price": 5.00,
+            "shipping_cost": 0.00,
+            "days": 1,
+            "hours": 2,
+            "minutes": 30,
+            "item_image": FileStorage(
+                stream=io.BytesIO(b"Fake image data"),
+                filename="test_image.jpeg",
+                content_type="image/jpeg"
+            )
+        }
+        return data
+
+    # check for correct redirect and item is added
+    response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=False)
+    assert response.status_code == 302
+    assert db.session.query(Item).count() == initial_count + 1
+
+    # check for message flash
+    response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Item listed successfully!" in response.data
+
+def test_missing_data(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing list items page - test data not inputted:{Colours.RESET}")
+
+    with app.app_context():
+        initial_count = db.session.query(Item).count()
+
+    # create fake item listing data
+    def create_form_data():
+        data = {
+            "item_name": "",
+            "description": "A great test item!",
+            "minimum_price": 5.00,
+            "shipping_cost": 1,
             "days": 3,
             "hours": 2,
             "minutes": 30,
@@ -220,6 +271,8 @@ def test_boundry_time(loggedInClientP1):
         }
         return data
 
-    # check for correct redirect and item is not added 
     response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=True)
 
+    assert response.status_code == 200
+    #assert b'This field is required.' in response.data
+    assert db.session.query(Item).count() == initial_count
