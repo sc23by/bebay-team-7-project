@@ -530,6 +530,16 @@ def manager_dashboard():
 def manager_fees():
     fee_config = FeeConfig.get_current_fees()
     
+    if request.method == 'POST':
+        site_fee = request.form.get('site_fee', type=float)
+        expert_fee = request.form.get('expert_fee', type=float)
+
+        if site_fee is not None and expert_fee is not None:
+            fee_config.site_fee_percentage = site_fee
+            fee_config.expert_fee_percentage = expert_fee
+            db.session.commit()
+            print(f"Updated Fees: Site - {fee_config.site_fee_percentage}%, Expert - {fee_config.expert_fee_percentage}%")  # Debugging
+            flash("Fees updated successfully!", "success")
 
     return render_template("manager_fees.html", fee_config=fee_config)
 
