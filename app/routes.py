@@ -1,8 +1,8 @@
 from app import app, db, bcrypt
-from flask import render_template, redirect, url_for, flash, request, current_app
+from flask import render_template, redirect, url_for, request, flash, current_app
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm, ListItemForm
-from app.models import User, Item
+from app.models import FeeConfig, User, Item
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -10,6 +10,7 @@ import base64
 from werkzeug.utils import secure_filename
 import os
 import uuid
+
 
 # Decorators
 
@@ -514,3 +515,22 @@ def manager_dashboard():
                            approved_items=[{"name": "Laptop"}, {"name": "Smartphone"}, {"name": "Headphones"}],
                            rejected_items=[{"name": "Old Monitor"}, {"name": "Broken Keyboard"}],
                            pending_items=[{"name": "Gaming Console"}, {"name": "Tablet"}])
+
+
+
+
+
+
+
+
+
+
+# Route for Manager to Update Fees
+@app.route('/manager/fees', methods=['GET', 'POST'])
+def manager_fees():
+    fee_config = FeeConfig.get_current_fees()
+    
+
+    return render_template("manager_fees.html", fee_config=fee_config)
+
+
