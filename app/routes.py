@@ -2,7 +2,7 @@ from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
-from app.models import User, Item, Bid
+from app.models import User, Item, Bid, WaitingList
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
