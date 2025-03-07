@@ -1,5 +1,5 @@
 from app import app, db, bcrypt
-from flask import render_template, redirect, url_for, flash, request, current_app, jsonify
+from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm, ListItemForm
 from app.models import User, Item, ExpertAvailabilities
@@ -392,6 +392,7 @@ def expert_availability():
         ExpertAvailabilities.query.filter_by(user_id=user_id).delete()
         
         if not dates and not start_times:
+            db.session.commit()
             return redirect(url_for('expert_availability'))
 
         splitDates = dates.split(",")
@@ -415,20 +416,7 @@ def expert_availability():
         return redirect(url_for('expert_availability'))
 
     else:
-        
-        availabilities = ExpertAvailabilities.query.filter_by(user_id=user_id).all()
-        timeslots = []
-        for availability in availabilities:
-            timeslots.append({
-                'date': availability.date.strftime('%Y-%m-%d'),
-                'start_time': availability.start_time.strftime('%H:%M'),
-            })
-
-        return render_template('expert_availability.html',timeslots=timeslots)
-
-
-
-
+        return render_template('expert_availability.html')
 
 #Route: Expert Account Page
 @app.route('/expert/account')

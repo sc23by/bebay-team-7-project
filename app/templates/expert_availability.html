@@ -81,20 +81,14 @@
             selectedTimeslots.push({ date: formattedDate, start_time: startTime });
         });
 
-        alert('Selected timeslots to submit:\n' + selectedTimeslots.map(ts => `Date: ${ts.date}, Start Time: ${ts.start_time}`).join('\n'));
-
         form.querySelector('[name="date"]').value = "";
         form.querySelector('[name="start_time"]').value = "";
-
         selectedTimeslots.forEach((timeslot, index) => {
-        form.querySelector('[name="date"]').value += timeslot.date + (index < selectedTimeslots.length - 1 ? ',' : '');  // Append dates
-        form.querySelector('[name="start_time"]').value += timeslot.start_time + (index < selectedTimeslots.length - 1 ? ',' : '');  // Append start times
-    });
-        alert(`Date: ${document.getElementById('date').value}\n` + `Start Time: ${document.getElementById('start_time').value}\n`);
-        
+        form.querySelector('[name="date"]').value += timeslot.date + (index < selectedTimeslots.length - 1 ? ',' : '');  
+        form.querySelector('[name="start_time"]').value += timeslot.start_time + (index < selectedTimeslots.length - 1 ? ',' : '');  
+    });        
         form.submit();
     }
-
 
     function toggleTimeSlotCellColour(timeSlotCell) {
         timeSlotCell.classList.toggle("filled")
