@@ -327,7 +327,17 @@ def user_list_item():
             return redirect(url_for('user_list_item', form=form))
 
         listing_time = datetime.utcnow()
-        
+        if 'authenticate' in request.form:
+            date_time = None
+            expiration_time = None
+        else:
+            date_time = datetime.utcnow()
+            expiration_time = listing_time + timedelta(
+                days=int(form.days.data),
+                hours=int(form.hours.data),
+                minutes=int(form.minutes.data)
+            )
+
         # Store filename in DB (relative path)
         new_item = Item(
             seller_id=current_user.id,
@@ -335,22 +345,34 @@ def user_list_item():
             description=form.description.data,
             minimum_price=form.minimum_price.data,
             item_image=filename,
-            date_time=datetime.utcnow(), 
-            expiration_time=listing_time + timedelta(
-                days=int(form.days.data),
-                hours=int(form.hours.data),
-                minutes=int(form.minutes.data)
-                ),
+            date_time=date_time,
+            expiration_time=expiration_time,
+            days=int(form.days.data),
+            hours=int(form.hours.data),
+            minutes=int(form.minutes.data),
             shipping_cost=form.shipping_cost.data,
             approved=False
         )
         
         db.session.add(new_item)
         db.session.commit()
-        flash('Item listed successfully!', 'success')
-        return redirect(url_for('user_home')) 
+        if 'authenticate' in request.form:
+            waiting_list_entry = WaitingList(item_id=new_item.item_id)
+            db.session.add(waiting_list_entry)
+            db.session.commit()
+        else :
+            flash('Item listed successfully!', 'success')
+        return redirect(url_for('user_home'))
         
     return render_template('user_list_item.html', form=form)
+
+# Route: For clicking on an item to see more detail
+#@app.route('/request_authentication/<int:item_id>', methods=['POST'])
+#@user_required
+#def request_authentication(item_id):
+    
+
+
 
 # Route: For clicking on an item to see more detail
 @app.route('/item/<int:item_id>')
