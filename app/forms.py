@@ -91,20 +91,34 @@ class UserInfoForm(FlaskForm):
         DataRequired(), 
         Length(min=2, max=30, message="First name must be 2-30 characters."),
         Regexp('^[A-Za-z]+$', message="First name should only contain letters.")
-    ])
+    ]) 
 
+    update_info = SubmitField('Update Info')
+
+# Form for changing password
+class ChangeUsernameForm(FlaskForm):
+    """
+    Allows user to change username
+    """
     username = StringField('Username', validators=[
         DataRequired(), 
         Length(min=3, max=20, message="Username must be 3-20 characters."),
         Regexp('^[A-Za-z0-9_]+$', message="Only letters, numbers, and underscores allowed.")
     ])
 
+    update_username = SubmitField('Edit')
+
+# Form for changing password
+class ChangeEmailForm(FlaskForm):
+    """
+    Allows user to change email
+    """
     email = StringField('Email', validators=[
         DataRequired(), 
         Email(message="Invalid email address.")
     ])
 
-    update_info = SubmitField('Update Info')
+    update_email = SubmitField('Edit')
 
 # Form for changing password
 class ChangePasswordForm(FlaskForm):

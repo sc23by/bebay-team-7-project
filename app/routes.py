@@ -1,7 +1,7 @@
 from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
-from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm, ListItemForm
+from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm
 from app.models import User, Item, watched_item, PaymentInfo
 from functools import wraps
 import matplotlib.pyplot as plt
@@ -269,21 +269,6 @@ def account():
     Redirects to account page, has buttons to other pages and user information.
     """
     sidebar_form = SideBarForm()
-    info_form = UserInfoForm()
-    password_form = ChangePasswordForm()
-    card_form = CardInfoForm()
-
-    user = User.query.get(current_user.id)
-    # find users payment and shipping info from PaymentInfo table 
-    payment_info = PaymentInfo.query.filter(PaymentInfo.user_id == user.id).first()
-
-    # Only access attributes if payment_info is not None
-    if payment_info:  
-        payment_type = payment_info.payment_type
-        shipping_info = payment_info.shipping_address
-    else:
-        payment_type = None
-        shipping_info = None
 
     if sidebar_form.validate_on_submit() :
         if sidebar_form.info.data:
@@ -297,22 +282,45 @@ def account():
         elif sidebar_form.logout.data:
             return redirect(url_for("logout")) 
     
+    info_form = UserInfoForm()
+    username_form = ChangeUsernameForm()
+    email_form = ChangeEmailForm()
+    password_form = ChangePasswordForm()
+    card_form = CardInfoForm()
+    
+    user = User.query.get(current_user.id)
+    # find users payment and shipping info from PaymentInfo table 
+    payment_info = PaymentInfo.query.filter(PaymentInfo.user_id == user.id).first()
+
+    # Only access attributes if payment_info is not None
+    if payment_info:  
+        payment_type = payment_info.payment_type
+        shipping_info = payment_info.shipping_address
+    else:
+        payment_type = None
+        shipping_info = None
+    
     # if user info is updated, update in db
     if info_form.update_info.data and info_form.validate_on_submit():
         user.first_name=info_form.first_name.data
         user.last_name=info_form.last_name.data
         db.session.commit()
-        if User.query.filter_by(username=info_form.username.data).first():
+    
+    # if username is updated, validate then update in db
+    if username_form.update_username.data and username_form.validate_on_submit():
+        if User.query.filter_by(username=username_form.username.data).first():
             flash('Username already exists. Please choose a different one.', 'danger')
         else:
-            user.username=info_form.username.data
+            user.username=username_form.username.data
             db.session.commit()
             flash('Username updated successfully!', 'success')
 
-        if User.query.filter_by(email=info_form.email.data).first():
+    # if email is updated, validate then update in db
+    if email_form.update_email.data and email_form.validate_on_submit():
+        if User.query.filter_by(email=email_form.email.data).first():
             flash('Email already exists. Please choose a different one.', 'danger')
         else:
-            user.email=info_form.email.data
+            user.email=email_form.email.data
             db.session.commit()
             flash('Email updated successfully!', 'success')
 
@@ -336,12 +344,13 @@ def account():
         flash('Payment info updated successfully!', 'success')
 
     # populate forms with user information
-    if request.method == 'GET' or not info_form.validate_on_submit() or not card_form.validate_on_submit() or not password_form.validate_on_submit():
+    if request.method == 'GET' or not info_form.validate_on_submit() or not username_form.validate_on_submit() or not email_form.validate_on_submit() or not card_form.validate_on_submit() or not password_form.validate_on_submit():
         # user info
         info_form.first_name.data = user.first_name
         info_form.last_name.data = user.last_name
-        info_form.username.data = user.username
-        info_form.email.data = user.email
+
+        username_form.username.data = user.username
+        email_form.email.data = user.email
 
         # if info then print in form else dont print anything
         if payment_info:
@@ -351,7 +360,8 @@ def account():
             card_form.card_number.data = None
             card_form.shipping_address.data = None
 
-    return render_template('user_account.html', sidebar_form=sidebar_form, info_form=info_form, password_form=password_form, card_form=card_form)
+    return render_template('user_account.html', sidebar_form=sidebar_form, info_form=info_form, 
+        username_form=username_form, email_form=email_form, password_form=password_form, card_form=card_form)
 
 # Route: My Listings
 @app.route('/user/my_listings', methods=['GET', 'POST'])
