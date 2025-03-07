@@ -202,7 +202,7 @@ def user_home():
     """
     items = Item.query.all()  # Fetch all items from the database
         
-    return render_template('user_home.html', items = items)
+    return render_template('user_home.html', pagetitle='User Home', items = items)
 
 # Route: Watch
 @app.route('/user/watch', methods=['POST'])
@@ -360,7 +360,7 @@ def account():
             card_form.card_number.data = None
             card_form.shipping_address.data = None
 
-    return render_template('user_account.html', sidebar_form=sidebar_form, info_form=info_form, 
+    return render_template('user_account.html', pagetitle='Account', sidebar_form=sidebar_form, info_form=info_form, 
         username_form=username_form, email_form=email_form, password_form=password_form, card_form=card_form)
 
 # Route: My Listings
@@ -384,7 +384,7 @@ def my_listings():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    return render_template('user_my_listings.html', form=form)
+    return render_template('user_my_listings.html', pagetitle='Listings', form=form)
 
 # Route: Watchlist
 @app.route('/user/watchlist', methods=['GET', 'POST'])
@@ -410,7 +410,7 @@ def watchlist():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    return render_template('user_watchlist.html', form=form, watched_items = watched_items)
+    return render_template('user_watchlist.html', pagetitle='Watchlist', form=form, watched_items = watched_items)
 
 # Route: Sort watchlist items
 @app.route('/user/sort_watchlist', methods=['GET'])
@@ -465,7 +465,7 @@ def notifications():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    return render_template('user_notifications.html', form=form)
+    return render_template('user_notifications.html', pagetitle='Notifications', form=form)
 
 # Route: List Item Page
 @app.route('/user/list_item', methods=['GET', 'POST'])
@@ -513,7 +513,7 @@ def user_list_item():
         flash('Item listed successfully!', 'success')
         return redirect(url_for('user_home')) 
         
-    return render_template('user_list_item.html', form=form)
+    return render_template('user_list_item.html', title='List Item', form=form)
 
 # Route: For clicking on an item to see more detail
 @app.route('/item/<int:item_id>')
