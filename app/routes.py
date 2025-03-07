@@ -194,9 +194,11 @@ def logout():
 @user_required
 def user_home():
     """
-    Redirects to main page when website first opened. Displays all items.
+    Redirects to main page when website first opened. Displays only items not in waiting list.
     """
-    items = Item.query.all()  # Fetch all items from the database
+    items = Item.query.filter(
+        ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+    ).all()
     return render_template('user_home.html', items = items)
 
 # Route: Account
