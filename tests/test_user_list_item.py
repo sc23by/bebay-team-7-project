@@ -157,7 +157,7 @@ def test_boundry_price(loggedInClientP1):
         data = {
             "item_name": "Test Item",
             "description": "A great test item!",
-            "minimum_price": 0.00,
+            "minimum_price": 0.01,
             "shipping_cost": 5.50,
             "days": 3,
             "hours": 2,
@@ -226,7 +226,7 @@ def test_boundry_shipping_cost(loggedInClientP1):
             "item_name": "Test Item",
             "description": "A great test item!",
             "minimum_price": 5.00,
-            "shipping_cost": 0.00,
+            "shipping_cost": 0.01,
             "days": 1,
             "hours": 2,
             "minutes": 30,
