@@ -2,7 +2,7 @@ from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm, ListItemForm
-from app.models import User, Item, ExpertAvailabilities
+from app.models import User, Item, Bid, ExpertAvailabilities
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -104,7 +104,10 @@ def redirect_based_on_priority(user):
 
 # Function: Allow only certain filename endings for images
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+    if not filename or '.' not in filename:
+        return False  # Ensure empty or invalid filenames fail early
+    ext = filename.rsplit('.', 1)[1].lower()
+    return ext in app.config['ALLOWED_EXTENSIONS']
 
 
 # Guest Pages
@@ -308,7 +311,7 @@ def notifications():
 @user_required
 def user_list_item():
     form = ListItemForm()
-    
+
     if form.validate_on_submit():
         # Ensure the upload folder exists
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -319,12 +322,10 @@ def user_list_item():
             filename = f"{uuid.uuid4().hex}_{secure_filename(image_file.filename)}"
             filepath = os.path.join(app.config['ITEM_IMAGE_FOLDER'], filename)
             image_file.save(filepath)
-        else:
+        elif image_file and not allowed_file(image_file.filename):
             flash('Invalid file type. Only images are allowed.', 'danger')
+            return redirect(url_for('user_list_item', form=form))
 
-        # Formatting for prices
-        #minimum_price = float(f"{form.minimum_price.data:.2f}")
-        #shipping_cost = float(f"{form.shipping_cost.data:.2f}")
         listing_time = datetime.utcnow()
         
         # Store filename in DB (relative path)
@@ -353,9 +354,53 @@ def user_list_item():
 
 # Route: For clicking on an item to see more detail
 @app.route('/item/<int:item_id>')
-def item_details(item_id):
+def user_item_details(item_id):
     item = Item.query.get_or_404(item_id)  # Fetch the item or return 404
-    return render_template('item_details.html', item=item)
+    form=BidForm()
+
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
+    
+    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
+
+# Route: Placing a bid
+@app.route('/item/<int:item_id>/bid', methods=['GET', 'POST'])
+@user_required
+def place_bid(item_id):
+    item = Item.query.get_or_404(item_id)
+    form = BidForm()
+
+    # Check if the auction has expired
+    if datetime.utcnow() > item.expiration_time:
+        flash("Bidding has ended for this item.", "danger")
+        return redirect(url_for('user_item_details', item_id=item_id))
+
+    # Get the current highest bid
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+
+    if form.validate_on_submit():
+        bid_amount = form.bid_amount.data
+
+        # Check if bid is valid
+        if bid_amount <= highest_bid:
+            flash("Your bid must be higher than the current highest bid!", "danger")
+        else:
+            new_bid = Bid(
+                item_id=item_id,
+                user_id=current_user.id,
+                bid_amount=bid_amount,
+                bid_date_time=datetime.utcnow()
+            )
+            db.session.add(new_bid)
+            db.session.commit()
+            flash("Bid placed successfully!", "success")
+            return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
+
+
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+    
+    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
+
+
 
 
 # Expert Pages
@@ -513,7 +558,7 @@ def manager_expert_availability():
 #Route: Manager view of Items that are approved, recycled, and pending items
 @app.route('/manager_overview')
 def manager_dashboard():
-    return render_template('manager/overview).html',
+    return render_template('manager_overview.html',
                            userName="JohnDoe",
                            userPriority=2,
                            userEmail="john.doe@example.com",

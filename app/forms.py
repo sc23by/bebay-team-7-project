@@ -159,7 +159,7 @@ class ListItemForm(FlaskForm):
     
     item_image = FileField(
         'Upload Image', 
-        validators=[DataRequired(), FileAllowed({'png', 'jpg', 'jpeg', 'gif'}, 'Only images are allowed!')]
+        validators=[DataRequired()]
     )
     
     # Dropdowns for duration selection
@@ -190,3 +190,10 @@ class ListItemForm(FlaskForm):
     
     submit = SubmitField('List Item')
 
+class BidForm(FlaskForm):
+    bid_amount = DecimalField("Your Bid (£)",
+        validators=[DataRequired(),
+        NumberRange(min=0.01)],
+        render_kw={"step": "0.01", "min": "0", "class": "currency-input"})
+
+    submit = SubmitField("Place Bid")
