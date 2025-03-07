@@ -327,7 +327,6 @@ def user_list_item():
         elif image_file and not allowed_file(image_file.filename):
             flash('Invalid file type. Only images are allowed.', 'danger')
             return redirect(url_for('user_list_item', form=form))
-
         listing_time = datetime.utcnow()
         if 'authenticate' in request.form:
             date_time = None
@@ -367,13 +366,6 @@ def user_list_item():
         return redirect(url_for('user_home'))
         
     return render_template('user_list_item.html', form=form)
-
-# Route: For clicking on an item to see more detail
-#@app.route('/request_authentication/<int:item_id>', methods=['POST'])
-#@user_required
-#def request_authentication(item_id):
-    
-
 
 
 # Route: For clicking on an item to see more detail

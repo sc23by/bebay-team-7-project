@@ -154,7 +154,7 @@ class ListItemForm(FlaskForm):
         'Starting Price (£)',
         places=2, 
         validators=[DataRequired(), NumberRange(min=0)],
-        render_kw={"step": "0.01", "min": "0", "class": "currency-input"}
+        render_kw={"step": "0.01", "min": "0.01", "class": "currency-input"}
     )
     
     item_image = FileField(
@@ -185,11 +185,11 @@ class ListItemForm(FlaskForm):
         'Shipping Cost (£)', 
         places=2, 
         validators=[DataRequired(), NumberRange(min=0)],
-        render_kw={"step": "0.01", "min": "0", "class": "currency-input"}
+        render_kw={"step": "0.01", "min": "0.01", "class": "currency-input"}
     )
     
     submit = SubmitField('List Item')
-    
+
 
 class BidForm(FlaskForm):
     bid_amount = DecimalField("Your Bid (£)",
