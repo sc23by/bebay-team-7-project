@@ -49,11 +49,11 @@ class Item(db.Model):
     minimum_price = db.Column(db.Numeric(10,2), nullable=False)
     description = db.Column(db.String(500), nullable=False)
     item_image = db.Column(db.String(500), nullable=False)
-    date_time = db.Column(db.DateTime, nullable=False)
+    date_time = db.Column(db.DateTime, nullable=True)
     days = db.Column(db.Integer, nullable=False, default=0)
     hours = db.Column(db.Integer, nullable=False, default=0)
     minutes = db.Column(db.Integer, nullable=False, default=0)
-    expiration_time = db.Column(db.DateTime, nullable=False)  
+    expiration_time = db.Column(db.DateTime, nullable=True)  
     approved = db.Column(db.Boolean, default=False)
     shipping_cost = db.Column(db.Numeric(10,2), nullable=False)
     expert_payment_percentage = db.Column(db.Float, nullable=False, default=0.1) # Default can be changed by managers
