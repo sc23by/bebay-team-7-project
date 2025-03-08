@@ -2,7 +2,7 @@ from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
-from app.models import User, Item, Bid, WaitingList
+from app.models import User, Item, Bid, WaitingList, ExpertAvailabilities
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -440,10 +440,44 @@ def expert_messaging():
     return render_template('expert_messaging.html')
 
 #Route: Expert Avaliablity Page
-@app.route('/expert/availability')
+@app.route('/expert/availability',methods=['POST','GET'])
 @expert_required
-def expert_set_availability():
-    return render_template('expert_availability.html')
+def expert_availability():
+
+    user_id = current_user.id
+    if request.method == "POST":
+
+        dates = request.form.get('date')
+        start_times = request.form.get('start_time')
+
+        ExpertAvailabilities.query.filter_by(user_id=user_id).delete()
+        
+        if not dates and not start_times:
+            db.session.commit()
+            return redirect(url_for('expert_availability'))
+
+        splitDates = dates.split(",")
+        splitStartTimes =start_times.split(",")
+
+        for date, start_time, in zip(splitDates, splitStartTimes, ):
+            date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+
+            start_time_obj = datetime.strptime(start_time, '%H:%M').time()
+
+            availability = ExpertAvailabilities(
+                user_id=user_id,
+                date=date_obj,
+                start_time=start_time_obj,
+                duration=1
+            )
+
+            db.session.add(availability)
+
+        db.session.commit()
+        return redirect(url_for('expert_availability'))
+
+    else:
+        return render_template('expert_availability.html')
 
 #Route: Expert Account Page
 @app.route('/expert/account')
