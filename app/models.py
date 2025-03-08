@@ -45,15 +45,19 @@ class Solditem(db.Model):
 class Item(db.Model):
     item_id = db.Column(db.Integer, primary_key=True)
     seller_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
-    item_name = db.Column(db.String(100), nullable=False)  # Removed unique constraint so same name can be reused
+    item_name = db.Column(db.String(100), nullable=False)
     minimum_price = db.Column(db.Numeric(10,2), nullable=False)
     description = db.Column(db.String(500), nullable=False)
     item_image = db.Column(db.String(500), nullable=False)
-    date_time = db.Column(db.DateTime, nullable=False)
-    expiration_time = db.Column(db.DateTime, nullable=False)  
+    date_time = db.Column(db.DateTime, nullable=True)
+    days = db.Column(db.Integer, nullable=False, default=0)
+    hours = db.Column(db.Integer, nullable=False, default=0)
+    minutes = db.Column(db.Integer, nullable=False, default=0)
+    expiration_time = db.Column(db.DateTime, nullable=True)  
     approved = db.Column(db.Boolean, default=False)
     shipping_cost = db.Column(db.Numeric(10,2), nullable=False)
     expert_payment_percentage = db.Column(db.Float, nullable=False, default=0.1) # Default can be changed by managers
+    expert_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = True)
     
     def get_image_url(self):
         return url_for('static', filename=f'images/items/{self.item_image}')
@@ -63,6 +67,13 @@ class Item(db.Model):
         """Calculate remaining time from now until expiration."""
         remaining = self.expiration_time - datetime.utcnow()
         return max(remaining, timedelta(0))  # Ensure it doesn't go negative
+
+# Waiting List Model
+class WaitingList(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.item_id'), nullable=False, unique=True)  # Ensures an item isn't requested twice
+    request_time = db.Column(db.DateTime, default=datetime.utcnow)
+    expire_time = db.Column(db.DateTime, default=lambda: datetime.utcnow() + timedelta(days=2))
 
 # Bid model
 class Bid(db.Model):

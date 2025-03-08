@@ -2,7 +2,7 @@ from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
-from app.models import User, Item, Bid
+from app.models import User, Item, Bid, WaitingList
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -194,9 +194,11 @@ def logout():
 @user_required
 def user_home():
     """
-    Redirects to main page when website first opened. Displays all items.
+    Redirects to main page when website first opened. Displays only items not in waiting list.
     """
-    items = Item.query.all()  # Fetch all items from the database
+    items = Item.query.filter(
+        ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+    ).all()
     return render_template('user_home.html', items = items)
 
 # Route: Account
@@ -325,9 +327,18 @@ def user_list_item():
         elif image_file and not allowed_file(image_file.filename):
             flash('Invalid file type. Only images are allowed.', 'danger')
             return redirect(url_for('user_list_item', form=form))
-
         listing_time = datetime.utcnow()
-        
+        if 'authenticate' in request.form:
+            date_time = None
+            expiration_time = None
+        else:
+            date_time = datetime.utcnow()
+            expiration_time = listing_time + timedelta(
+                days=int(form.days.data),
+                hours=int(form.hours.data),
+                minutes=int(form.minutes.data)
+            )
+
         # Store filename in DB (relative path)
         new_item = Item(
             seller_id=current_user.id,
@@ -335,22 +346,27 @@ def user_list_item():
             description=form.description.data,
             minimum_price=form.minimum_price.data,
             item_image=filename,
-            date_time=datetime.utcnow(), 
-            expiration_time=listing_time + timedelta(
-                days=int(form.days.data),
-                hours=int(form.hours.data),
-                minutes=int(form.minutes.data)
-                ),
+            date_time=date_time,
+            expiration_time=expiration_time,
+            days=int(form.days.data),
+            hours=int(form.hours.data),
+            minutes=int(form.minutes.data),
             shipping_cost=form.shipping_cost.data,
             approved=False
         )
         
         db.session.add(new_item)
         db.session.commit()
-        flash('Item listed successfully!', 'success')
-        return redirect(url_for('user_home')) 
+        if 'authenticate' in request.form:
+            waiting_list_entry = WaitingList(item_id=new_item.item_id)
+            db.session.add(waiting_list_entry)
+            db.session.commit()
+        else :
+            flash('Item listed successfully!', 'success')
+        return redirect(url_for('user_home'))
         
     return render_template('user_list_item.html', form=form)
+
 
 # Route: For clicking on an item to see more detail
 @app.route('/item/<int:item_id>')
