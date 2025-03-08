@@ -1,6 +1,7 @@
 from app import db
+from flask import url_for
 from flask_login import UserMixin
-from sqlalchemy import ForeignKey, Numeric
+from sqlalchemy import ForeignKey
 from datetime import datetime, timedelta
 
 # Association model between watched item and user
@@ -20,7 +21,7 @@ class User(UserMixin, db.Model):
     last_name = db.Column(db.String(30), nullable=False)
     priority = db.Column(db.Integer, nullable=False, default=1)
     profile_picture = db.Column(db.String(255), nullable=False, default="default_profile.jpg")
-    watchlist = db.relationship('Item', secondary=watched_item, backref='watched_by') # allows user to watch multiple items
+    watchlist = db.relationship('Item', secondary=Watched_item, backref='watched_by') # allows user to watch multiple items
 
 # Expert model
 class ExpertAvailabilities(db.Model):
