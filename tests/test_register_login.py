@@ -176,4 +176,58 @@ def test_register_authenticated(loggedInClientP1):
     response = loggedInClientP1.get('/register')
     assert response.status_code == 302
     assert response.headers["Location"].endswith("/user")
+
+
+'''
+Testing login page
+'''
+
+def test_login_page_load(client):
+    print(f"{Colours.YELLOW}Testing login page - correct render:{Colours.RESET}")
+
+    response = client.get('/login')
+
+    assert response.status_code == 200
+    assert b'<h1>Login</h1>' in response.data
+
+def test_login_page_load(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing login page - redirect for authenticed users:{Colours.RESET}")
+
+    response = loggedInClientP1.get('/login')
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/user")
+
+
+def test_login_non_existant(client):
+    print(f"{Colours.YELLOW}Testing login page - attemt login not real account:{Colours.RESET}")
+
+    response = client.post('/login', data={
+        'username':'NotReal',
+        'password':'Firstpassword1!'}
+        , follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b'Invalid username or password.' in response.data
+
+
+def test_login_(client):
+    print(f"{Colours.YELLOW}Testing login page - login:{Colours.RESET}")
+
+    with app.app_context():
+        user = User(username='testuser',
+                    email='existing@example.com',
+                    password=bcrypt.generate_password_hash('Passwords12345'),
+                    first_name='firstname',
+                    last_name='lastname')
+        db.session.add(user)
+        db.session.commit() 
+
+    response = client.post('/login', data={
+        'username':'testuser',
+        'password':'Passwords12345'}
+        , follow_redirects=False)
+
+    assert response.status_code == 302
+    assert response.headers["Location"].startswith("/user")
     

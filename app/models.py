@@ -4,7 +4,7 @@ from sqlalchemy import ForeignKey, Numeric
 from datetime import datetime, timedelta
 
 # Association model between watched item and user
-watched_item = db.Table(
+Watched_item = db.Table(
     'watched_item',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
     db.Column('item_id', db.Integer, db.ForeignKey('item.item_id'), primary_key=True)
@@ -26,11 +26,9 @@ class User(UserMixin, db.Model):
 class ExpertAvailabilities(db.Model):
     availability_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)  # Each expert must be a unique user
-    available = db.Column(db.Boolean)
     date = db.Column(db.Date, nullable=False)
     start_time = db.Column(db.Time, nullable=False)
-    end_time = db.Column(db.Time, nullable=False)
-    duration = db.Column(db.Integer)
+    duration = db.Column(db.Integer, default=1)
     user = db.relationship('User', backref='expert_availabilities')
 
 
@@ -53,15 +51,19 @@ class Solditem(db.Model):
 class Item(db.Model):
     item_id = db.Column(db.Integer, primary_key=True)
     seller_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
-    item_name = db.Column(db.String(100), nullable=False)  # Removed unique constraint so same name can be reused
+    item_name = db.Column(db.String(100), nullable=False)
     minimum_price = db.Column(db.Numeric(10,2), nullable=False)
     description = db.Column(db.String(500), nullable=False)
     item_image = db.Column(db.String(500), nullable=False)
-    date_time = db.Column(db.DateTime, nullable=False)
-    expiration_time = db.Column(db.DateTime, nullable=False)  
+    date_time = db.Column(db.DateTime, nullable=True)
+    days = db.Column(db.Integer, nullable=False, default=0)
+    hours = db.Column(db.Integer, nullable=False, default=0)
+    minutes = db.Column(db.Integer, nullable=False, default=0)
+    expiration_time = db.Column(db.DateTime, nullable=True)  
     approved = db.Column(db.Boolean, default=False)
     shipping_cost = db.Column(db.Numeric(10,2), nullable=False)
     expert_payment_percentage = db.Column(db.Float, nullable=False, default=0.1) # Default can be changed by managers
+    expert_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = True)
     
     def get_image_url(self):
         return url_for('static', filename=f'images/items/{self.item_image}')
@@ -72,10 +74,17 @@ class Item(db.Model):
         remaining = self.expiration_time - datetime.utcnow()
         return max(remaining, timedelta(0))  # Ensure it doesn't go negative
 
-# Bids model
-class Bids(db.Model):
+# Waiting List Model
+class WaitingList(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.item_id'), nullable=False, unique=True)  # Ensures an item isn't requested twice
+    request_time = db.Column(db.DateTime, default=datetime.utcnow)
+    expire_time = db.Column(db.DateTime, default=lambda: datetime.utcnow() + timedelta(days=2))
+
+# Bid model
+class Bid(db.Model):
     bid_id = db.Column(db.Integer, primary_key=True)
     item_id = db.Column(db.Integer, ForeignKey('item.item_id'), nullable=False)
     user_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
-    bid_amount = db.Column(db.Float, nullable=False)  # Allows precise bid values
+    bid_amount = db.Column(db.Numeric(10, 2), nullable=False)  # Allows precise bid values
     bid_date_time = db.Column(db.DateTime, nullable=False)

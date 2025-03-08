@@ -1,8 +1,8 @@
 from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
-from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm
-from app.models import User, Item, watched_item, PaymentInfo
+from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
+from app.models import User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -104,7 +104,10 @@ def redirect_based_on_priority(user):
 
 # Function: Allow only certain filename endings for images
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+    if not filename or '.' not in filename:
+        return False  # Ensure empty or invalid filenames fail early
+    ext = filename.rsplit('.', 1)[1].lower()
+    return ext in app.config['ALLOWED_EXTENSIONS']
 
 
 # Guest Pages
@@ -198,9 +201,11 @@ def logout():
 @user_required
 def user_home():
     """
-    Redirects to main page when website first opened. Displays all items.
+    Redirects to main page when website first opened. Displays only items not in waiting list.
     """
-    items = Item.query.all()  # Fetch all items from the database
+    items = Item.query.filter(
+        ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+    ).all()
         
     return render_template('user_home.html', pagetitle='User Home', items = items)
 
@@ -423,7 +428,7 @@ def sort_watchlist():
     sort_by = request.args.get('sort', 'all')
 
     # query the items in the user's watchlist
-    items = db.session.query(Item).join(watched_item).filter(watched_item.c.user_id == current_user.id)
+    items = db.session.query(Item).join(Watched_item).filter(Watched_item.c.user_id == current_user.id)
 
     if sort_by == "min_price":
         sorted_items = items.order_by(Item.minimum_price.asc()).all()
@@ -433,7 +438,7 @@ def sort_watchlist():
         sorted_items = items.all()
 
     # Convert to JSON format
-    watched_items = [{
+    Watched_items = [{
         "item_id": item.item_id,
         "item_name": item.item_name,
         "minimum_price": str(item.minimum_price),  # Convert Decimal to string
@@ -442,7 +447,7 @@ def sort_watchlist():
         "is_watched": True
     } for item in sorted_items]
 
-    return jsonify(watched_items)
+    return jsonify(Watched_items)
 
 # Route: Notifications
 @app.route('/user/notifications', methods=['GET', 'POST'])
@@ -472,7 +477,7 @@ def notifications():
 @user_required
 def user_list_item():
     form = ListItemForm()
-    
+
     if form.validate_on_submit():
         # Ensure the upload folder exists
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -483,14 +488,21 @@ def user_list_item():
             filename = f"{uuid.uuid4().hex}_{secure_filename(image_file.filename)}"
             filepath = os.path.join(app.config['ITEM_IMAGE_FOLDER'], filename)
             image_file.save(filepath)
-        else:
+        elif image_file and not allowed_file(image_file.filename):
             flash('Invalid file type. Only images are allowed.', 'danger')
-
-        # Formatting for prices
-        #minimum_price = float(f"{form.minimum_price.data:.2f}")
-        #shipping_cost = float(f"{form.shipping_cost.data:.2f}")
+            return redirect(url_for('user_list_item', form=form))
         listing_time = datetime.utcnow()
-        
+        if 'authenticate' in request.form:
+            date_time = None
+            expiration_time = None
+        else:
+            date_time = datetime.utcnow()
+            expiration_time = listing_time + timedelta(
+                days=int(form.days.data),
+                hours=int(form.hours.data),
+                minutes=int(form.minutes.data)
+            )
+
         # Store filename in DB (relative path)
         new_item = Item(
             seller_id=current_user.id,
@@ -498,28 +510,77 @@ def user_list_item():
             description=form.description.data,
             minimum_price=form.minimum_price.data,
             item_image=filename,
-            date_time=datetime.utcnow(), 
-            expiration_time=listing_time + timedelta(
-                days=int(form.days.data),
-                hours=int(form.hours.data),
-                minutes=int(form.minutes.data)
-                ),
+            date_time=date_time,
+            expiration_time=expiration_time,
+            days=int(form.days.data),
+            hours=int(form.hours.data),
+            minutes=int(form.minutes.data),
             shipping_cost=form.shipping_cost.data,
             approved=False
         )
         
         db.session.add(new_item)
         db.session.commit()
-        flash('Item listed successfully!', 'success')
-        return redirect(url_for('user_home')) 
+        if 'authenticate' in request.form:
+            waiting_list_entry = WaitingList(item_id=new_item.item_id)
+            db.session.add(waiting_list_entry)
+            db.session.commit()
+        else :
+            flash('Item listed successfully!', 'success')
+        return redirect(url_for('user_home'))
         
     return render_template('user_list_item.html', title='List Item', form=form)
 
+
 # Route: For clicking on an item to see more detail
 @app.route('/item/<int:item_id>')
-def item_details(item_id):
+def user_item_details(item_id):
     item = Item.query.get_or_404(item_id)  # Fetch the item or return 404
-    return render_template('item_details.html', item=item)
+    form=BidForm()
+
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
+    
+    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
+
+# Route: Placing a bid
+@app.route('/item/<int:item_id>/bid', methods=['GET', 'POST'])
+@user_required
+def place_bid(item_id):
+    item = Item.query.get_or_404(item_id)
+    form = BidForm()
+
+    # Check if the auction has expired
+    if datetime.utcnow() > item.expiration_time:
+        flash("Bidding has ended for this item.", "danger")
+        return redirect(url_for('user_item_details', item_id=item_id))
+
+    # Get the current highest bid
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+
+    if form.validate_on_submit():
+        bid_amount = form.bid_amount.data
+
+        # Check if bid is valid
+        if bid_amount <= highest_bid:
+            flash("Your bid must be higher than the current highest bid!", "danger")
+        else:
+            new_bid = Bid(
+                item_id=item_id,
+                user_id=current_user.id,
+                bid_amount=bid_amount,
+                bid_date_time=datetime.utcnow()
+            )
+            db.session.add(new_bid)
+            db.session.commit()
+            flash("Bid placed successfully!", "success")
+            return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
+
+
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+    
+    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
+
+
 
 
 # Expert Pages
@@ -543,10 +604,44 @@ def expert_messaging():
     return render_template('expert_messaging.html')
 
 #Route: Expert Avaliablity Page
-@app.route('/expert/availability')
+@app.route('/expert/availability',methods=['POST','GET'])
 @expert_required
-def expert_set_availability():
-    return render_template('expert_availability.html')
+def expert_availability():
+
+    user_id = current_user.id
+    if request.method == "POST":
+
+        dates = request.form.get('date')
+        start_times = request.form.get('start_time')
+
+        ExpertAvailabilities.query.filter_by(user_id=user_id).delete()
+        
+        if not dates and not start_times:
+            db.session.commit()
+            return redirect(url_for('expert_availability'))
+
+        splitDates = dates.split(",")
+        splitStartTimes =start_times.split(",")
+
+        for date, start_time, in zip(splitDates, splitStartTimes, ):
+            date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+
+            start_time_obj = datetime.strptime(start_time, '%H:%M').time()
+
+            availability = ExpertAvailabilities(
+                user_id=user_id,
+                date=date_obj,
+                start_time=start_time_obj,
+                duration=1
+            )
+
+            db.session.add(availability)
+
+        db.session.commit()
+        return redirect(url_for('expert_availability'))
+
+    else:
+        return render_template('expert_availability.html')
 
 #Route: Expert Account Page
 @app.route('/expert/account')
@@ -643,7 +738,7 @@ def manager_expert_availability():
 #Route: Manager view of Items that are approved, recycled, and pending items
 @app.route('/manager_overview')
 def manager_dashboard():
-    return render_template('manager/overview).html',
+    return render_template('manager_overview.html',
                            userName="JohnDoe",
                            userPriority=2,
                            userEmail="john.doe@example.com",
