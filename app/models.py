@@ -1,7 +1,15 @@
 from app import db
+from flask import url_for
 from flask_login import UserMixin
-from sqlalchemy import ForeignKey, Numeric
+from sqlalchemy import ForeignKey
 from datetime import datetime, timedelta
+
+# Association model between watched item and user
+Watched_item = db.Table(
+    'watched_item',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('item_id', db.Integer, db.ForeignKey('item.item_id'), primary_key=True)
+)
 
 # User model
 class User(UserMixin, db.Model):
@@ -13,6 +21,7 @@ class User(UserMixin, db.Model):
     last_name = db.Column(db.String(30), nullable=False)
     priority = db.Column(db.Integer, nullable=False, default=1)
     profile_picture = db.Column(db.String(255), nullable=False, default="default_profile.jpg")
+    watchlist = db.relationship('Item', secondary=Watched_item, backref='watched_by') # allows user to watch multiple items
 
 # Expert model
 class ExpertAvailabilities(db.Model):
@@ -28,8 +37,8 @@ class ExpertAvailabilities(db.Model):
 class PaymentInfo(db.Model):
     payment_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, ForeignKey('user.id'), unique=True, nullable=False)  # One user should have one payment info
-    payment_type = db.Column(db.String(30), nullable=False)
-    shipping_address = db.Column(db.String(500), nullable=False)
+    payment_type = db.Column(db.String(30), nullable=True)
+    shipping_address = db.Column(db.String(500), nullable=True)
 
 # Sold item model
 class Solditem(db.Model):
@@ -39,7 +48,7 @@ class Solditem(db.Model):
     buyer_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
     price = db.Column(db.Float, nullable=False)
 
-# item model
+# Item model
 class Item(db.Model):
     item_id = db.Column(db.Integer, primary_key=True)
     seller_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
@@ -80,4 +89,3 @@ class Bid(db.Model):
     user_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
     bid_amount = db.Column(db.Numeric(10, 2), nullable=False)  # Allows precise bid values
     bid_date_time = db.Column(db.DateTime, nullable=False)
-

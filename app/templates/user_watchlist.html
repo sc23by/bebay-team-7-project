@@ -1,3 +1,4 @@
+<!-- User Watchlist Page, see items that are currently being watched -->
 {% extends 'base_user.html' %}
 {% block content %}
 <body class="container-fluid bg-light">
@@ -6,7 +7,7 @@
         <!-- Sidebar -->
         <div class="col-md-3 col-lg-2 bg-white shadow-sm p-4">
             <div class="d-grid gap-2">
-                <form action="{{ url_for('watchlist') }}" method="post" name="sidebar">
+                <form action="{{ url_for('watchlist') }}" method="POST">
                     {{ form.hidden_tag() }}
 
                     <div>{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
@@ -20,8 +21,41 @@
 
         <!-- Content Area -->
         <div class="col-md-9 col-lg-10 p-5">
-            <h2 class="mb-4">My Watchlist</h2>            
+            <h2 class="mb-4">My Watchlist</h2>
+            <!-- Sort watchlist items dynamically using js -->
+            <select id="watchlist_dropdown" class="form-select">
+                <option value="all">Show All</option>
+                <option value="min_price">Price: Low to High</option>
+                <option value="name_asc">Name: A-Z</option>
+            </select>
 
+            <div id="watchlist_sort" class="row row-cols-3 row-cols-md-5 g-4">
+                {% for item in watched_items %}
+                <div class="col">
+                    <div class="card h-100">
+                        <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
+                             class="card-img-top" alt="{{ item.item_name }}">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ item.item_name }}</h5>
+                            <p class="card-text">Start Time: {{ item.date_time.strftime('%H:%M') }}</p>
+                            <p class="card-text">Price: £{{ item.minimum_price }}</p>
+                            <input type="button" value="Bid">
+                            {% if item in current_user.watchlist %}
+                                <span class="fa fa-heart selected" data-value="{{ current_user.watchlist | default(0) }}"
+                                    data-item-id="{{ item.item_id }}"></span>
+                                <input type="hidden" id="heart_Value" name="watch" value="1">
+                                <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
+                            {% else %}
+                                <span class="fa fa-heart " data-value="{{ current_user.watchlist | default(0) }}"
+                                    data-item-id="{{ item.item_id }}"></span>
+                                <input type="hidden" id="heart_Value" name="watch" value="0">
+                                <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 

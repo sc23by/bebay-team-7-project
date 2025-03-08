@@ -1,18 +1,25 @@
+<!-- User Home Page, see all items and sort through them -->
 {% extends "base_user.html" %}
-
 {% block content %}
     <h3>Hello {{ current_user.username }}</h3>
 
-    <div class="row row-cols-3 row-cols-md-5 g-4">
+    <!-- Sort items dynamically using js -->
+    <select id="items_dropdown" class="form-select">
+        <option value="all">Show All</option>
+        <option value="min_price">Price: Low to High</option>
+        <option value="name_asc">Name: A-Z</option>
+    </select>
+
+    <div id="items_sort"  class="row row-cols-3 row-cols-md-5 g-4">
+        
         {% for item in items %}
         <div class="col">
             <div class="card h-100">
-                <span class="fa fa-heart"></span>
                 <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
                      class="card-img-top" alt="{{ item.item_name }}">
                 <div class="card-body">
                     <h5 class="card-title">{{ item.item_name }}</h5>
-                    <p class="card-text">Description: £{{ item.description }}</p>
+                    <p class="card-text">Description: {{ item.description }}</p>
                     <p class="card-text">Duration: {{ item.duration }}</p>
                     <p class="card-text">Price: £{{ item.minimum_price }}</p>
                     <p class="card-text">Shipping Price: £{{ item.shipping_cost }}</p>
@@ -32,16 +39,29 @@
                     <a href="{{ url_for('user_item_details', item_id=item.item_id) }}" class="btn btn-primary">
                         View Details
                     </a>
+                    {% if item in current_user.watchlist %}
+                        <span class="fa fa-heart selected" data-value="{{ current_user.watchlist | default(0) }}"
+                            data-item-id="{{ item.item_id }}"></span>
+                        <input type="hidden" id="heart_Value" name="watch" value="1">
+                        <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
+                    {% else %}
+                        <span class="fa fa-heart " data-value="{{ current_user.watchlist | default(0) }}"
+                            data-item-id="{{ item.item_id }}"></span>
+                        <input type="hidden" id="heart_Value" name="watch" value="0">
+                        <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
+                    {% endif %}
+
+                    <input type="button" value="Bid">
                 </div>
             </div>
         </div>
         {% endfor %}
     </div>
 
-    <!-- Pagination buttons (optional) -->
+    <!-- Pagination buttons (optional)
     <div>
         <button>&laquo;</button>
         page
         <button>&raquo;</button>
-    </div>
+    </div> -->
 {% endblock %}
