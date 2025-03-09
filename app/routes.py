@@ -503,7 +503,7 @@ def user_list_item():
                 minutes=int(form.minutes.data)
             )
 
-        # Store filename in DB (relative path)
+        # Store item in DB
         new_item = Item(
             seller_id=current_user.id,
             item_name=form.item_name.data,
@@ -521,6 +521,7 @@ def user_list_item():
         
         db.session.add(new_item)
         db.session.commit()
+        
         if 'authenticate' in request.form:
             waiting_list_entry = WaitingList(item_id=new_item.item_id)
             db.session.add(waiting_list_entry)

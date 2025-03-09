@@ -65,6 +65,9 @@ class Item(db.Model):
     shipping_cost = db.Column(db.Numeric(10,2), nullable=False)
     expert_payment_percentage = db.Column(db.Float, nullable=False, default=0.1) # Default can be changed by managers
     expert_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = True)
+    # Store the fixed fees at the time of listing
+    site_fee_percentage = db.Column(db.Float, nullable=False)
+    expert_fee_percentage = db.Column(db.Float, nullable=False)
     
     def get_image_url(self):
         return url_for('static', filename=f'images/items/{self.item_image}')
@@ -74,10 +77,6 @@ class Item(db.Model):
         """Calculate remaining time from now until expiration."""
         remaining = self.expiration_time - datetime.utcnow()
         return max(remaining, timedelta(0))  # Ensure it doesn't go negative
-    
-    # Store the fixed fees at the time of listing
-    site_fee_percentage = db.Column(db.Float, nullable=False)
-    expert_fee_percentage = db.Column(db.Float, nullable=False)
 
     def calculate_fee(self, final_price, expert_approved=False):
         if expert_approved:
