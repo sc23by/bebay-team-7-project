@@ -713,13 +713,13 @@ def manager_accounts_sort_high_low():
 
 @app.route('/manager/accounts/filter/<int:filter_number>',methods=['GET','POST'])
 def manager_accounts_filter(filter_number):
-    filtered_accounts = []
-    
-    for account in accounts:
-        if account['number'] == filter_number:
-            filtered_accounts.append(account)
+    filtered_accounts = User.query.filter(User.priority == filter_number).all()
 
-    return render_template("manager_accounts.html",accounts = filtered_accounts)   
+    if not filtered_accounts:
+        filtered_accounts = []
+
+    return render_template("manager_accounts.html",accounts = filtered_accounts) 
+   
 
 @app.route('/manager/accounts/search',methods = ['GET'])
 def manager_accounts_search():
