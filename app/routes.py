@@ -739,11 +739,10 @@ def manager_accounts_search():
 #Route: Manager Listing Page
 @app.route('/manager/listings',methods=['GET'])
 def manager_listings():
-    user = User.query.get()
-    return render_template("manager_listings.html",account = user)
+    return render_template("manager_listings.html")
 
-@app.rotue('/manager/listings/<int:id>',methods=['GET'])
-def manager_lisgings_user():
+@app.route('/manager/listings/<int:id>',methods=['GET'])
+def manager_lisgings_user(id):
     user = User.query.get(id)
     return render_template("manager_listings.html",account = user)   
 
