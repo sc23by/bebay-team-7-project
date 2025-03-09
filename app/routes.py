@@ -1,8 +1,8 @@
 from app import app, db, bcrypt
-from flask import render_template, redirect, url_for, request, flash, current_app
+from flask import render_template, redirect, url_for, request, flash, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
-from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangePasswordForm, CardInfoForm, ListItemForm
-from app.models import FeeConfig, User, Item
+from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
+from app.models import FeeConfig, User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -10,7 +10,9 @@ import base64
 from werkzeug.utils import secure_filename
 import os
 import uuid
-
+from datetime import datetime, timedelta
+# Parses data sent by JS
+import json
 
 # Decorators
 
@@ -102,12 +104,14 @@ def redirect_based_on_priority(user):
 
 # Function: Allow only certain filename endings for images
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+    if not filename or '.' not in filename:
+        return False  # Ensure empty or invalid filenames fail early
+    ext = filename.rsplit('.', 1)[1].lower()
+    return ext in app.config['ALLOWED_EXTENSIONS']
 
 
 # Guest Pages
 
-# Route: Login Page
 @app.route('/')
 @guest_required
 def guest_home():
@@ -143,9 +147,16 @@ def register():
 
         hashed_password = bcrypt.generate_password_hash(form.password.data)
         user = User(first_name=form.first_name.data, last_name=form.last_name.data, username=form.username.data, email=form.email.data, password=hashed_password)
+
         db.session.add(user)
         db.session.commit()
 
+        # set up user ID in payment info table so that info can be updated later 
+        payment_info = PaymentInfo(user_id=user.id)
+
+        db.session.add(payment_info)
+        db.session.commit()
+        
         return redirect(url_for('login'))
     elif form.errors:
         flash('There were errors in the form. Please correct them.', 'danger')
@@ -190,10 +201,70 @@ def logout():
 @user_required
 def user_home():
     """
-    Redirects to main page when website first opened. Displays all items.
+    Redirects to main page when website first opened. Displays only items not in waiting list.
     """
-    items = Item.query.all()  # Fetch all items from the database
-    return render_template('user_home.html', items = items)
+    items = Item.query.filter(
+        ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+    ).all()
+        
+    return render_template('user_home.html', pagetitle='User Home', items = items)
+
+# Route: Watch
+@app.route('/user/watch', methods=['POST'])
+@user_required
+def watch():
+    """
+    Handles AJAX request for watchlist
+    """
+    # Gets item id and if heart was clicked from json data
+    data = request.get_json()
+    watch = data.get('watch')
+    item_id = data.get('item_id')
+
+    item = Item.query.get(item_id)
+    user = User.query.get(current_user.id)
+
+    if watch == 1:
+        # adds liked item to watchlist
+        if item not in user.watchlist:
+            user.watchlist.append(item)
+        # allows for item to be unliked
+        else:
+            user.watchlist.remove(item)
+    db.session.commit()
+    
+    return jsonify({'status':'OK','watch': watch}), 200
+
+# Route: Sort items on main page
+@app.route('/user/sort_items', methods=['GET'])
+@user_required
+def sort_items():
+    """
+    Handles json request to allow dynamic sort feature to sort items
+    """
+    # if user selects the sort function
+    sort_by = request.args.get('sort', 'all')
+
+    # query the items on the main page
+    if sort_by == "min_price":
+        sorted_items = Item.query.order_by(Item.minimum_price.asc()).all()
+    elif sort_by == "name_asc":
+        sorted_items = Item.query.order_by(Item.item_name.asc()).all()
+    else:
+        sorted_items = Item.query.all()
+
+    # Convert to JSON format
+    items = [{
+        "item_id": item.item_id,
+        "item_name": item.item_name,
+        "description": item.description,
+        "minimum_price": str(item.minimum_price),  # Convert Decimal to string
+        "shipping_cost": str(item.shipping_cost), 
+        "item_image": item.item_image,
+        "is_watched": True
+    } for item in sorted_items]
+
+    return jsonify(items)
 
 # Route: Account
 @app.route('/user/account', methods=['GET', 'POST'])
@@ -204,7 +275,7 @@ def account():
     """
     sidebar_form = SideBarForm()
 
-    if sidebar_form.validate_on_submit() and 'sidebar' in request.form:
+    if sidebar_form.validate_on_submit() :
         if sidebar_form.info.data:
             return redirect(url_for("account"))
         elif sidebar_form.my_listings.data:
@@ -215,23 +286,87 @@ def account():
             return redirect(url_for("notifications"))
         elif sidebar_form.logout.data:
             return redirect(url_for("logout")) 
-
+    
     info_form = UserInfoForm()
-
-    if info_form.validate_on_submit():
-        return redirect(url_for('account'))
-
+    username_form = ChangeUsernameForm()
+    email_form = ChangeEmailForm()
     password_form = ChangePasswordForm()
-
-    if password_form.validate_on_submit():
-        return redirect(url_for('account'))
-
     card_form = CardInfoForm()
+    
+    user = User.query.get(current_user.id)
+    # find users payment and shipping info from PaymentInfo table 
+    payment_info = PaymentInfo.query.filter(PaymentInfo.user_id == user.id).first()
 
-    if card_form.validate_on_submit():
-        return redirect(url_for('account'))
+    # Only access attributes if payment_info is not None
+    if payment_info:  
+        payment_type = payment_info.payment_type
+        shipping_info = payment_info.shipping_address
+    else:
+        payment_type = None
+        shipping_info = None
+    
+    # if user info is updated, update in db
+    if info_form.update_info.data and info_form.validate_on_submit():
+        user.first_name=info_form.first_name.data
+        user.last_name=info_form.last_name.data
+        db.session.commit()
+    
+    # if username is updated, validate then update in db
+    if username_form.update_username.data and username_form.validate_on_submit():
+        if User.query.filter_by(username=username_form.username.data).first():
+            flash('Username already exists. Please choose a different one.', 'danger')
+        else:
+            user.username=username_form.username.data
+            db.session.commit()
+            flash('Username updated successfully!', 'success')
 
-    return render_template('user_account.html', sidebar_form=sidebar_form, info_form=info_form, password_form=password_form, card_form=card_form)
+    # if email is updated, validate then update in db
+    if email_form.update_email.data and email_form.validate_on_submit():
+        if User.query.filter_by(email=email_form.email.data).first():
+            flash('Email already exists. Please choose a different one.', 'danger')
+        else:
+            user.email=email_form.email.data
+            db.session.commit()
+            flash('Email updated successfully!', 'success')
+
+    # if password is updated, update in db
+    if password_form.update_privacy.data and password_form.validate_on_submit():
+        if password_form.new_password.data != password_form.confirm_password.data:
+            flash('Passwords do not match.', 'danger')
+        else:
+            hashed_password = bcrypt.generate_password_hash(password_form.new_password.data)
+            user.password = hashed_password
+            db.session.commit()
+            flash('Password updated successfully!', 'success')
+
+    # if payment info is updated, update in db
+    if card_form.update_card.data and card_form.validate_on_submit():
+        # Update existing payment info for current user
+        payment_info.payment_type = card_form.card_number.data
+        payment_info.shipping_address = card_form.shipping_address.data
+
+        db.session.commit()
+        flash('Payment info updated successfully!', 'success')
+
+    # populate forms with user information
+    if request.method == 'GET' or not info_form.validate_on_submit() or not username_form.validate_on_submit() or not email_form.validate_on_submit() or not card_form.validate_on_submit() or not password_form.validate_on_submit():
+        # user info
+        info_form.first_name.data = user.first_name
+        info_form.last_name.data = user.last_name
+
+        username_form.username.data = user.username
+        email_form.email.data = user.email
+
+        # if info then print in form else dont print anything
+        if payment_info:
+            card_form.card_number.data = payment_info.payment_type
+            card_form.shipping_address.data = payment_info.shipping_address
+        else:
+            card_form.card_number.data = None
+            card_form.shipping_address.data = None
+
+    return render_template('user_account.html', pagetitle='Account', sidebar_form=sidebar_form, info_form=info_form, 
+        username_form=username_form, email_form=email_form, password_form=password_form, card_form=card_form)
 
 # Route: My Listings
 @app.route('/user/my_listings', methods=['GET', 'POST'])
@@ -254,7 +389,7 @@ def my_listings():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    return render_template('user_my_listings.html', form=form)
+    return render_template('user_my_listings.html', pagetitle='Listings', form=form)
 
 # Route: Watchlist
 @app.route('/user/watchlist', methods=['GET', 'POST'])
@@ -264,6 +399,9 @@ def watchlist():
     Redirects to watchlist page, has buttons to other pages.
     """
     form = SideBarForm()
+
+    user = User.query.get(current_user.id)
+    watched_items = user.watchlist
 
     if form.validate_on_submit():
         if form.info.data:
@@ -277,7 +415,39 @@ def watchlist():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    return render_template('user_watchlist.html', form=form)
+    return render_template('user_watchlist.html', pagetitle='Watchlist', form=form, watched_items = watched_items)
+
+# Route: Sort watchlist items
+@app.route('/user/sort_watchlist', methods=['GET'])
+@user_required
+def sort_watchlist():
+    """
+    Handles json request to allow dynamic sort feature to sort items
+    """
+    # if user selects the sort function
+    sort_by = request.args.get('sort', 'all')
+
+    # query the items in the user's watchlist
+    items = db.session.query(Item).join(Watched_item).filter(Watched_item.c.user_id == current_user.id)
+
+    if sort_by == "min_price":
+        sorted_items = items.order_by(Item.minimum_price.asc()).all()
+    elif sort_by == "name_asc":
+        sorted_items = items.order_by(Item.item_name.asc()).all()
+    else:
+        sorted_items = items.all()
+
+    # Convert to JSON format
+    Watched_items = [{
+        "item_id": item.item_id,
+        "item_name": item.item_name,
+        "minimum_price": str(item.minimum_price),  # Convert Decimal to string
+        "date_time": item.date_time.strftime('%H:%M'),
+        "item_image": item.item_image,
+        "is_watched": True
+    } for item in sorted_items]
+
+    return jsonify(Watched_items)
 
 # Route: Notifications
 @app.route('/user/notifications', methods=['GET', 'POST'])
@@ -300,14 +470,14 @@ def notifications():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    return render_template('user_notifications.html', form=form)
+    return render_template('user_notifications.html', pagetitle='Notifications', form=form)
 
 # Route: List Item Page
 @app.route('/user/list_item', methods=['GET', 'POST'])
 @user_required
 def user_list_item():
     form = ListItemForm()
-    
+
     if form.validate_on_submit():
         # Ensure the upload folder exists
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -318,6 +488,20 @@ def user_list_item():
             filename = f"{uuid.uuid4().hex}_{secure_filename(image_file.filename)}"
             filepath = os.path.join(app.config['ITEM_IMAGE_FOLDER'], filename)
             image_file.save(filepath)
+        elif image_file and not allowed_file(image_file.filename):
+            flash('Invalid file type. Only images are allowed.', 'danger')
+            return redirect(url_for('user_list_item', form=form))
+        listing_time = datetime.utcnow()
+        if 'authenticate' in request.form:
+            date_time = None
+            expiration_time = None
+        else:
+            date_time = datetime.utcnow()
+            expiration_time = listing_time + timedelta(
+                days=int(form.days.data),
+                hours=int(form.hours.data),
+                minutes=int(form.minutes.data)
+            )
 
         # Store filename in DB (relative path)
         new_item = Item(
@@ -325,21 +509,78 @@ def user_list_item():
             item_name=form.item_name.data,
             description=form.description.data,
             minimum_price=form.minimum_price.data,
-            item_image=filename,  # Store filename only
-            duration=form.duration.data,
-            time=form.time.data,
-            date=form.date.data,
+            item_image=filename,
+            date_time=date_time,
+            expiration_time=expiration_time,
+            days=int(form.days.data),
+            hours=int(form.hours.data),
+            minutes=int(form.minutes.data),
             shipping_cost=form.shipping_cost.data,
             approved=False
         )
         
         db.session.add(new_item)
         db.session.commit()
-        flash('Item listed successfully!', 'success')
-        return redirect(url_for('user_home')) 
-    else:
-        flash('Invalid file type. Only images are allowed.', 'danger')
-    return render_template('user_list_item.html', form=form)
+        if 'authenticate' in request.form:
+            waiting_list_entry = WaitingList(item_id=new_item.item_id)
+            db.session.add(waiting_list_entry)
+            db.session.commit()
+        else :
+            flash('Item listed successfully!', 'success')
+        return redirect(url_for('user_home'))
+        
+    return render_template('user_list_item.html', title='List Item', form=form)
+
+
+# Route: For clicking on an item to see more detail
+@app.route('/item/<int:item_id>')
+def user_item_details(item_id):
+    item = Item.query.get_or_404(item_id)  # Fetch the item or return 404
+    form=BidForm()
+
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
+    
+    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
+
+# Route: Placing a bid
+@app.route('/item/<int:item_id>/bid', methods=['GET', 'POST'])
+@user_required
+def place_bid(item_id):
+    item = Item.query.get_or_404(item_id)
+    form = BidForm()
+
+    # Check if the auction has expired
+    if datetime.utcnow() > item.expiration_time:
+        flash("Bidding has ended for this item.", "danger")
+        return redirect(url_for('user_item_details', item_id=item_id))
+
+    # Get the current highest bid
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+
+    if form.validate_on_submit():
+        bid_amount = form.bid_amount.data
+
+        # Check if bid is valid
+        if bid_amount <= highest_bid:
+            flash("Your bid must be higher than the current highest bid!", "danger")
+        else:
+            new_bid = Bid(
+                item_id=item_id,
+                user_id=current_user.id,
+                bid_amount=bid_amount,
+                bid_date_time=datetime.utcnow()
+            )
+            db.session.add(new_bid)
+            db.session.commit()
+            flash("Bid placed successfully!", "success")
+            return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
+
+
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+    
+    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
+
+
 
 
 # Expert Pages
@@ -363,10 +604,44 @@ def expert_messaging():
     return render_template('expert_messaging.html')
 
 #Route: Expert Avaliablity Page
-@app.route('/expert/availability')
+@app.route('/expert/availability',methods=['POST','GET'])
 @expert_required
-def expert_set_availability():
-    return render_template('expert_availability.html')
+def expert_availability():
+
+    user_id = current_user.id
+    if request.method == "POST":
+
+        dates = request.form.get('date')
+        start_times = request.form.get('start_time')
+
+        ExpertAvailabilities.query.filter_by(user_id=user_id).delete()
+        
+        if not dates and not start_times:
+            db.session.commit()
+            return redirect(url_for('expert_availability'))
+
+        splitDates = dates.split(",")
+        splitStartTimes =start_times.split(",")
+
+        for date, start_time, in zip(splitDates, splitStartTimes, ):
+            date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+
+            start_time_obj = datetime.strptime(start_time, '%H:%M').time()
+
+            availability = ExpertAvailabilities(
+                user_id=user_id,
+                date=date_obj,
+                start_time=start_time_obj,
+                duration=1
+            )
+
+            db.session.add(availability)
+
+        db.session.commit()
+        return redirect(url_for('expert_availability'))
+
+    else:
+        return render_template('expert_availability.html')
 
 #Route: Expert Account Page
 @app.route('/expert/account')

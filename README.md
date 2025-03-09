@@ -7,8 +7,8 @@ All dependencies can be installed by running the `flaskSetupVenv.sh` script.
 ### Steps to Install:
 
 ```sh
-chmod +x flaskSetupVenv.sh
-./flaskSetupVenv.sh
+chmod +x RequirementsSetup.sh
+./RequirementsSetup.sh
 ```
 
 ## Dependencies

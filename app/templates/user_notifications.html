@@ -1,3 +1,4 @@
+<!-- User notifications page, see users notifications -->
 {% extends 'base_user.html' %}
 {% block content %}
 <body class="container-fluid bg-light">
@@ -6,7 +7,7 @@
         <!-- Sidebar -->
         <div class="col-md-3 col-lg-2 bg-white shadow-sm p-4">
             <div class="d-grid gap-2">
-                <form action="{{ url_for('notifications') }}" method="post" name="sidebar">
+                <form action="{{ url_for('notifications') }}" method="post">
                     {{ form.hidden_tag() }}
 
                     <div>{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>

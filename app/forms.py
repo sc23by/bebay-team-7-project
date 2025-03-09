@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, TextAreaField, FloatField, TimeField, DateField, BooleanField
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField, FloatField, TimeField, DateField, BooleanField, SelectField, DecimalField
 from wtforms.validators import DataRequired, Length, EqualTo, Regexp, ValidationError, Email, NumberRange
 from flask_wtf.file import FileField, FileAllowed
 
@@ -91,20 +91,34 @@ class UserInfoForm(FlaskForm):
         DataRequired(), 
         Length(min=2, max=30, message="First name must be 2-30 characters."),
         Regexp('^[A-Za-z]+$', message="First name should only contain letters.")
-    ])
+    ]) 
 
+    update_info = SubmitField('Update Info')
+
+# Form for changing password
+class ChangeUsernameForm(FlaskForm):
+    """
+    Allows user to change username
+    """
     username = StringField('Username', validators=[
         DataRequired(), 
         Length(min=3, max=20, message="Username must be 3-20 characters."),
         Regexp('^[A-Za-z0-9_]+$', message="Only letters, numbers, and underscores allowed.")
     ])
 
+    update_username = SubmitField('Edit')
+
+# Form for changing password
+class ChangeEmailForm(FlaskForm):
+    """
+    Allows user to change email
+    """
     email = StringField('Email', validators=[
         DataRequired(), 
         Email(message="Invalid email address.")
     ])
 
-    update_info = SubmitField('Update Info')
+    update_email = SubmitField('Edit')
 
 # Form for changing password
 class ChangePasswordForm(FlaskForm):
@@ -118,7 +132,7 @@ class ChangePasswordForm(FlaskForm):
 
     confirm_password = PasswordField('Confirm Password', validators=[
         DataRequired(),
-        EqualTo('password', message="Passwords must match.")
+        EqualTo('new_password', message="Passwords must match.")
     ])
 
     update_privacy = SubmitField('Change Password')
@@ -150,35 +164,51 @@ class ListItemForm(FlaskForm):
         validators=[DataRequired(), Length(max=500)]
     )
     
-    minimum_price = FloatField(
-        'Starting Price (£)', 
-        validators=[DataRequired(), NumberRange(min=0)]
+    minimum_price = DecimalField(
+        'Starting Price (£)',
+        places=2, 
+        validators=[DataRequired(), NumberRange(min=0)],
+        render_kw={"step": "0.01", "min": "0.01", "class": "currency-input"}
     )
     
     item_image = FileField(
         'Upload Image', 
-        validators=[DataRequired(), FileAllowed({'png', 'jpg', 'jpeg', 'gif'}, 'Only images are allowed!')]
-    )
-    
-    duration = TimeField(
-        'Duration (HH:MM)', 
         validators=[DataRequired()]
     )
     
-    time = TimeField(
-        'Start Time', 
+    # Dropdowns for duration selection
+    days = SelectField(
+        'Days', 
+        choices=[(str(i), f"{i} day{'s' if i != 1 else ''}") for i in range(5)], 
         validators=[DataRequired()]
     )
     
-    date = DateField(
-        'Start Date', 
+    hours = SelectField(
+        'Hours', 
+        choices=[(str(i), f"{i} hour{'s' if i != 1 else ''}") for i in range(24)], 
+        validators=[DataRequired()]
+    )
+
+    minutes = SelectField(
+        'Minutes', 
+        choices=[(str(i), f"{i} minute{'s' if i != 1 else ''}") for i in range(0, 60, 5)], 
         validators=[DataRequired()]
     )
     
-    shipping_cost = FloatField(
+    shipping_cost = DecimalField(
         'Shipping Cost (£)', 
-        validators=[DataRequired(), NumberRange(min=0)]
+        places=2, 
+        validators=[DataRequired(), NumberRange(min=0)],
+        render_kw={"step": "0.01", "min": "0.01", "class": "currency-input"}
     )
     
     submit = SubmitField('List Item')
 
+
+class BidForm(FlaskForm):
+    bid_amount = DecimalField("Your Bid (£)",
+        validators=[DataRequired(),
+        NumberRange(min=0.01)],
+        render_kw={"step": "0.01", "min": "0", "class": "currency-input"})
+
+    submit = SubmitField("Place Bid")
