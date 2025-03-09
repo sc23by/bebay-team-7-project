@@ -744,7 +744,7 @@ def manager_listings():
 @app.route('/manager/listings/<int:id>',methods=['GET'])
 def manager_lisgings_user(id):
     user = User.query.get(id)
-    return render_template("manager_listings.html",account = user)   
+    return render_template("manager_listings_user.html",account = user)   
 
 @app.route('/manager/listings/<username>/<int:update_number>',methods=['GET','POST'])
 def manager_listings_update_number(username,update_number):
