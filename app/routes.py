@@ -727,11 +727,13 @@ def manager_accounts_search():
     filtered_accounts = []
     empty_accounts = []
 
+    accounts = User.query.all()
+
     if not search_query:
         return render_template("manager_accounts.html",accounts = empty_accounts)
 
     for account in accounts:
-        if search_query.lower() == account['username'].lower():
+        if search_query.lower() == account.username.lower():
             filtered_accounts.append(account)
     
     return render_template("manager_accounts.html",accounts=filtered_accounts)
@@ -748,9 +750,9 @@ def manager_lisgings_user(id):
     user_listings = user.items
     return render_template("manager_listings_user.html", account = user, items=user_listings)   
 
-@app.route('/manager/listings/<username>/<int:update_number>',methods=['GET','POST'])
+@app.route('/manager/listings/<int:id>/<int:update_number>',methods=['GET','POST'])
 def manager_listings_update_number(username,update_number):
-    user_account = User.query.filter_by(username=username).first()
+    user_account = User.query.filter_by(id=id).first()
 
     if user_account:
         user_account.priority = update_number
