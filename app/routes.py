@@ -702,7 +702,7 @@ def manager_accounts_update_number(username,update_number):
 
 @app.route('/manager/accounts/sort/low_high',methods=['GET','POST'])
 def manager_accounts_sort_low_high():
-    accounts.sort(key = lambda x: x['username'])
+    accounts = User.query.order_by(User.username).all()
     return redirect(url_for('manager_accounts'))
 
 @app.route('/manager/accounts/sort/high_low',methods=['GET','POST'])
