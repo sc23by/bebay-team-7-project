@@ -11,6 +11,7 @@ from werkzeug.utils import secure_filename
 import os
 import uuid
 from datetime import datetime, timedelta
+from sqlalchemy import desc
 # Parses data sent by JS
 import json
 
@@ -703,12 +704,12 @@ def manager_accounts_update_number(username,update_number):
 @app.route('/manager/accounts/sort/low_high',methods=['GET','POST'])
 def manager_accounts_sort_low_high():
     accounts = User.query.order_by(User.username).all()
-    return redirect(url_for('manager_accounts'))
+    return render_template('manager_accounts.html',accounts = accounts)
 
 @app.route('/manager/accounts/sort/high_low',methods=['GET','POST'])
 def manager_accounts_sort_high_low():
-    accounts.sort(key = lambda x: x['username'],reverse=True)
-    return redirect(url_for('manager_accounts'))
+    accounts = User.query.order_by(desc(User.username)).all()
+    return render_template('manager_accounts.html',accounts = accounts)
 
 @app.route('/manager/accounts/filter/<int:filter_number>',methods=['GET','POST'])
 def manager_accounts_filter(filter_number):
