@@ -690,14 +690,15 @@ def manager_accounts():
 @app.route('/manager/accounts/<username>/<int:update_number>',methods=['GET','POST'])
 def manager_accounts_update_number(username,update_number):
 
-    accounts = User.query.all()
+    account = User.query.filter_by(username=username).first()
     
-    for account in accounts:
-        if account['username'] == username:
-            account['number'] = update_number
-            break
+    if account:
+        account.priority = update_number
+        db.session.commit()
 
-    return redirect(url_for('manager_accounts'))
+        return redirect(url_for('manager_accounts'))
+    else:
+        return "Error", 404
 
 @app.route('/manager/accounts/sort/low_high',methods=['GET','POST'])
 def manager_accounts_sort_low_high():
