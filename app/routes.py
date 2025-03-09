@@ -737,15 +737,15 @@ def manager_accounts_search():
     return render_template("manager_accounts.html",accounts=filtered_accounts)
 
 #Route: Manager Listing Page
-@app.route('/manager/listings/',methods=['GET','POST'])
+@app.route('/manager/listings',methods=['GET'])
 def manager_listings():
-    user_id = request.args.get('user_id',type=int)
-    user_account = User.query.get(user_id)
+    user = User.query.get()
+    return render_template("manager_listings.html",account = user)
 
-    if user_account:
-        return render_template("manager_listings.html",account=user_account)
-    else:
-        return "User not found", 404
+@app.rotue('/manager/listings/<int:id>',methods=['GET'])
+def manager_lisgings_user():
+    user = User.query.get(id)
+    return render_template("manager_listings.html",account = user)   
 
 @app.route('/manager/listings/<username>/<int:update_number>',methods=['GET','POST'])
 def manager_listings_update_number(username,update_number):
