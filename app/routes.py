@@ -690,7 +690,8 @@ def manager_accounts():
 @app.route('/manager/accounts/<username>/<int:update_number>',methods=['GET','POST'])
 def manager_accounts_update_number(username,update_number):
 
-
+    accounts = User.query.all()
+    
     for account in accounts:
         if account['username'] == username:
             account['number'] = update_number
@@ -737,12 +738,7 @@ def manager_accounts_search():
 @app.route('/manager/listings/',methods=['GET','POST'])
 def manager_listings():
     user_id = request.args.get('user_id',type=int)
-    user_account = None
-
-    for account in accounts:
-        if account["user_id"] == user_id:
-            user_account = account
-            break
+    user_account = User.query.get(user_id)
 
     if user_account:
         return render_template("manager_listings.html",account=user_account)
@@ -751,21 +747,15 @@ def manager_listings():
 
 @app.route('/manager/listings/<username>/<int:update_number>',methods=['GET','POST'])
 def manager_listings_update_number(username,update_number):
-    for account in accounts:
-        if account['username'] == username:
-            account['number'] = update_number
-            break
-
-    user_account = None
-
-    for account in accounts:
-        if account["user_id"] == user_id:
-            user_account = account
-            break
+    user_account = User.query.filter_by(username=username).first()
 
     if user_account:
-        return render_template("manager_listings.html",account=user_account)
+        user_account.priority = update_number
+        db.session.commit()
 
+        return render_template("manager_listings.html",account = user_account)
+    else:
+        return "User not found", 404
 
 #Route: Manager view sorting all the authentication assignments
 @app.route('/manager/authentication')

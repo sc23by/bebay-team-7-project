@@ -41,7 +41,7 @@
 {% for account in accounts %}
 <div class="card">
     <div class="card-body">
-            <span> <a href="{{url_for('manager_listings',user_id=account['user_id'])}}">{{ account.username}}</a>{{account.number}}          
+            <span> <a href="{{url_for('manager_listings',user_id=account['user_id'])}}">{{ account.username}}</a>{{account.priority}}          
               <button type="button" class="btn btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
               Set
             </button>
