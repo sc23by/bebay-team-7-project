@@ -737,15 +737,16 @@ def manager_accounts_search():
     return render_template("manager_accounts.html",accounts=filtered_accounts)
 
 #Route: Manager Listing Page
-@app.route('/manager/listings',methods=['GET'])
+@app.route('/manager/listings',methods=['GET','POST'])
 def manager_listings():
-    return render_template("manager_listings.html")
+    items = Item.query.all()
+    return render_template("manager_listings.html",items = items)
 
 @app.route('/manager/listings/<int:id>',methods=['GET'])
 def manager_lisgings_user(id):
     user = User.query.get(id)
     user_listings = user.items
-    return render_template("manager_listings_user.html",account = user, items=user_listings)   
+    return render_template("manager_listings_user.html", account = user, items=user_listings)   
 
 @app.route('/manager/listings/<username>/<int:update_number>',methods=['GET','POST'])
 def manager_listings_update_number(username,update_number):
