@@ -65,11 +65,11 @@ class Item(db.Model):
     expiration_time = db.Column(db.DateTime, nullable=True)  
     approved = db.Column(db.Boolean, default=False)
     shipping_cost = db.Column(db.Numeric(10,2), nullable=False)
-    expert_payment_percentage = db.Column(db.Float, nullable=False, default=0.1) # Default can be changed by managers
+    expert_payment_percentage = db.Column(db.Float, nullable=False, default=0.00) # Default can be changed by managers
     expert_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = True)
     # Store the fixed fees at the time of listing
-    site_fee_percentage = db.Column(db.Float, nullable=False)
-    expert_fee_percentage = db.Column(db.Float, nullable=False)
+    site_fee_percentage = db.Column(db.Float, nullable=False,default=0.00)
+    expert_fee_percentage = db.Column(db.Float, nullable=False,default=0.00)
     
     def get_image_url(self):
         return url_for('static', filename=f'images/items/{self.item_image}')
