@@ -2,4 +2,18 @@
 
 {% block content %}
 
+{% if listings %}
+  <div class="row row-cols-3 row-cols-md-5 g-4">
+    {% for item in listings %}
+    <div class="col">
+      <div class="card h-100">
+        <img src="{{ item.image }}" class="card-img-top" alt="...">
+        <div class="card-body">
+          <h5 class="card-title">{{item.title}}</h5>
+        </div>
+      </div>
+  </div>
+  {% endfor %}
+{% endif %}
+
 {% endblock %}
