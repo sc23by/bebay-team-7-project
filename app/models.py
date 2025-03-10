@@ -72,6 +72,8 @@ class Item(db.Model):
     @property
     def time_left(self):
         """Calculate remaining time from now until expiration."""
+        if self.expiration_time is None:
+            return timedelta(0)  # Return zero time if expiration_time is None
         remaining = self.expiration_time - datetime.utcnow()
         return max(remaining, timedelta(0))  # Ensure it doesn't go negative
 
