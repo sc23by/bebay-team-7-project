@@ -91,20 +91,34 @@ class UserInfoForm(FlaskForm):
         DataRequired(), 
         Length(min=2, max=30, message="First name must be 2-30 characters."),
         Regexp('^[A-Za-z]+$', message="First name should only contain letters.")
-    ])
+    ]) 
 
+    update_info = SubmitField('Update Info')
+
+# Form for changing password
+class ChangeUsernameForm(FlaskForm):
+    """
+    Allows user to change username
+    """
     username = StringField('Username', validators=[
         DataRequired(), 
         Length(min=3, max=20, message="Username must be 3-20 characters."),
         Regexp('^[A-Za-z0-9_]+$', message="Only letters, numbers, and underscores allowed.")
     ])
 
+    update_username = SubmitField('Edit')
+
+# Form for changing password
+class ChangeEmailForm(FlaskForm):
+    """
+    Allows user to change email
+    """
     email = StringField('Email', validators=[
         DataRequired(), 
         Email(message="Invalid email address.")
     ])
 
-    update_info = SubmitField('Update Info')
+    update_email = SubmitField('Edit')
 
 # Form for changing password
 class ChangePasswordForm(FlaskForm):
@@ -118,7 +132,7 @@ class ChangePasswordForm(FlaskForm):
 
     confirm_password = PasswordField('Confirm Password', validators=[
         DataRequired(),
-        EqualTo('password', message="Passwords must match.")
+        EqualTo('new_password', message="Passwords must match.")
     ])
 
     update_privacy = SubmitField('Change Password')
@@ -154,7 +168,7 @@ class ListItemForm(FlaskForm):
         'Starting Price (£)',
         places=2, 
         validators=[DataRequired(), NumberRange(min=0)],
-        render_kw={"step": "0.01", "min": "0", "class": "currency-input"}
+        render_kw={"step": "0.01", "min": "0.01", "class": "currency-input"}
     )
     
     item_image = FileField(
@@ -185,10 +199,11 @@ class ListItemForm(FlaskForm):
         'Shipping Cost (£)', 
         places=2, 
         validators=[DataRequired(), NumberRange(min=0)],
-        render_kw={"step": "0.01", "min": "0", "class": "currency-input"}
+        render_kw={"step": "0.01", "min": "0.01", "class": "currency-input"}
     )
     
     submit = SubmitField('List Item')
+
 
 class BidForm(FlaskForm):
     bid_amount = DecimalField("Your Bid (£)",

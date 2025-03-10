@@ -1,3 +1,4 @@
+<!-- User Account Page, see user information -->
 {% extends 'base_user.html' %}
 {% block content %}
 <body class="container-fluid bg-light">
@@ -35,17 +36,26 @@
                     {{ info_form.last_name.label(class="col-sm-2 col-form-label")}}
                     {{ info_form.last_name(class="col-sm-6")}}
                 </div>
-
+            </form>
+            
+            <form action="{{ url_for('account') }}" method="post">
+                {{ username_form.hidden_tag() }}
                 <div class="mb-3 row">
-                    {{ info_form.username.label(class="col-sm-2 col-form-label")}}
-                    {{ info_form.username(class="col-sm-6")}}
-                </div>
-
-                <div class="mb-3 row">
-                    {{ info_form.email.label(class="col-sm-2 col-form-label")}}
-                    {{ info_form.email(class="col-sm-6")}}
+                    {{ username_form.username.label(class="col-sm-2 col-form-label")}}
+                    {{ username_form.username(class="col-sm-6")}}
                     <div class="col-sm-2">
-                        {{ info_form.update_info(class="btn btn-outline-primary") }}
+                        {{ username_form.update_username(class="btn btn-outline-primary") }}
+                    </div>
+                </div>
+            </form>
+
+            <form action="{{ url_for('account') }}" method="post">
+                {{email_form.hidden_tag() }}
+                <div class="mb-3 row">
+                    {{ email_form.email.label(class="col-sm-2 col-form-label")}}
+                    {{ email_form.email(class="col-sm-6")}}
+                    <div class="col-sm-2">
+                        {{ email_form.update_email(class="btn btn-outline-primary") }}
                     </div>
                 </div>
             </form>
@@ -59,11 +69,17 @@
                 <div class="mb-3 row">
                     {{ password_form.new_password.label(class="col-sm-2 col-form-label")}}
                     {{ password_form.new_password(class="col-sm-6")}}
+                    {% for error in password_form.new_password.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
                 </div>
 
                 <div class="mb-3 row">
                     {{ password_form.confirm_password.label(class="col-sm-2 col-form-label")}}
                     {{ password_form.confirm_password(class="col-sm-6")}}
+                    {% for error in password_form.confirm_password.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
                     <div class="col-sm-2">
                         {{ password_form.update_privacy(class="btn btn-outline-primary") }}
                     </div>
