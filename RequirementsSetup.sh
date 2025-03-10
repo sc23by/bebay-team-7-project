@@ -20,6 +20,7 @@ flask/bin/pip install email_validator
 flask/bin/pip install coverage 
 flask/bin/pip install pytest
 flask/bin/pip install matplotlib
+flask/bin/pip install stripe
 
 export FLASK_APP=run.py
 export FLASK_DEBUG=1
