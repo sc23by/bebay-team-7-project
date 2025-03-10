@@ -68,8 +68,8 @@ class Item(db.Model):
     expert_payment_percentage = db.Column(db.Float, nullable=False, default=0.00) # Default can be changed by managers
     expert_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = True)
     # Store the fixed fees at the time of listing
-    site_fee_percentage = db.Column(db.Float, nullable=False,default=0.00)
-    expert_fee_percentage = db.Column(db.Float, nullable=False,default=0.00)
+    site_fee_percentage = db.Column(db.Float, nullable=False,default=1.00)
+    expert_fee_percentage = db.Column(db.Float, nullable=False,default=4.00)
     
     def get_image_url(self):
         return url_for('static', filename=f'images/items/{self.item_image}')
@@ -84,6 +84,8 @@ class Item(db.Model):
         if expert_approved:
             return final_price * ((self.site_fee_percentage + self.expert_fee_percentage) / 100)
         return final_price * (self.site_fee_percentage / 100)
+
+    def total_price
 
 # Waiting List Model
 class WaitingList(db.Model):
