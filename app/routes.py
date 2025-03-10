@@ -207,8 +207,13 @@ def user_home():
     items = Item.query.filter(
         ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
     ).all()
-        
-    return render_template('user_home.html', pagetitle='User Home', items = items)
+    
+    item_bids = {}
+    for item in items:
+        highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item.item_id).scalar()
+        item_bids[item.item_id] = highest_bid if highest_bid is not None else None 
+
+    return render_template('user_home.html', pagetitle='User Home', items = items, item_bids = item_bids)
 
 # Route: Watch
 @app.route('/user/watch', methods=['POST'])
@@ -390,7 +395,18 @@ def my_listings():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    return render_template('user_my_listings.html', pagetitle='Listings', form=form)
+
+    items = Item.query.filter_by(seller_id=current_user.id).all()
+
+    item_bids = {}
+    for item in items:
+        highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item.item_id).scalar()
+        item_bids[item.item_id] = highest_bid if highest_bid is not None else None 
+
+    waiting_list = db.session.query(WaitingList.item_id).all()
+    waiting_list = [item[0] for item in waiting_list]
+
+    return render_template('user_my_listings.html', pagetitle='Listings', form=form, items=items, item_bids=item_bids, waiting_list = waiting_list)
 
 # Route: Watchlist
 @app.route('/user/watchlist', methods=['GET', 'POST'])
@@ -541,7 +557,9 @@ def user_item_details(item_id):
     form=BidForm()
 
     highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
-    
+    # If no bid exists, set highest_bid to "No bids yet"
+    if highest_bid is None:
+        highest_bid = "No bids yet"
     return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
 
 # Route: Placing a bid
