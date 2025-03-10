@@ -1,3 +1,4 @@
+<!-- User Listings Page, see listed items -->
 {% extends 'base_user.html' %}
 {% block content %}
 <body class="container-fluid bg-light">
@@ -6,7 +7,7 @@
         <!-- Sidebar -->
         <div class="col-md-3 col-lg-2 bg-white shadow-sm p-4">
             <div class="d-grid gap-2">
-                <form action="{{ url_for('my_listings') }}" method="post" name="sidebar">
+                <form action="{{ url_for('my_listings') }}" method="post">
                     {{ form.hidden_tag() }}
 
                     <div>{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
@@ -21,7 +22,43 @@
         <!-- Content Area -->
         <div class="col-md-9 col-lg-10 p-5">
             <h2 class="mb-4">My Listings</h2>
-
+            <div class="row row-cols-3 row-cols-md-5 g-4">
+                {% for item in items %}
+                <div class="col">
+                    <div class="card h-100">
+                        <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
+                             class="card-img-top" alt="{{ item.item_name }}">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ item.item_name }}</h5>
+                            <p>Time Left: 
+                                {% if item.time_left.total_seconds() > 0 %}
+                                    {{ item.time_left.days }} days,
+                                    {{ item.time_left.seconds // 3600 }} hours,
+                                    {{ (item.time_left.seconds // 60) % 60 }} minutes,
+                                    {{ item.time_left.seconds % 60 }} seconds
+                                {% else %}
+                                    Expired
+                                {% endif %}
+                            </p>
+                            <p class="card-text">Starting Price: £{{ item.minimum_price }}</p>
+                            <p class="card-text">Current Highest Bid: 
+                                {% if item_bids[item.item_id] is none %}
+                                    No bids yet
+                                {% else %}
+                                    £{{ item_bids[item.item_id] }}
+                                {% endif %}
+                            </p>
+                            {% if item.item_id in waiting_list %}
+                                <p class="card-text text-warning">Waiting for authentication.</p>
+                            {% endif %}
+                            <a href="{{ url_for('user_item_details', item_id=item.item_id) }}" class="btn btn-primary">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 
