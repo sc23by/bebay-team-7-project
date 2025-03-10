@@ -1,8 +1,8 @@
 from app import app, db, bcrypt
-from flask import render_template, redirect, url_for, flash, request, current_app, jsonify
+from flask import render_template, redirect, url_for, request, flash, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
-from app.models import User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo
+from app.models import FeeConfig, User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -11,6 +11,7 @@ from werkzeug.utils import secure_filename
 import os
 import uuid
 from datetime import datetime, timedelta
+from sqlalchemy import desc
 # Parses data sent by JS
 import json
 
@@ -503,7 +504,7 @@ def user_list_item():
                 minutes=int(form.minutes.data)
             )
 
-        # Store filename in DB (relative path)
+        # Store item in DB
         new_item = Item(
             seller_id=current_user.id,
             item_name=form.item_name.data,
@@ -521,6 +522,7 @@ def user_list_item():
         
         db.session.add(new_item)
         db.session.commit()
+        
         if 'authenticate' in request.form:
             waiting_list_entry = WaitingList(item_id=new_item.item_id)
             db.session.add(waiting_list_entry)
@@ -681,27 +683,84 @@ def manager_stats():
 
 #Route: Manager Account Page
 @app.route('/manager/accounts',methods=['GET','POST'])
-@manager_required
 def manager_accounts():
-    accounts = [
-        {"username": "Jonghyun Kim","number": 1},
-        {"username": "Feibi Allen","number": 2},
-        {"username": "Bellaly Yahoo","number": 1},
-        {"username": "Rammy G","number": 1},
-        {"username": "MM","number": 3},
-        {"username": "Leyna TJ","number": 1}
-    ]
+    accounts = User.query.all()
+
     return render_template("manager_accounts.html",accounts=accounts)
+
+@app.route('/manager/accounts/<username>/<int:update_number>',methods=['GET','POST'])
+def manager_accounts_update_number(username,update_number):
+
+    account = User.query.filter_by(username=username).first()
+    
+    if account:
+        account.priority = update_number
+        db.session.commit()
+
+        return redirect(url_for('manager_accounts'))
+    else:
+        return "Error", 404
+
+@app.route('/manager/accounts/sort/low_high',methods=['GET','POST'])
+def manager_accounts_sort_low_high():
+    accounts = User.query.order_by(User.username).all()
+    return render_template('manager_accounts.html',accounts = accounts)
+
+@app.route('/manager/accounts/sort/high_low',methods=['GET','POST'])
+def manager_accounts_sort_high_low():
+    accounts = User.query.order_by(desc(User.username)).all()
+    return render_template('manager_accounts.html',accounts = accounts)
+
+@app.route('/manager/accounts/filter/<int:filter_number>',methods=['GET','POST'])
+def manager_accounts_filter(filter_number):
+    filtered_accounts = User.query.filter(User.priority == filter_number).all()
+
+    if not filtered_accounts:
+        filtered_accounts = []
+
+    return render_template("manager_accounts.html",accounts = filtered_accounts) 
+   
+
+@app.route('/manager/accounts/search',methods = ['GET'])
+def manager_accounts_search():
+    search_query = request.args.get('query', '')
+    filtered_accounts = []
+    empty_accounts = []
+
+    accounts = User.query.all()
+
+    if not search_query:
+        return render_template("manager_accounts.html",accounts = empty_accounts)
+
+    for account in accounts:
+        if search_query.lower() == account.username.lower():
+            filtered_accounts.append(account)
+    
+    return render_template("manager_accounts.html",accounts=filtered_accounts)
 
 #Route: Manager Listing Page
 @app.route('/manager/listings',methods=['GET','POST'])
 def manager_listings():
-    listings = [
-        {"title": "Jumper","image" : "https://image.hm.com/assets/006/35/ee/35eeb535903be97df8fcfd77b21822b91862ba2c.jpg?imwidth=1260"},
-        {"title": "Pants","image" : "https://image.hm.com/assets/hm/7a/9e/7a9e28408cddce6247b5173b6a54b9a13b98dc1c.jpg?imwidth=1260"}
+    items = Item.query.all()
+    return render_template("manager_listings.html",items = items)
 
-    ]
-    return render_template("manager_listings.html",listings=listings)
+@app.route('/manager/listings/<int:id>',methods=['GET'])
+def manager_lisgings_user(id):
+    user = User.query.get(id)
+    user_listings = user.items
+    return render_template("manager_listings_user.html", account = user, items=user_listings)   
+
+@app.route('/manager/listings/<int:id>/<int:update_number>',methods=['GET','POST'])
+def manager_listings_update_number(username,update_number):
+    user_account = User.query.filter_by(id=id).first()
+
+    if user_account:
+        user_account.priority = update_number
+        db.session.commit()
+
+        return render_template("manager_listings.html",account = user_account)
+    else:
+        return "User not found", 404
 
 #Route: Manager view sorting all the authentication assignments
 @app.route('/manager/authentication')
@@ -719,30 +778,44 @@ def manager_auth_assignments():
 @app.route('/manager/expert_availability')
 def manager_expert_availability():
     item = {
-        "name": "Item A",
-        "assigned_expert": "John Doe",
-        "description": "This item requires authentication by an expert."
+
     }
 
     experts = [
-        {"name": "Alice Smith", "available": "Now"},
-        {"name": "Bob Johnson", "available": "48h"},
-        {"name": "Charlie Davis", "available": "Now"},
-        {"name": "Diana Lee", "available": "48h"}
+
     ]
 
     return render_template('manager_expert_availability.html', item=item, experts=experts)
 
 
-
 #Route: Manager view of Items that are approved, recycled, and pending items
-@app.route('/manager_overview')
-def manager_dashboard():
+@app.route('/manager/overview')
+def manager_overview():
     return render_template('manager_overview.html',
-                           userName="JohnDoe",
-                           userPriority=2,
-                           userEmail="john.doe@example.com",
-                           userCategory="Electronics",
-                           approved_items=[{"name": "Laptop"}, {"name": "Smartphone"}, {"name": "Headphones"}],
-                           rejected_items=[{"name": "Old Monitor"}, {"name": "Broken Keyboard"}],
-                           pending_items=[{"name": "Gaming Console"}, {"name": "Tablet"}])
+                           userName="",
+                           userPriority="",
+                           userEmail="",
+                           userCategory="",
+                           approved_items=[],
+                           rejected_items=[],
+                           pending_items=[])
+
+# Route for Manager to Update Fees
+@app.route('/manager/fees', methods=['GET', 'POST'])
+def manager_fees():
+    fee_config = FeeConfig.get_current_fees()
+    
+    if request.method == 'POST':
+        site_fee = request.form.get('site_fee', type=float)
+        expert_fee = request.form.get('expert_fee', type=float)
+
+        if site_fee is not None and expert_fee is not None:
+            fee_config.site_fee_percentage = site_fee
+            fee_config.expert_fee_percentage = expert_fee
+            db.session.commit()
+            print(f"Updated Fees: Site - {fee_config.site_fee_percentage}%, Expert - {fee_config.expert_fee_percentage}%")  # Debugging
+            flash("Fees updated successfully!", "success")
+            
+    return render_template("manager_fees.html", fee_config=fee_config)
+
+
