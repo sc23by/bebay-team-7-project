@@ -668,8 +668,9 @@ def manager_home():
 @app.route('/manager/statistics', methods=['GET','POST'])
 @manager_required
 def manager_stats():
-    items = Item.query.all()
-    ratio = [33.5,30,20,10]
+    total_revenue = 0
+
+    ratio = [40,30,20,10]
     labels = ['Generated income','Customer cost','Postal cost','Experts cost']
     colors=['red','green','blue','orange']
 
@@ -679,7 +680,7 @@ def manager_stats():
     img.seek(0)
     img_base64 = base64.b64encode(img.getvalue()).decode()
 
-    return render_template('manager_statistics.html',img_data=img_base64,ratio=ratio,labels=labels,items = items)
+    return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, labels=labels)
 
 
 #Route: Manager Account Page
