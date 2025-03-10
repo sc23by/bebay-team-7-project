@@ -668,8 +668,6 @@ def manager_home():
 @app.route('/manager/statistics', methods=['GET','POST'])
 @manager_required
 def manager_stats():
-    total_revenue = 0
-
     ratio = [40,30,20,10]
     labels = ['Generated income','Customer cost','Postal cost','Experts cost']
     colors=['red','green','blue','orange']
