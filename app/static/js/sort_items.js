@@ -43,7 +43,9 @@ document.addEventListener("DOMContentLoaded", function() {
                                         `<span class="fa fa-heart" data-item-id="${item.item_id}"></span>
                                         <input type="hidden" name="watch" value="0">
                                     `}
-                                    <input type="button" value="Bid">
+                                    <a href="{{ url_for('user_item_details', item_id=item.item_id) }}" class="btn btn-primary">
+                                        View Details
+                                    </a>
                                 </div>
                             </div>
                         `;

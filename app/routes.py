@@ -389,7 +389,10 @@ def my_listings():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    return render_template('user_my_listings.html', pagetitle='Listings', form=form)
+
+    user_items = Item.query.filter_by(seller_id=current_user.id).all()
+
+    return render_template('user_my_listings.html', pagetitle='Listings', form=form, items=user_items)
 
 # Route: Watchlist
 @app.route('/user/watchlist', methods=['GET', 'POST'])
