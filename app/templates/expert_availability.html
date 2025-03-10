@@ -51,6 +51,10 @@
 
 <script>
 
+    const filledTimeslots = JSON.parse('{{ filled_timeslots|tojson|safe }}');
+    console.log(filledTimeslots);
+
+
     function saveState() {
         const form = document.getElementById("availabilityForm");
         const filledCells = document.querySelectorAll('#availability-table td.filled');
