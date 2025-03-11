@@ -4,6 +4,7 @@ from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from flask_bcrypt import Bcrypt
+from flask_socketio import SocketIO
 import os
 
 
@@ -46,6 +47,9 @@ bcrypt = Bcrypt(app)
 
 # Enable CSRF Protection
 csrf = CSRFProtect(app)
+
+# Websockets
+socketio = SocketIO(app)
 
 # User loader for Flask-Login
 @login_manager.user_loader

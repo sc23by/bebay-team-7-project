@@ -22,9 +22,12 @@
         {% if highest_bid == "No bids yet" %}
             No bids yet
         {% else %}
-            £{{ highest_bid }}
+        <span id="highest_bid" data-item-id="{{ item.item_id }}">£{{ highest_bid }}</span>
         {% endif %}
     </p>
+
+    
+
     <p>Shipping Price: £{{ item.shipping_cost }}</p>
     <p>Listing Time: {{ item.date_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
     <p>Expires On: {{ item.expiration_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
@@ -40,22 +43,18 @@
         {% endif %}
     </p>
 
-    <form method="POST" action="{{ url_for('place_bid', item_id=item.item_id) }}">
-        {{ form.hidden_tag() }}
-    
+    <!-- Bidding Form -->
+    <form onsubmit="event.preventDefault(); placeBid({{ item.item_id }});">
         <div class="form-group">
             <label for="bid_amount">Enter Bid</label>
             <div class="input-group">
                 <span class="input-group-text">£</span>
-                {{ form.bid_amount(class="form-control", id="bid_amount", placeholder="0.00") }}
+                <input type="number" id="bid_amount" class="form-control" placeholder="0.00" required>
             </div>
         </div>
-    
-        <div class="mt-2">
-            {{ form.submit(class="btn btn-primary") }}
-        </div>
+        <button type="submit" class="btn btn-primary mt-2">Place Bid</button>
     </form>
-   
+
     <a href="{{ url_for('user_home') }}" class="btn btn-secondary">Back to Listings</a>
 </div>
 {% endblock %}

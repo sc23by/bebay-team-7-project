@@ -74,11 +74,17 @@
     <!-- Template extentions go here -->
     {% block content %}{% endblock %}
 
+    <!-- Socket.IO (Required for real-time updates) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.0/socket.io.js"></script>
+
     <!-- Javascript -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js"></script> 
     <script src="{{ url_for('static', filename='js/watchlist.js') }}"></script> 
     <script src="{{ url_for('static', filename='js/sort_watchlist.js') }}"></script> 
     <script src="{{ url_for('static', filename='js/sort_items.js') }}"></script> 
+
+    <script src="{{ url_for('static', filename='js/user_bidding.js') }}"></script>
+
 </body>
 </html>

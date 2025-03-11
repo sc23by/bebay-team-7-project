@@ -14,6 +14,9 @@ from datetime import datetime, timedelta
 from sqlalchemy import desc
 # Parses data sent by JS
 import json
+# Websockets
+from flask_socketio import emit
+from . import socketio
 
 # Decorators
 
@@ -563,44 +566,45 @@ def user_item_details(item_id):
     return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
 
 # Route: Placing a bid
-@app.route('/item/<int:item_id>/bid', methods=['GET', 'POST'])
-@user_required
-def place_bid(item_id):
-    item = Item.query.get_or_404(item_id)
-    form = BidForm()
+@socketio.on('new_bid')
+def handle_new_bid(data):
+    """Handle new bid via WebSocket."""
+    item_id = data.get('item_id')
+    bid_amount = float(data.get('bid_amount'))
+
+    item = Item.query.get(item_id)
+    if not item:
+        emit('bid_error', {'message': 'Item not found!'}, room=request.sid)
+        return
 
     # Check if the auction has expired
     if datetime.utcnow() > item.expiration_time:
-        flash("Bidding has ended for this item.", "danger")
-        return redirect(url_for('user_item_details', item_id=item_id))
+        emit('bid_error', {'message': 'Bidding has ended for this item.'}, room=request.sid)
+        return
 
     # Get the current highest bid
     highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
 
-    if form.validate_on_submit():
-        bid_amount = form.bid_amount.data
+    # Validate bid amount
+    if bid_amount <= highest_bid:
+        emit('bid_error', {'message': 'Your bid must be higher than the current highest bid!'}, room=request.sid)
+        return
 
-        # Check if bid is valid
-        if bid_amount <= highest_bid:
-            flash("Your bid must be higher than the current highest bid!", "danger")
-        else:
-            new_bid = Bid(
-                item_id=item_id,
-                user_id=current_user.id,
-                bid_amount=bid_amount,
-                bid_date_time=datetime.utcnow()
-            )
-            db.session.add(new_bid)
-            db.session.commit()
-            flash("Bid placed successfully!", "success")
-            return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
+    # Save new bid
+    new_bid = Bid(
+        item_id=item_id,
+        user_id=current_user.id,
+        bid_amount=bid_amount,
+        bid_date_time=datetime.utcnow()
+    )
+    db.session.add(new_bid)
+    db.session.commit()
 
+    # Notify all users of the new highest bid
+    emit('update_bid', {'item_id': item_id, 'new_bid': bid_amount}, broadcast=True)
 
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
-    
-    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
-
-
+    # Notify the bidder that the bid was successful
+    emit('bid_success', {'message': 'Bid placed successfully!'}, room=request.sid)
 
 
 # Expert Pages
