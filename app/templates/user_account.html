@@ -29,11 +29,20 @@
                 <div class="mb-3 row">
                     {{ info_form.first_name.label(class="col-sm-2 col-form-label")}}
                     {{ info_form.first_name(class="col-sm-6")}}
+                    {% for error in info_form.first_name.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
                 </div>
     
                 <div class="mb-3 row">
                     {{ info_form.last_name.label(class="col-sm-2 col-form-label")}}
                     {{ info_form.last_name(class="col-sm-6")}}
+                    {% for error in info_form.last_name.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                    <div class="col-sm-2">
+                        {{ info_form.update_info(class="btn btn-outline-primary") }}
+                    </div>
                 </div>
             </form>
             
@@ -42,6 +51,9 @@
                 <div class="mb-3 row">
                     {{ username_form.username.label(class="col-sm-2 col-form-label")}}
                     {{ username_form.username(class="col-sm-6")}}
+                    {% for error in username_form.username.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
                     <div class="col-sm-2">
                         {{ username_form.update_username(class="btn btn-outline-primary") }}
                     </div>
@@ -53,6 +65,9 @@
                 <div class="mb-3 row">
                     {{ email_form.email.label(class="col-sm-2 col-form-label")}}
                     {{ email_form.email(class="col-sm-6")}}
+                    {% for error in email_form.email.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
                     <div class="col-sm-2">
                         {{ email_form.update_email(class="btn btn-outline-primary") }}
                     </div>
@@ -68,11 +83,17 @@
                 <div class="mb-3 row">
                     {{ password_form.new_password.label(class="col-sm-2 col-form-label")}}
                     {{ password_form.new_password(class="col-sm-6")}}
+                    {% for error in password_form.new_password.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
                 </div>
 
                 <div class="mb-3 row">
                     {{ password_form.confirm_password.label(class="col-sm-2 col-form-label")}}
                     {{ password_form.confirm_password(class="col-sm-6")}}
+                    {% for error in password_form.confirm_password.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
                     <div class="col-sm-2">
                         {{ password_form.update_privacy(class="btn btn-outline-primary") }}
                     </div>

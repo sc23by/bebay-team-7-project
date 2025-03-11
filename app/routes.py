@@ -194,7 +194,6 @@ def logout():
     logout_user()
     return redirect(url_for('guest_home'))
 
-
 # User Pages
 
 # Route: Logged In Page
@@ -214,6 +213,23 @@ def user_home():
         item_bids[item.item_id] = highest_bid if highest_bid is not None else None 
 
     return render_template('user_home.html', pagetitle='User Home', items = items, item_bids = item_bids)
+
+# Route: Search in navbar
+@app.route('/user/search', methods = ['GET'])
+def search():
+    search_query = request.args.get('query', '').strip()
+
+    if not search_query:
+        items = Item.query.all()
+    else:
+        items = Item.query.filter(Item.item_name.ilike(f"%{search_query}%")).all()
+
+    item_bids = {}
+    for item in items:
+        highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item.item_id).scalar()
+        item_bids[item.item_id] = highest_bid if highest_bid is not None else None 
+    
+    return render_template("user_home.html", items = items, item_bids = item_bids)
 
 # Route: Watch
 @app.route('/user/watch', methods=['POST'])
@@ -334,9 +350,9 @@ def account():
             user.email=email_form.email.data
             db.session.commit()
             flash('Email updated successfully!', 'success')
-    # if form validation fails flask the message
-    elif not email_form.validate_on_submit():
-        flash('Invalid email address.', 'danger')
+    # # if form validation fails flask the message
+    # elif not email_form.validate_on_submit():
+    #     flash('Invalid email address.', 'danger')
 
     # if password is updated, update in db
     if password_form.update_privacy.data and password_form.validate_on_submit():
@@ -344,9 +360,9 @@ def account():
         user.password = hashed_password
         db.session.commit()
         flash('Password updated successfully!', 'success')
-    elif not password_form.validate_on_submit():
-        if password_form.new_password.data != password_form.confirm_password.data:
-            flash('Passwords do not match.', 'danger')
+    # elif not password_form.validate_on_submit():
+    #     if password_form.new_password.data != password_form.confirm_password.data:
+    #         flash('Passwords do not match.', 'danger')
 
     # if payment info is updated, update in db
     if card_form.update_card.data and card_form.validate_on_submit():
