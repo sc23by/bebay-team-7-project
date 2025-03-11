@@ -107,17 +107,17 @@ def test_change_existing_email(loggedInClientP1):
         assert current_user.email != "existing@example.com"
 
 
-def test_change_unvalid_username(loggedInClientP1):
-    print(f"{Colours.YELLOW}Testing account info page - username invalid:{Colours.RESET}")
+def test_change_unvalid_email(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing account info page - email invalid:{Colours.RESET}")
 
     response = loggedInClientP1.post("/user/account", data={
-        'username': 'testuser()',
-        'update_username': True
+        'email': 'invalid@',
+        "update_email": True
     }, follow_redirects=True)
 
     assert response.status_code == 200
 
     with app.app_context():
-        assert current_user.username != 'testuser()'
+        assert current_user.username != 'invalid@'
 
 
