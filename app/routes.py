@@ -661,7 +661,16 @@ def expert_availability():
         return redirect(url_for('expert_availability'))
 
     else:
-        return render_template('expert_availability.html')
+
+        availabilites = ExpertAvailabilities.query.filter_by(user_id=user_id).all()
+
+        filled_timeslots = []
+
+        for timeslot in availabilites:
+            filled_timeslots.append({"date": str(timeslot.date), "start_time":str(timeslot.start_time)[:5]})
+
+
+        return render_template('expert_availability.html',filled_timeslots=filled_timeslots)
 
 #Route: Expert Account Page
 @app.route('/expert/account')
