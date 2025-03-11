@@ -51,14 +51,86 @@
 
 <script>
 
+    document.addEventListener("DOMContentLoaded", function () {
+
     const filledTimeslots = JSON.parse('{{ filled_timeslots|tojson|safe }}');
     console.log(filledTimeslots);
 
+    const timeSlots = [
+            "08:00-09:00", "09:00-10:00", "10:00-11:00", "11:00-12:00",
+            "12:00-13:00", "13:00-14:00", "14:00-15:00", "15:00-16:00",
+            "16:00-17:00", "17:00-18:00", "18:00-19:00", "19:00-20:00"
+    ];
 
+    //Works out the dates of the current week to display on the header rows of the availability table.
+
+    const today = new Date();
+    const weekDay = today.getDay();
+    const currentDay = today.getDate();
+
+    weekdays = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"]
+    weekdaysCapitalised = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
+
+    /*
+    Converts a Javascript Date object into a formatted dd/mm/yy string so it can be displayed.
+
+    Parameters:
+    var (date): The Javascript date
+
+    Returns:
+    str: The dd/mm/yy string
+    */
+
+    function formatDate(date){
+
+        const day = String(date.getDate()).padStart(2, '0'); 
+        const month = String(date.getMonth() + 1).padStart(2, '0'); 
+        const year = String(date.getFullYear()).slice(-2);         
+        return `${day}/${month}/${year}`;
+        }
+
+    for(day=0;day<7;day++){
+    let currentDate = new Date(today)
+    currentDate.setDate(today.getDate() - weekDay + day)
+    document.getElementById(weekdays[day]+'-date').textContent = `${weekdaysCapitalised[day]} ${formatDate(currentDate)}`;
+    }
+
+    const tableBody = document.querySelector("#availability-table tbody");
+    tableBody.innerHTML = ""; 
+
+    for (let i = 0; i < timeSlots.length; i++) {
+        let row = document.createElement("tr");
+
+        let timeSlotCell = document.createElement("td");
+        timeSlotCell.textContent = timeSlots[i]; 
+        row.appendChild(timeSlotCell);
+
+        for (let j = 0; j < 7; j++) {
+            let cell = document.createElement("td");
+            cell.dataset.row = i;
+            cell.dataset.col = j;
+
+            cell.dataset.startTime = timeSlots[i].split('-')[0];
+
+            let currentDate = new Date(today);
+            currentDate.setDate(today.getDate() - weekDay + j);
+            const formattedDate = currentDate.toISOString().split("T")[0];
+            cell.dataset.date = formattedDate;
+
+            if (filledTimeslots.some(slot => slot.date === formattedDate && slot.start_time === cell.dataset.startTime)) {
+            cell.classList.add("filled");
+            }
+
+            cell.addEventListener("click", () => cell.classList.toggle("filled"));
+            row.appendChild(cell);
+        }
+        tableBody.appendChild(row);
+    }
+    
     function saveState() {
         const form = document.getElementById("availabilityForm");
         const filledCells = document.querySelectorAll('#availability-table td.filled');
-        const today = new Date();  
+        const baseDate = new Date();  
         const weekDay = today.getDay();  
 
         let selectedTimeslots = [];
@@ -73,9 +145,8 @@
             const rowIndex = cell.dataset.row;  
             const colIndex = cell.dataset.col; 
 
-            let currentDate = new Date(today);
-
-            currentDate.setDate(today.getDate() - weekDay + colIndex - 18); 
+            let currentDate = new Date(baseDate);
+            currentDate.setDate(baseDate.getDate() - baseDate.getDay() + parseInt(colIndex));
 
 
             const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
@@ -111,80 +182,12 @@
             background-color: lightblue;  
         }
     `;
+    
     document.head.appendChild(timeSlotColour);
-
-    //Creates the table dynamically once the html has been generated for the window
-
-    document.addEventListener("DOMContentLoaded", function () {
-
-        const rows = 12;
-        const cols = 8;
-
-        const timeSlots = [
-                "08:00-09:00", "09:00-10:00", "10:00-11:00", "11:00-12:00",
-                "12:00-13:00", "13:00-14:00", "14:00-15:00", "15:00-16:00",
-                "16:00-17:00", "17:00-18:00", "18:00-19:00", "19:00-20:00"
-        ];
-
-        for (let i = 0; i < rows; i++) {
-            let row = document.createElement("tr");
-
-            let timeSlotCell = document.createElement("td");
-            timeSlotCell.textContent = timeSlots[i]; 
-            row.appendChild(timeSlotCell);
-
-            for (let j = 0; j < cols - 1; j++) {
-                let cell = document.createElement("td");
-                cell.dataset.row = i;
-                cell.dataset.col = j;
-                cell.onclick = function () { toggleTimeSlotCellColour(this); }; 
-                row.appendChild(cell);
-            }
-            document.getElementById("availability-table").appendChild(row);
-        }
-    });
-
     document.getElementById("resetButton").addEventListener("click", resetCells);
     document.getElementById("saveButton").addEventListener("click", saveState);
-       
-        /*
-        Converts a Javascript Date object into a formatted dd/mm/yy string so it can be displayed.
+})
 
-        Parameters:
-        var (date): The Javascript date
-
-        Returns:
-        str: The dd/mm/yy string
-        */
-
-        function formatDate(date){
-
-            const day = String(date.getDate()).padStart(2, '0'); 
-            const month = String(date.getMonth() + 1).padStart(2, '0'); 
-            const year = String(date.getFullYear()).slice(-2);         
-            return `${day}/${month}/${year}`;
-        }
-
-        //Works out the dates of the current week to display on the header rows of the availability table.
-
-        window.onload = function() {
-
-            const today = new Date();
-            const weekDay = today.getDay();
-            const currentDay = today.getDate();
-
-            weekdays = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"]
-            weekdaysCapitalised = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
-
-            for(day=0;day<7;day++){
-                let currentDate = new Date(today)
-                currentDate.setDate(today.getDate() - weekDay + day)
-                document.getElementById(weekdays[day]+'-date').textContent = `${weekdaysCapitalised[day]} ${formatDate(currentDate)}`;
-            }
-        }
-
-//Save button
-//Delete all records for each day and replace with new set for the week
 </script>
 
 
