@@ -2,7 +2,7 @@
 
 ## Installation
 
-All dependencies can be installed by running the `flaskSetupVenv.sh` script.
+All dependencies can be installed by running the `RequirementsSetup.sh` script.
 
 ### Steps to Install:
 
