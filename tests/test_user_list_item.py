@@ -280,6 +280,7 @@ def test_missing_data(loggedInClientP1):
     response = loggedInClientP1.post("/user/list_item", data=create_form_data(), follow_redirects=True)
 
     assert response.status_code == 200
+    # managed by forms - does show up
     #assert b'This field is required.' in response.data
     assert db.session.query(Item).count() == initial_count
 
@@ -355,5 +356,4 @@ def test_view_no_items(loggedInClientP1):
     response = loggedInClientP1.get("/user")
 
     assert response.status_code == 200
-    # un hash when belal adds this in
-    #assert b'No items listed' in response.data
+    assert b'No items listed' in response.data
