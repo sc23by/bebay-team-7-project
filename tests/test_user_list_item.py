@@ -1,10 +1,13 @@
 # test list item route
 
 from app import app, db
-from app.models import Item
+from app.models import Item, Watched_item
 import io
 # import for direct file upload in testing
 from werkzeug.datastructures import FileStorage
+from datetime import datetime, timedelta
+from flask_login import current_user
+
 
 from colours import Colours
 
@@ -249,6 +252,7 @@ def test_boundry_shipping_cost(loggedInClientP1):
     assert b"Item listed successfully!" in response.data
     assert db.session.query(Item).count() == initial_count + 2
 
+
 def test_missing_data(loggedInClientP1):
     print(f"{Colours.YELLOW}Testing list items page - test data not inputted:{Colours.RESET}")
 
@@ -278,3 +282,78 @@ def test_missing_data(loggedInClientP1):
     assert response.status_code == 200
     #assert b'This field is required.' in response.data
     assert db.session.query(Item).count() == initial_count
+
+
+def test_view_items(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing view listed items - item exists in main page and my listings section:{Colours.RESET}")
+
+    with app.app_context():
+        expiration_time = datetime.utcnow() + timedelta(days=3)
+        new_item = Item(
+            seller_id= current_user.id,
+            item_name="Vintage Watch",
+            minimum_price=150.00,
+            description="A rare vintage watch in excellent condition.",
+            item_image="vintage_watch.jpg",
+            date_time=datetime.utcnow(),
+            expiration_time=expiration_time,
+            approved=True,
+            shipping_cost=10.50,
+            expert_payment_percentage=0.15 )
+
+        db.session.add(new_item)
+        db.session.commit()
+
+    response = loggedInClientP1.get("/user")
+
+    assert response.status_code == 200
+    #check name
+    assert b'Vintage Watch' in response.data
+    # check time remaining
+    expected_time_remaining = expiration_time.strftime("%Y-%m-%d %H:%M")
+    assert expected_time_remaining.encode() in response.data
+
+    response = loggedInClientP1.get("/user/my_listings")
+    assert response.status_code == 200
+    assert b'Vintage Watch' in response.data
+    # no time check bc it went down by the time this test runs
+
+
+def test_watchlist_items(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing view watchlist items - check items show up:{Colours.RESET}")
+
+    with app.app_context():
+        expiration_time = datetime.utcnow() + timedelta(days=3)
+        new_item = Item(
+            seller_id= 1234,
+            item_name="Vintage Watch",
+            minimum_price=150.00,
+            description="A rare vintage watch in excellent condition.",
+            item_image="vintage_watch.jpg",
+            date_time=datetime.utcnow(),
+            expiration_time=expiration_time,
+            approved=True,
+            shipping_cost=10.50,
+            expert_payment_percentage=0.15 )
+
+        db.session.add(new_item)
+        db.session.commit()
+
+        user = current_user.query.get(current_user.id)
+        user.watchlist.append(new_item)
+        db.session.commit()
+        assert new_item in user.watchlist
+
+    response = loggedInClientP1.get("/user/watchlist")
+    assert response.status_code == 200
+    assert b'Vintage Watch' in response.data
+
+
+def test_view_no_items(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing view listed items - no item is added:{Colours.RESET}")
+
+    response = loggedInClientP1.get("/user")
+
+    assert response.status_code == 200
+    # un hash when belal adds this in
+    #assert b'No items listed' in response.data
