@@ -29,35 +29,39 @@
                 <option value="name_asc">Name: A-Z</option>
             </select>
 
-            <div id="watchlist_sort" class="row row-cols-3 row-cols-md-5 g-4">
-                {% for item in watched_items %}
-                <div class="col">
-                    <div class="card h-100">
-                        <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
-                             class="card-img-top" alt="{{ item.item_name }}">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ item.item_name }}</h5>
-                            <p class="card-text">Start Time: {{ item.date_time.strftime('%H:%M') }}</p>
-                            <p class="card-text">Price: £{{ item.minimum_price }}</p>
-                            <a href="{{ url_for('user_item_details', item_id=item.item_id) }}" class="btn btn-primary">
-                                View Details
-                            </a>
-                            {% if item in current_user.watchlist %}
-                                <span class="fa fa-heart selected" data-value="{{ current_user.watchlist | default(0) }}"
-                                    data-item-id="{{ item.item_id }}"></span>
-                                <input type="hidden" id="heart_Value" name="watch" value="1">
-                                <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
-                            {% else %}
-                                <span class="fa fa-heart " data-value="{{ current_user.watchlist | default(0) }}"
-                                    data-item-id="{{ item.item_id }}"></span>
-                                <input type="hidden" id="heart_Value" name="watch" value="0">
-                                <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
-                            {% endif %}
+            {% if watched_items %}
+                <div id="watchlist_sort" class="row row-cols-3 row-cols-md-5 g-4">
+                    {% for item in watched_items %}
+                    <div class="col">
+                        <div class="card h-100">
+                            <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
+                                class="card-img-top" alt="{{ item.item_name }}">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ item.item_name }}</h5>
+                                <p class="card-text">Start Time: {{ item.date_time.strftime('%H:%M') }}</p>
+                                <p class="card-text">Price: £{{ item.minimum_price }}</p>
+                                <a href="{{ url_for('user_item_details', item_id=item.item_id) }}" class="btn btn-primary">
+                                    View Details
+                                </a>
+                                {% if item in current_user.watchlist %}
+                                    <span class="fa fa-heart selected" data-value="{{ current_user.watchlist | default(0) }}"
+                                        data-item-id="{{ item.item_id }}"></span>
+                                    <input type="hidden" id="heart_Value" name="watch" value="1">
+                                    <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
+                                {% else %}
+                                    <span class="fa fa-heart " data-value="{{ current_user.watchlist | default(0) }}"
+                                        data-item-id="{{ item.item_id }}"></span>
+                                    <input type="hidden" id="heart_Value" name="watch" value="0">
+                                    <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
+            {% else %}
+                <p class="text-center text-muted">No items in your watchlist</p>
+            {% endif %}
         </div>
     </div>
 
