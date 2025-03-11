@@ -2,7 +2,7 @@
 
 
 from app import app, db, bcrypt
-from app.models import User
+from app.models import User, PaymentInfo
 from flask_login import current_user
 
 from colours import Colours
@@ -23,7 +23,7 @@ def test_change_valid_username(loggedInClientP1):
 
     response = loggedInClientP1.post("/user/account", data={
         "username": "newusername",
-        "update_username": True
+        "update_username": 'Edit'
     }, follow_redirects=True)
 
     assert response.status_code == 200
@@ -46,7 +46,7 @@ def test_change_existing_username(loggedInClientP1):
 
     response = loggedInClientP1.post("/user/account", data={
         'username': 'other_user',
-        'update_username': True
+        'update_username': 'Edit'
     }, follow_redirects=True)
 
     assert response.status_code == 200
@@ -60,7 +60,7 @@ def test_change_unvalid_username(loggedInClientP1):
 
     response = loggedInClientP1.post("/user/account", data={
         'username': 'testuser()',
-        'update_username': True
+        'update_username': 'Edit'
     }, follow_redirects=True)
 
     assert response.status_code == 200
@@ -74,7 +74,7 @@ def test_change_valid_email(loggedInClientP1):
 
     response = loggedInClientP1.post("/user/account", data={
         'email': 'newemail@email.com',
-        "update_email": True
+        "update_email": 'Edit'
     }, follow_redirects=True)
 
     assert response.status_code == 200
@@ -97,7 +97,7 @@ def test_change_existing_email(loggedInClientP1):
 
     response = loggedInClientP1.post("/user/account", data={
         'email': 'existing@example.com',
-        "update_email": True
+        "update_email": 'Edit'
     }, follow_redirects=True)
 
     assert response.status_code == 200
@@ -112,12 +112,65 @@ def test_change_unvalid_email(loggedInClientP1):
 
     response = loggedInClientP1.post("/user/account", data={
         'email': 'invalid@',
-        "update_email": True
+        "update_email": 'Edit'
     }, follow_redirects=True)
 
     assert response.status_code == 200
+    assert b'Invalid email address.' in response.data
 
     with app.app_context():
         assert current_user.username != 'invalid@'
 
 
+def test_change_passowrd(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing account info page - update password:{Colours.RESET}")
+
+    response = loggedInClientP1.post('/user/account', data={
+        'new_password': 'newValidPassword123',
+        'confirm_password': 'newValidPassword123',
+        'update_privacy': 'Change Password'
+    },follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b'Password updated successfully!' in response.data
+
+    with app.app_context():
+        assert bcrypt.check_password_hash(current_user.password, 'newValidPassword123')
+
+def test_missmatching_passowrds(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing account info page -passwords missmatch:{Colours.RESET}")
+
+    response = loggedInClientP1.post('/user/account', data={
+        'new_password': 'newValidPassword123',
+        'confirm_password': 'differentValidPassword123',
+        'update_privacy': 'Change Password'
+    },follow_redirects=True)
+
+    assert response.status_code == 200
+    # FIXME when leyna changes flash messages to show
+    assert b'Passwords do not match.' in response.data
+
+    with app.app_context():
+        assert not bcrypt.check_password_hash(current_user.password, 'newValidPassword123')
+        assert not bcrypt.check_password_hash(current_user.password, 'differentValidPassword123')
+
+
+def test_update_shipping_card(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing account info page - card and shipping update:{Colours.RESET}")
+
+    with app.app_context():
+        payment_info = PaymentInfo(user_id=current_user.id)
+        db.session.add(payment_info)
+        db.session.commit()
+
+    response = loggedInClientP1.post('/user/account', data={
+        'card_number': '12345678',
+        'shipping_address': 'my address',
+        'update_card': 'Update Card Info'
+    },follow_redirects=True)
+
+    assert response.status_code == 200
+
+    with app.app_context():
+        payment_info = PaymentInfo.query.filter_by(user_id=current_user.id).first()
+        assert payment_info.shipping_address == 'my address'
