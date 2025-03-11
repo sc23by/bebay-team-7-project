@@ -350,26 +350,22 @@ def account():
             user.email=email_form.email.data
             db.session.commit()
             flash('Email updated successfully!', 'success')
-    # # if form validation fails flask the message
-    # elif not email_form.validate_on_submit():
-    #     flash('Invalid email address.', 'danger')
 
     # if password is updated, update in db
     if password_form.update_privacy.data and password_form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(password_form.new_password.data)
-        user.password = hashed_password
-        db.session.commit()
-        flash('Password updated successfully!', 'success')
-    # elif not password_form.validate_on_submit():
-    #     if password_form.new_password.data != password_form.confirm_password.data:
-    #         flash('Passwords do not match.', 'danger')
+        if password_form.new_password.data != password_form.confirm_password.data:
+            flash('Passwords do not match.', 'danger')
+        else:
+            hashed_password = bcrypt.generate_password_hash(password_form.new_password.data)
+            user.password = hashed_password
+            db.session.commit()
+            flash('Password updated successfully!', 'success')    
 
     # if payment info is updated, update in db
     if card_form.update_card.data and card_form.validate_on_submit():
         # Update existing payment info for current user
         payment_info.payment_type = card_form.card_number.data
         payment_info.shipping_address = card_form.shipping_address.data
-
         db.session.commit()
         flash('Payment info updated successfully!', 'success')
 
