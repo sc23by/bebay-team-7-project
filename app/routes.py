@@ -668,10 +668,12 @@ def manager_home():
 @app.route('/manager/statistics', methods=['GET','POST'])
 @manager_required
 def manager_statistics():
+    date_str = request.args.get('date',default = '2025-03-01', type = str)
+    start_date = datetime.strptime(date_str, '%Y-%m-%d')
 
     weeks = []
-    current_date = start_date
 
+    current_date = start_date
     while current_date.weekday() != 6:
         current_date -= timedelta(days = 1)
 
@@ -683,16 +685,12 @@ def manager_statistics():
             'week_end' : week_end.strftime('%Y-%m-%d') 
         })
 
-    current_date = week_end + timedelta(days=1)
-    date_str = request.args.get('date',default = '2025-03-01', type = str)
-
-    start_date = datetime.strptime(date_str, '%Y-%m-%d')
-    weeks = split_into_weeks(start_date)
+        current_date = week_end + timedelta(days=1)
 
     week_labels = []
 
     for week in weeks:
-        week_labels.append([week['week_start'],week['week_end']])
+        week_labels.append(f"{week['week_start']} - {week['week_end']}")
     print(week_labels)
     values = [100,150,120,130]
 
@@ -706,7 +704,11 @@ def manager_statistics():
     plt.savefig(img,format='png')
     img.seek(0)
 
-    return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, week_labels=week_labels, )
+    ratio = [0.75]
+
+    img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
+
+    return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, week_labels=week_labels)
 
 #Route: Manager Account Page
 @app.route('/manager/accounts',methods=['GET','POST'])

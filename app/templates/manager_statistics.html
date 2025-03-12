@@ -2,9 +2,8 @@
 
 {% block content %}
 <!--Pie chart card-->
-{% for item in sold_items %}
 
-  <img sec="{{url_for('manager_statistics')}}">
+<img sec="{{url_for('manager_statistics')}}">
 
 <div class="container">
     <div class="row">
@@ -18,12 +17,11 @@
             </div>
             <div>
             <p class="card-text">Cost per posting: <button>edit</button></p>
-            <p class="card-text">Expert Payment: {{item.expert_fee_percentage}} %<button>edit</button></p>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-{% endfor %}
+
 {% endblock %}
