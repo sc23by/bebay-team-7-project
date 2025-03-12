@@ -668,6 +668,11 @@ def manager_home():
 @app.route('/manager/statistics', methods=['GET','POST'])
 @manager_required
 def manager_statistics():
+
+    bid_item_id = Bid.query.with_entities(Bid.item_id).all()
+
+    Item.query.all()
+
     date_str = request.args.get('date',default = '2025-03-01', type = str)
     start_date = datetime.strptime(date_str, '%Y-%m-%d')
 

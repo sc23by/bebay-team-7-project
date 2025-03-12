@@ -71,6 +71,8 @@ class Item(db.Model):
     # Store the fixed fees at the time of listing
     site_fee_percentage = db.Column(db.Float, nullable=False,default=1.00)
     expert_fee_percentage = db.Column(db.Float, nullable=False,default=4.00)
+
+    bids = db.relationship('Bid',backref='item',lazy=True)
     
     def get_image_url(self):
         return url_for('static', filename=f'images/items/{self.item_image}')
