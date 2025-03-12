@@ -669,9 +669,14 @@ def manager_home():
 @manager_required
 def manager_statistics():
 
-    bid_item_id = Bid.query.with_entities(Bid.item_id).all()
+    bids = Bid.query.all()
 
-    Item.query.all()
+    for bid in bids:
+        item = Item.query.get(bid.item_id)
+
+        if item:
+            expiration_time = item.expiration_time
+
 
     date_str = request.args.get('date',default = '2025-03-01', type = str)
     start_date = datetime.strptime(date_str, '%Y-%m-%d')
@@ -689,6 +694,14 @@ def manager_statistics():
             'week_start': week_start.strftime('%Y-%m-%d'),
             'week_end' : week_end.strftime('%Y-%m-%d') 
         })
+
+        expired_items = Item.query.filter(
+            Item.expiration_time >= week_start,
+            Item.expiration_time <= week_end
+        ).all()
+
+        weekly_revenue = []    
+
 
         current_date = week_end + timedelta(days=1)
 
