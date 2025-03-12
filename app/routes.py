@@ -677,46 +677,50 @@ def manager_statistics():
         if item:
             expiration_time = item.expiration_time
 
-
-    date_str = request.args.get('date',default = '2025-03-01', type = str)
-    start_date = datetime.strptime(date_str, '%Y-%m-%d')
+    current_date = datetime.now()
+    four_weeks_ago = current_date - timedelta(weeks=4)
 
     weeks = []
-
-    current_date = start_date
-    while current_date.weekday() != 6:
-        current_date -= timedelta(days = 1)
+    values = []
 
     for i in range(4):
-        week_start = current_date
-        week_end = current_date + timedelta(days = 6)
-        weeks.append({
-            'week_start': week_start.strftime('%Y-%m-%d'),
-            'week_end' : week_end.strftime('%Y-%m-%d') 
-        })
+        week_start = four_weeks_ago + timedelta(weeks=i)
+        week_end = week_start + timedelta(days = 6)
 
         expired_items = Item.query.filter(
+            Item.expiration_time < datetime.now(),
             Item.expiration_time >= week_start,
             Item.expiration_time <= week_end
         ).all()
 
-        weekly_revenue = []    
+        price = 0
 
+        for item in expired_items:
+            if item.sold_item:
+                price += item.sold_item.price
+        
+        values.append(price)
 
-        current_date = week_end + timedelta(days=1)
+        weeks.append({
+            'week_start': week_start.strftime('%m-%d'),
+            'week_end': week_end.strftime('%m-%d')
+        })
+
 
     week_labels = []
 
     for week in weeks:
-        week_labels.append(f"{week['week_start']} - {week['week_end']}")
-    print(week_labels)
-    values = [100,150,120,130]
+        week_labels.append(f"{week['week_start']} - {week['week_end']}")    
+
 
     plt.figure(figsize=(10,6))
     plt.bar(week_labels, values)
+    plt.ylim(0)
+
     plt.xlabel('Week')
     plt.ylabel('Value')
-    plt.title('Weekly Data')
+    plt.title('Weekly Revenue')
+
 
     img = io.BytesIO()
     plt.savefig(img,format='png')
