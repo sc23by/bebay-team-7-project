@@ -12,6 +12,7 @@ import os
 import uuid
 from datetime import datetime, timedelta
 from sqlalchemy import desc
+from week import split_into_weeks
 # Parses data sent by JS
 import json
 
@@ -668,10 +669,24 @@ def manager_home():
 @app.route('/manager/statistics', methods=['GET','POST'])
 @manager_required
 def manager_stats():
-
-
     return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, labels=labels, sold_items=sold_items)
 
+@app.route('manager/statistics/get_weeks',methods=['GET','POST'])
+@manager_required
+def get_weeks():
+    date_str = request.args.get('date',default = '2025-03-01', type = str)
+
+    start_date = datetime.strptime(date_str, '%Y-%m-%d')
+    weeks = split_into_weeks(start_date)
+
+    week_lables = []
+
+    for week in weeks:
+        weekl_lables.append(week['week_start','week_end'])
+
+    values = [100,150,120,130]
+
+    return render_template('manager_chart.html',week_labels = week_labels, values=values)
 
 
 #Route: Manager Account Page
