@@ -674,9 +674,6 @@ def manager_statistics():
     for bid in bids:
         item = Item.query.get(bid.item_id)
 
-        if item:
-            expiration_time = item.expiration_time
-
     current_date = datetime.now()
     four_weeks_ago = current_date - timedelta(weeks=4)
 
@@ -693,13 +690,15 @@ def manager_statistics():
             Item.expiration_time <= week_end
         ).all()
 
-        price = 0
+        weekly_revenue = 0
 
         for item in expired_items:
             if item.sold_item:
-                price += item.sold_item.price
-        
-        values.append(price)
+                final_price = item.sold_item.price
+                site_fee = item.calculate_fee(final_price, expert_approved=False)
+                weekly_revenue += site_fee
+
+        values.append(weekly_revenue)
 
         weeks.append({
             'week_start': week_start.strftime('%m-%d'),

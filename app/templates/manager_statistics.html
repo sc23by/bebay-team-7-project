@@ -11,6 +11,15 @@
           <img src="data:image/png;base64,{{img_data}}" class="card-img-top" alt="...">
           <div class="card-body">
             <div>
+              <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Dropdown button
+                </button>
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" href="#">Weekly Income</a></li>
+                  <li><a class="dropdown-item" href="#">Weekly Cost</a></li>
+                </ul>
+              </div>
                 <p class="card-text">Total Revenue: £</p>
                 <p class="card-text">Generated Income: £{{ratio[0]}}</p>
                 <p class="card-text">Percentage generated: £</p>
