@@ -345,6 +345,9 @@ def account():
     
 
     # validation error handeling
+    if info_form.update_info.data and not info_form.validate_on_submit():
+        flash('Invalid first or last name (only letters are allowed).', 'danger')
+
     if username_form.username.data and not username_form.validate_on_submit():
         flash('Invalid username.', 'danger')
     
