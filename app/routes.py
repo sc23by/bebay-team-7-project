@@ -12,7 +12,6 @@ import os
 import uuid
 from datetime import datetime, timedelta
 from sqlalchemy import desc
-from week import split_into_weeks
 # Parses data sent by JS
 import json
 
@@ -668,26 +667,46 @@ def manager_home():
 #Route: Manager Stats Page
 @app.route('/manager/statistics', methods=['GET','POST'])
 @manager_required
-def manager_stats():
-    return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, labels=labels, sold_items=sold_items)
+def manager_statistics():
 
-@app.route('manager/statistics/get_weeks',methods=['GET','POST'])
-@manager_required
-def get_weeks():
+    weeks = []
+    current_date = start_date
+
+    while current_date.weekday() != 6:
+        current_date -= timedelta(days = 1)
+
+    for i in range(4):
+        week_start = current_date
+        week_end = current_date + timedelta(days = 6)
+        weeks.append({
+            'week_start': week_start.strftime('%Y-%m-%d'),
+            'week_end' : week_end.strftime('%Y-%m-%d') 
+        })
+
+    current_date = week_end + timedelta(days=1)
     date_str = request.args.get('date',default = '2025-03-01', type = str)
 
     start_date = datetime.strptime(date_str, '%Y-%m-%d')
     weeks = split_into_weeks(start_date)
 
-    week_lables = []
+    week_labels = []
 
     for week in weeks:
-        weekl_lables.append(week['week_start','week_end'])
-
+        week_labels.append([week['week_start'],week['week_end']])
+    print(week_labels)
     values = [100,150,120,130]
 
-    return render_template('manager_chart.html',week_labels = week_labels, values=values)
+    plt.figure(figsize=(10,6))
+    plt.bar(week_labels, values)
+    plt.xlabel('Week')
+    plt.ylabel('Value')
+    plt.title('Weekly Data')
 
+    img = io.BytesIO()
+    plt.savefig(img,format='png')
+    img.seek(0)
+
+    return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, week_labels=week_labels, )
 
 #Route: Manager Account Page
 @app.route('/manager/accounts',methods=['GET','POST'])
