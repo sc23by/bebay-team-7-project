@@ -45,9 +45,9 @@ class PaymentInfo(db.Model):
 # Sold item model
 class SoldItem(db.Model):
     sold_id = db.Column(db.Integer, primary_key=True)
-    item_id = db.Column(db.Integer, ForeignKey('Item.item_id'), nullable=False)
-    seller_id = db.Column(db.Integer, ForeignKey('User.id'), nullable=False)
-    buyer_id = db.Column(db.Integer, ForeignKey('User.id'), nullable=False)
+    item_id = db.Column(db.Integer, ForeignKey('item.item_id'), nullable=False)
+    seller_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
+    buyer_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
     price = db.Column(db.Float, nullable=False)
 
 
@@ -115,4 +115,3 @@ class FeeConfig(db.Model):
             db.session.add(fee)
             db.session.commit()
         return fee
-

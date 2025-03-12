@@ -2,7 +2,7 @@ from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, request, flash, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
-from app.models import FeeConfig, User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo
+from app.models import FeeConfig, User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo,SoldItem
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -668,17 +668,10 @@ def manager_home():
 @app.route('/manager/statistics', methods=['GET','POST'])
 @manager_required
 def manager_stats():
-    ratio = [40,30,20,10]
-    labels = ['Generated income','Customer cost','Postal cost','Experts cost']
-    colors=['red','green','blue','orange']
 
-    plt.pie(ratio, labels=labels,colors=colors,autopct=lambda p: f'{p:.1f}%\n £ {p * sum(ratio) / 100:.0f}')
-    img = io.BytesIO()
-    plt.savefig(img, format='png')
-    img.seek(0)
-    img_base64 = base64.b64encode(img.getvalue()).decode()
 
-    return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, labels=labels)
+    return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, labels=labels, sold_items=sold_items)
+
 
 
 #Route: Manager Account Page
