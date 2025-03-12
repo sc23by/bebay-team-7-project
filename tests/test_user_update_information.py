@@ -18,6 +18,9 @@ def test_account_page_loads(loggedInClientP1):
     assert b'Username' in response.data
     assert b'Email' in response.data
 
+
+# FIXME - add name update ytests
+
 def test_change_valid_username(loggedInClientP1):
     print(f"{Colours.YELLOW}Testing account info page - update username:{Colours.RESET}")
 
@@ -63,7 +66,8 @@ def test_change_unvalid_username(loggedInClientP1):
         'update_username': 'Edit'
     }, follow_redirects=True)
 
-    assert response.status_code == 200
+    assert response.status_code == 200#
+    # FIXME - add validation for flash message
 
     with app.app_context():
         assert current_user.username != 'testuser()'
@@ -147,7 +151,6 @@ def test_missmatching_passowrds(loggedInClientP1):
     },follow_redirects=True)
 
     assert response.status_code == 200
-    # FIXME when leyna changes flash messages to show
     assert b'Passwords do not match.' in response.data
 
     with app.app_context():

@@ -334,9 +334,7 @@ def account():
             user.email=email_form.email.data
             db.session.commit()
             flash('Email updated successfully!', 'success')
-    # if form validation fails flask the message
-    elif not email_form.validate_on_submit():
-        flash('Invalid email address.', 'danger')
+    
 
     # if password is updated, update in db
     if password_form.update_privacy.data and password_form.validate_on_submit():
@@ -344,7 +342,16 @@ def account():
         user.password = hashed_password
         db.session.commit()
         flash('Password updated successfully!', 'success')
-    elif not password_form.validate_on_submit():
+    
+
+    # validation error handeling
+    if username_form.username.data and not username_form.validate_on_submit():
+        flash('Invalid username.', 'danger')
+    
+    if email_form.email.data and not email_form.validate_on_submit():
+        flash('Invalid email address.', 'danger')
+
+    if password_form.update_privacy.data and not password_form.validate_on_submit():
         if password_form.new_password.data != password_form.confirm_password.data:
             flash('Passwords do not match.', 'danger')
 
