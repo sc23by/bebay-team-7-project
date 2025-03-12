@@ -19,7 +19,37 @@ def test_account_page_loads(loggedInClientP1):
     assert b'Email' in response.data
 
 
-# FIXME - add name update ytests
+def test_change_valid_name(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing account info page - update name:{Colours.RESET}")
+
+    response = loggedInClientP1.post("/user/account", data={
+        'first_name': "oli",
+        'last_name': 'mursell',
+        'update_info': 'Update Info'
+    }, follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b'Information updated successfully!' in response.data
+
+    with app.app_context():
+        assert current_user.first_name == "oli"
+        assert current_user.last_name == "mursell"
+
+def test_change_invalid_name(loggedInClientP1):
+    print(f"{Colours.YELLOW}Testing account info page - invalid name:{Colours.RESET}")
+
+    response = loggedInClientP1.post("/user/account", data={
+        'first_name': "oli1234",
+        'last_name': 'mursell',
+        'update_info': 'Update Info'
+    }, follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b'Invalid first or last name (only letters are allowed).' in response.data
+
+    with app.app_context():
+        assert current_user.first_name == "Test"
+        assert current_user.last_name == "User"
 
 def test_change_valid_username(loggedInClientP1):
     print(f"{Colours.YELLOW}Testing account info page - update username:{Colours.RESET}")
@@ -66,8 +96,8 @@ def test_change_unvalid_username(loggedInClientP1):
         'update_username': 'Edit'
     }, follow_redirects=True)
 
-    assert response.status_code == 200#
-    # FIXME - add validation for flash message
+    assert response.status_code == 200
+    assert b'Invalid username.' in response.data
 
     with app.app_context():
         assert current_user.username != 'testuser()'

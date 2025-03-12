@@ -316,6 +316,7 @@ def account():
         user.first_name=info_form.first_name.data
         user.last_name=info_form.last_name.data
         db.session.commit()
+        flash('Information updated successfully!', 'success')
     
     # if username is updated, validate then update in db
     if username_form.update_username.data and username_form.validate_on_submit():
