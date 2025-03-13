@@ -87,6 +87,18 @@ class Item(db.Model):
             return final_price * ((self.site_fee_percentage + self.expert_fee_percentage) / 100)
         return final_price * (self.site_fee_percentage / 100)
 
+    def highest_bid(self):
+        """Returns the highest bid amount."""
+        highest_bid = Bid.query.filter_by(item_id=self.item_id).order_by(Bid.bid_amount.desc()).first()
+        return highest_bid.bid_amount if highest_bid else None
+
+    def highest_bidder(self):
+        """Returns the user who placed the highest bid."""
+        highest_bid = self.highest_bid()  # Use the existing method
+        if highest_bid:
+            return Bid.query.filter_by(item_id=self.item_id, bid_amount=highest_bid).first().user
+        return None
+
 # Waiting List Model
 class WaitingList(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -101,6 +113,8 @@ class Bid(db.Model):
     user_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
     bid_amount = db.Column(db.Numeric(10, 2), nullable=False)  # Allows precise bid values
     bid_date_time = db.Column(db.DateTime, nullable=False)
+
+    user = db.relationship('User', backref='bids')
 
 # Fee Configuration Model (New)
 class FeeConfig(db.Model):
@@ -117,3 +131,9 @@ class FeeConfig(db.Model):
             db.session.commit()
         return fee
 
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    message = db.Column(db.String(500), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    read = db.Column(db.Boolean, default=False)
