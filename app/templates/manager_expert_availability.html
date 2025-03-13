@@ -99,3 +99,22 @@
 
     </div>
 </div>
+
+
+
+
+<!-- JavaScript to Handle Selections and Update UI -->
+<script>
+    let selectedItemId = null;
+    let expertAvailability = {};
+
+    {% for expert in experts %}
+        expertAvailability[{{ expert.id }}] = [
+            {% for slot in expert.availability %}
+                { id: "{{ slot.id }}", date: "{{ slot.date }}", start_time: "{{ slot.start_time }}" }
+            {% endfor %}
+        ];
+    {% endfor %}
+</script>
+
+{% endblock %}
