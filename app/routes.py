@@ -812,6 +812,9 @@ def manager_expert_availability():
         flash("Unauthorized Access", "danger")
         return redirect(url_for('index'))
 
+    items = Item.query.all()
+    experts = User.query.filter_by(priority=2).all()  # Fetch all experts (assuming priority=2 is expert)
+
 
 
     return render_template(
