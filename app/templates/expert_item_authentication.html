@@ -28,7 +28,7 @@
 
                 <button type="submit" class="button">Reassign</button>
 
-                <select name="reassign_expert" id="reassigsn_expert" class="form-select">
+                <select name="reassign_expert" id="reassign_expert" class="form-select">
                     {% for expert in experts %}
                         {% if expert.id != current_user.id %}
                             <option value="{{ expert.id }}">{{ expert.username }}</option>
