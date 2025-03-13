@@ -614,6 +614,7 @@ def expert_assignments():
 
     return render_template('expert_assignments.html',items=assigned_items)
 
+
 #Route: Expert Authentication Page
 @app.route('/expert/item_authentication/<int:item_id>')
 @expert_required
@@ -621,6 +622,11 @@ def expert_item_authentication(item_id):
 
     item_to_authenticate = Item.query.get(item_id)
     return render_template('expert_item_authentication.html',item_to_authenticate=item_to_authenticate)
+
+@app.route('/expert/approve_item/<int:item_id>', methods=['POST'])
+@expert_required
+def approve_item(item_id):
+    return redirect(url_for('expert_assignments'))
 
 #Route: Expert Messaging Page
 @app.route('/expert/messaging')
