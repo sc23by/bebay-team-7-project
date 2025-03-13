@@ -633,6 +633,16 @@ def approve_item(item_id):
 
     return redirect(url_for('expert_assignments'))
 
+@app.route('/expert/decline_item/<int:item_id>', methods=['POST'])
+@expert_required
+def decline_item(item_id):
+
+    item_to_approve = Item.query.get(item_id)
+    item_to_approve.approved = False
+    db.session.commit()
+
+    return redirect(url_for('expert_assignments'))
+
 #Route: Expert Messaging Page
 @app.route('/expert/messaging')
 @expert_required
