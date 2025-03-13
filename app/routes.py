@@ -844,15 +844,6 @@ def manager_expert_availability():
     )
 
 
-
-
-
-
-
-
-
-
-
 @app.route('/assign_expert', methods=['POST'])
 @login_required
 def assign_expert():
@@ -879,6 +870,21 @@ def assign_expert():
 
     return redirect(url_for('manager_expert_availability'))
 
+
+
+
+@app.route('/unassign_expert', methods=['POST'])
+@login_required
+def unassign_expert():
+    if current_user.priority < 2:  # Ensure only managers can access
+        flash("Unauthorized Action", "danger")
+        return redirect(url_for('index'))
+
+    item_id = request.form.get('item_id')
+    item = Item.query.get(item_id)
+
+
+    return redirect(url_for('manager_expert_availability'))
 
 
 
