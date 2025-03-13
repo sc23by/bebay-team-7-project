@@ -63,7 +63,7 @@ class Item(db.Model):
     hours = db.Column(db.Integer, nullable=False, default=0)
     minutes = db.Column(db.Integer, nullable=False, default=0)
     expiration_time = db.Column(db.DateTime, nullable=True)  
-    approved = db.Column(db.Boolean, default=False)
+    approved = db.Column(db.Boolean, default=None, nullable=True)
     shipping_cost = db.Column(db.Numeric(10,2), nullable=False)
     expert_payment_percentage = db.Column(db.Float, nullable=False, default=0.00) # Default can be changed by managers
     expert_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = True)
@@ -86,6 +86,8 @@ class Item(db.Model):
         if expert_approved:
             return final_price * ((self.site_fee_percentage + self.expert_fee_percentage) / 100)
         return final_price * (self.site_fee_percentage / 100)
+
+    expert = db.relationship('User',foreign_keys=[expert_id],backref='assigned_items')
 
 # Waiting List Model
 class WaitingList(db.Model):

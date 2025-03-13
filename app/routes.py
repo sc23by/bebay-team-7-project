@@ -642,13 +642,53 @@ def place_bid(item_id):
 @app.route('/expert/assignments')
 @expert_required
 def expert_assignments():
-    return render_template('expert_assignments.html')
+
+    assigned_items = Item.query.filter_by(expert_id=current_user.id, approved=None).all()
+
+    return render_template('expert_assignments.html',items=assigned_items)
+
 
 #Route: Expert Authentication Page
-@app.route('/expert/item_authentication')
+@app.route('/expert/item_authentication/<int:item_id>')
 @expert_required
-def expert_item_authentication():
-    return render_template('expert_item_authentication.html')
+def expert_item_authentication(item_id):
+
+    item_to_authenticate = Item.query.get(item_id)
+    experts = User.query.filter(User.priority == 2)
+    return render_template('expert_item_authentication.html', item_to_authenticate=item_to_authenticate, experts=experts)
+
+@app.route('/expert/approve_item/<int:item_id>', methods=['POST'])
+@expert_required
+def approve_item(item_id):
+
+    item_to_approve = Item.query.get(item_id)
+    item_to_approve.approved = True
+    db.session.commit()
+
+    return redirect(url_for('expert_assignments'))
+
+@app.route('/expert/decline_item/<int:item_id>', methods=['POST'])
+@expert_required
+def decline_item(item_id):
+
+    item_to_approve = Item.query.get(item_id)
+    item_to_approve.approved = False
+    db.session.commit()
+
+    return redirect(url_for('expert_assignments'))
+
+@app.route('/expert/reassign_item/<int:item_id>', methods=['POST'])
+@expert_required
+def reassign_item(item_id):
+
+    new_expert_id = request.form.get('reassign_expert')
+    
+    item_to_be_reassigned = Item.query.get(item_id)
+    
+    item_to_be_reassigned.expert_id = new_expert_id
+    
+    db.session.commit()
+    return redirect(url_for('expert_assignments'))
 
 #Route: Expert Messaging Page
 @app.route('/expert/messaging')
