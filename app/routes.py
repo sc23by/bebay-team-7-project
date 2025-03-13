@@ -2,7 +2,7 @@ from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, request, flash, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
-from app.models import FeeConfig, User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo
+from app.models import FeeConfig, User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo, Notification, SoldItem
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -14,7 +14,12 @@ from datetime import datetime, timedelta
 from sqlalchemy import desc
 # Parses data sent by JS
 import json
-
+# Websockets
+from flask_socketio import emit
+from . import socketio
+# Emails
+from flask_mail import Message
+from app import mail
 # Decorators
 
 # Guest-only access decorator
@@ -110,6 +115,81 @@ def allowed_file(filename):
     ext = filename.rsplit('.', 1)[1].lower()
     return ext in app.config['ALLOWED_EXTENSIONS']
 
+# Function: Expired Auctions
+def check_expired_auctions():
+    """Check for expired auctions and send notifications."""
+    with current_app.app_context():
+        expired_items = Item.query.filter(Item.expiration_time <= datetime.utcnow(), Item.sold == False).all()
+        #print("EXPIRED CHECK")
+        for item in expired_items:
+            highest_bid = item.highest_bid()
+            highest_bidder = item.highest_bidder()
+
+            # Notify highest bidder if they exist
+            if highest_bidder:
+                win_notification = Notification(
+                    user_id=highest_bidder.id,
+                    message=f"Congratulations! You have won the auction for '{item.item_name}' with a bid of £{highest_bid:.2f}."
+                )
+                db.session.add(win_notification)
+                # Send email notification to the winner
+                send_winner_email(highest_bidder, item, highest_bid)
+
+            # Notify all previous bidders (updated: using item.item_id instead of item.id)
+            previous_bidders = db.session.query(Bid.user_id).filter(Bid.item_id == item.item_id).distinct().all()
+            for bidder in previous_bidders:
+                if highest_bidder and bidder[0] == highest_bidder.id:
+                    continue
+                notification = Notification(
+                    user_id=bidder[0],
+                    message=f"The auction for '{item.item_name}' has ended."
+                )
+                db.session.add(notification)
+
+            # Notify the seller
+            if highest_bidder:
+                seller_notification = Notification(
+                    user_id=item.seller_id,
+                    message=f"Your item '{item.item_name}' has been sold to {highest_bidder.username} for £{highest_bid:.2f}."
+                )
+
+                sold_item = SoldItem(
+                    item_id=item.item_id,
+                    seller_id=item.seller_id,
+                    buyer_id=highest_bidder.id,
+                    price=float(highest_bid)
+                )
+                db.session.add(sold_item)
+            else:
+                seller_notification = Notification(
+                    user_id=item.seller_id,
+                    message=f"Your item '{item.item_name}' has expired with no bids."
+                )
+            db.session.add(seller_notification)
+
+            # Mark item as sold
+            item.sold = True
+
+            db.session.commit()
+
+            # Broadcast auction end event (updated: using item.item_id)
+            socketio.emit('auction_ended', {'item_id': item.item_id, 'winner_id': highest_bidder.id if highest_bidder else None})
+
+def send_winner_email(winner, item, highest_bid):
+    subject = f"You have won the auction for {item.item_name}!"
+    recipients = [winner.email]
+    body = f"""
+Hi {winner.username},
+
+Congratulations! You have won the auction for '{item.item_name}' with a bid of £{highest_bid:.2f}.
+
+Thank you for participating in Bebay auctions!
+
+Best regards,
+The Bebay Team
+"""
+    msg = Message(subject=subject, recipients=recipients, body=body)
+    mail.send(msg)
 
 # Guest Pages
 
@@ -194,7 +274,6 @@ def logout():
     logout_user()
     return redirect(url_for('guest_home'))
 
-
 # User Pages
 
 # Route: Logged In Page
@@ -208,12 +287,26 @@ def user_home():
         ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
     ).all()
     
+    item_bids = {item.item_id: item.highest_bid() for item in items}
+    
+    return render_template('user_home.html', pagetitle='User Home', items = items, item_bids = item_bids)
+
+# Route: Search in navbar
+@app.route('/user/search', methods = ['GET'])
+def search():
+    search_query = request.args.get('query', '').strip()
+
+    if not search_query:
+        items = Item.query.all()
+    else:
+        items = Item.query.filter(Item.item_name.ilike(f"%{search_query}%")).all()
+
     item_bids = {}
     for item in items:
         highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item.item_id).scalar()
         item_bids[item.item_id] = highest_bid if highest_bid is not None else None 
-
-    return render_template('user_home.html', pagetitle='User Home', items = items, item_bids = item_bids)
+    
+    return render_template("user_home.html", items = items, item_bids = item_bids)
 
 # Route: Watch
 @app.route('/user/watch', methods=['POST'])
@@ -316,6 +409,7 @@ def account():
         user.first_name=info_form.first_name.data
         user.last_name=info_form.last_name.data
         db.session.commit()
+        flash('Information updated successfully!', 'success')
     
     # if username is updated, validate then update in db
     if username_form.update_username.data and username_form.validate_on_submit():
@@ -334,23 +428,35 @@ def account():
             user.email=email_form.email.data
             db.session.commit()
             flash('Email updated successfully!', 'success')
+    
 
     # if password is updated, update in db
     if password_form.update_privacy.data and password_form.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(password_form.new_password.data)
+        user.password = hashed_password
+        db.session.commit()
+        flash('Password updated successfully!', 'success')
+    
+
+    # validation error handeling
+    if info_form.update_info.data and not info_form.validate_on_submit():
+        flash('Invalid first or last name (only letters are allowed).', 'danger')
+
+    if username_form.username.data and not username_form.validate_on_submit():
+        flash('Invalid username.', 'danger')
+    
+    if email_form.email.data and not email_form.validate_on_submit():
+        flash('Invalid email address.', 'danger')
+
+    if password_form.update_privacy.data and not password_form.validate_on_submit():
         if password_form.new_password.data != password_form.confirm_password.data:
             flash('Passwords do not match.', 'danger')
-        else:
-            hashed_password = bcrypt.generate_password_hash(password_form.new_password.data)
-            user.password = hashed_password
-            db.session.commit()
-            flash('Password updated successfully!', 'success')
 
     # if payment info is updated, update in db
     if card_form.update_card.data and card_form.validate_on_submit():
         # Update existing payment info for current user
         payment_info.payment_type = card_form.card_number.data
         payment_info.shipping_address = card_form.shipping_address.data
-
         db.session.commit()
         flash('Payment info updated successfully!', 'success')
 
@@ -398,10 +504,7 @@ def my_listings():
 
     items = Item.query.filter_by(seller_id=current_user.id).all()
 
-    item_bids = {}
-    for item in items:
-        highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item.item_id).scalar()
-        item_bids[item.item_id] = highest_bid if highest_bid is not None else None 
+    item_bids = {item.item_id: item.highest_bid() for item in items}
 
     waiting_list = db.session.query(WaitingList.item_id).all()
     waiting_list = [item[0] for item in waiting_list]
@@ -487,7 +590,11 @@ def notifications():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    return render_template('user_notifications.html', pagetitle='Notifications', form=form)
+    notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.timestamp.desc()).all()
+    Notification.query.filter_by(user_id=current_user.id, read=False).update({"read": True})
+    db.session.commit()
+ 
+    return render_template('user_notifications.html', pagetitle='Notifications', form=form, notifications=notifications)
 
 # Route: List Item Page
 @app.route('/user/list_item', methods=['GET', 'POST'])
@@ -556,50 +663,65 @@ def user_item_details(item_id):
     item = Item.query.get_or_404(item_id)  # Fetch the item or return 404
     form=BidForm()
 
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
-    # If no bid exists, set highest_bid to "No bids yet"
-    if highest_bid is None:
-        highest_bid = "No bids yet"
+    highest_bid = item.highest_bid() or "No bids yet"
+
     return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
 
 # Route: Placing a bid
-@app.route('/item/<int:item_id>/bid', methods=['GET', 'POST'])
-@user_required
-def place_bid(item_id):
-    item = Item.query.get_or_404(item_id)
-    form = BidForm()
+@socketio.on('new_bid')
+def handle_new_bid(data):
+    """Handle new bid via WebSocket."""
+    item_id = data.get('item_id')
+    bid_amount = float(data.get('bid_amount'))
 
+    item = Item.query.get(item_id)
+    if not item:
+        emit('bid_error', {'message': 'Item not found!'}, room=request.sid)
+        return
+
+    # Check if the user is trying to bid on their own item
+    if item.seller_id == current_user.id:
+        emit('bid_error', {'message': 'You cannot bid on your own item!'}, room=request.sid)
+        return
+    
     # Check if the auction has expired
     if datetime.utcnow() > item.expiration_time:
-        flash("Bidding has ended for this item.", "danger")
-        return redirect(url_for('user_item_details', item_id=item_id))
+        emit('bid_error', {'message': 'Bidding has ended for this item.'}, room=request.sid)
+        return
 
     # Get the current highest bid
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+    highest_bid = item.highest_bid() or item.minimum_price
+    previous_highest_bidder = item.highest_bidder()
 
-    if form.validate_on_submit():
-        bid_amount = form.bid_amount.data
+    # Validate bid amount
+    if bid_amount <= highest_bid:
+        emit('bid_error', {'message': 'Your bid must be higher than the current highest bid!'}, room=request.sid)
+        return
 
-        # Check if bid is valid
-        if bid_amount <= highest_bid:
-            flash("Your bid must be higher than the current highest bid!", "danger")
-        else:
-            new_bid = Bid(
-                item_id=item_id,
-                user_id=current_user.id,
-                bid_amount=bid_amount,
-                bid_date_time=datetime.utcnow()
-            )
-            db.session.add(new_bid)
-            db.session.commit()
-            flash("Bid placed successfully!", "success")
-            return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
+    # Save new bid
+    new_bid = Bid(
+        item_id=item_id,
+        user_id=current_user.id,
+        bid_amount=bid_amount,
+        bid_date_time=datetime.utcnow()
+    )
+    db.session.add(new_bid)
 
+    # Notify the previous highest bidder if they were outbid
+    if previous_highest_bidder and previous_highest_bidder.id != current_user.id:
+        notification = Notification(
+            user_id=previous_highest_bidder.id,
+            message=f"You have been outbid on '{item.item_name}'. The new highest bid is £{bid_amount:.2f}."
+        )
+        db.session.add(notification)
 
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
-    
-    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
+    db.session.commit()
 
+    # Notify all users of the new highest bid
+    emit('update_bid', {'item_id': item_id, 'new_bid': bid_amount})
+
+    # Notify the bidder that the bid was successful
+    emit('bid_success', {'message': 'Bid placed successfully!'}, room=request.sid)
 
 
 
@@ -609,13 +731,53 @@ def place_bid(item_id):
 @app.route('/expert/assignments')
 @expert_required
 def expert_assignments():
-    return render_template('expert_assignments.html')
+
+    assigned_items = Item.query.filter_by(expert_id=current_user.id, approved=None).all()
+
+    return render_template('expert_assignments.html',items=assigned_items)
+
 
 #Route: Expert Authentication Page
-@app.route('/expert/item_authentication')
+@app.route('/expert/item_authentication/<int:item_id>')
 @expert_required
-def expert_item_authentication():
-    return render_template('expert_item_authentication.html')
+def expert_item_authentication(item_id):
+
+    item_to_authenticate = Item.query.get(item_id)
+    experts = User.query.filter(User.priority == 2)
+    return render_template('expert_item_authentication.html', item_to_authenticate=item_to_authenticate, experts=experts)
+
+@app.route('/expert/approve_item/<int:item_id>', methods=['POST'])
+@expert_required
+def approve_item(item_id):
+
+    item_to_approve = Item.query.get(item_id)
+    item_to_approve.approved = True
+    db.session.commit()
+
+    return redirect(url_for('expert_assignments'))
+
+@app.route('/expert/decline_item/<int:item_id>', methods=['POST'])
+@expert_required
+def decline_item(item_id):
+
+    item_to_approve = Item.query.get(item_id)
+    item_to_approve.approved = False
+    db.session.commit()
+
+    return redirect(url_for('expert_assignments'))
+
+@app.route('/expert/reassign_item/<int:item_id>', methods=['POST'])
+@expert_required
+def reassign_item(item_id):
+
+    new_expert_id = request.form.get('reassign_expert')
+    
+    item_to_be_reassigned = Item.query.get(item_id)
+    
+    item_to_be_reassigned.expert_id = new_expert_id
+    
+    db.session.commit()
+    return redirect(url_for('expert_assignments'))
 
 #Route: Expert Messaging Page
 @app.route('/expert/messaging')
