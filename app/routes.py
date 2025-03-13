@@ -12,6 +12,7 @@ import os
 import uuid
 from datetime import datetime, timedelta
 from sqlalchemy import desc
+import numpy as np
 # Parses data sent by JS
 import json
 
@@ -773,6 +774,27 @@ def manager_statistics_edit():
 
 @app.route('/manager/statistics/cost',methods=['GET','POST'])
 def manager_statistics_cost():
+
+    total_revenue = 0
+    total_profit = 0
+
+    sold_items = SoldItem.query.all()
+
+    for sold_item in sold_items:
+        total_revenue += sold_item.price 
+
+    items = Item.query.all()
+
+    for item in items:
+        if item.sold_item:
+            final_price = item.sold_item[0].price
+            site_fee = item.calculate_fee(final_price, expert_approved=False)
+            total_profit += site_fee
+    
+    if items:
+        generated_percentage = items[0].site_fee_percentage
+
+
     sold_items = SoldItem.query.all()
 
     current_date = datetime.now()
@@ -785,33 +807,32 @@ def manager_statistics_cost():
     for i in range(4):
         week_start = three_weeks_ago + timedelta(weeks=i)
         week_end = week_start + timedelta(days = 6,hours=23,minutes=59,seconds=59)
-        
+
+
         expired_items = Item.query.filter(
             Item.expiration_time >= week_start,
             Item.expiration_time <= week_end            
         ).all()
 
-        items = Item.query.all()
 
         weekly_expert_fee = 0
+        item_cost = 0
 
-        for item in items:
+        for item in expired_items:
             if item.sold_item:
-                if item.expert_approved:
+                for sold_item in item.sold_item:
+                        final_price = sold_item.price
+                        site_fee = item.calculate_fee(final_price,expert_approved=False)
 
-                    final_price = sold_item.price
-                    site_fee = item_calculate_fee(final_price,expert_approved=False)
+                        if item.approved:                        
+                    
+                            expert_fee = item.calculate_fee(final_price,expert_approved=True) - site_fee
+                            weekly_expert_fee += expert_fee
 
-                    for sold_item in item.sold_item:
-                        
-                        expert_fee = item.calculate_fee(final_price,expert_approved=True) - site_fee
-                        weekly_expert_fee += expert_fee
-
-                        item_cost = final_price - (expert_fee + site_fee)
-                else:
-                    for sold_item in item.sold_item:
-                        item_cost = final_price - site_fee
-                    weekly_expert_fee = 0
+                            item_cost = final_price - (expert_fee + site_fee)
+                        else:
+                            item_cost += final_price - site_fee
+                            weekly_expert_fee = 0
 
         expert_fee_value.append(weekly_expert_fee)
         cost_value.append(item_cost)
@@ -828,25 +849,26 @@ def manager_statistics_cost():
 
     plt.figure(figsize=(10,6))
 
-    x=np.arrange(len(expert_fee_value))
+    x=np.arange(len(expert_fee_value))
 
-    plt.bar(x, expert_fee_value, label='Expert Fee')
-    plt.bar(x,item_cost, label='Item Cost')
+    plt.bar(week_labels, expert_fee_value, label='Expert Fee')
+    plt.bar(week_labels, cost_value, bottom = expert_fee_value, label='Item Cost')
     plt.autoscale(axis='y')
 
-    plt.xlabe('Week')
+    plt.xlabel('Week')
     plt.ylabel('GBP')
     plt.title('Weekly Cost')
 
     img = io.BytesIO()
-    plt.sacefig(img,format='png')
+    plt.savefig(img,format='png')
     img.seek(0)
 
     ratio = [0.75]
 
     img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
 
-    render_template('manager_statistics_cost.html',image_data = image_data, ratio = ratio, week_labels=week_labels, cost_values = cost_values, expert_fee_value = expert_fee_value)
+
+    return render_template('manager_statistics_cost.html',img_data = img_base64, total_profit = total_profit, total_revenue = total_revenue, generated_percentage=generated_percentage)
 
 #Route: Manager Account Page
 @app.route('/manager/accounts',methods=['GET','POST'])

@@ -3,7 +3,6 @@
 {% block content %}
 <!--Pie chart card-->
 
-<img sec="{{url_for('manager_statistics')}}">
 
 <div class="container">
     <div class="row">
@@ -16,8 +15,8 @@
                   Select Chart
                 </button>
                 <ul class="dropdown-menu">
-                  <li><a class="dropdown-item" href="#">Weekly Revenue</a></li>
-                  <li><a class="dropdown-item" href="#">Weekly Cost</a></li>
+                  <li><a class="dropdown-item" href="{{url_for('manager_statistics')}}">Weekly Revenue</a></li>
+                  <li><a class="dropdown-item" href="{{url_for('manager_statistics_cost')}}">Weekly Cost</a></li>
                 </ul>
               </div>
                 <p class="card-text">Total Revenue: £ {{ total_revenue }}</p>
