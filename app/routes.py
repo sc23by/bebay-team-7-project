@@ -609,7 +609,10 @@ def place_bid(item_id):
 @app.route('/expert/assignments')
 @expert_required
 def expert_assignments():
-    return render_template('expert_assignments.html')
+
+    assigned_items = Item.query.filter_by(expert_id=current_user.id).all()
+
+    return render_template('expert_assignments.html',items=assigned_items)
 
 #Route: Expert Authentication Page
 @app.route('/expert/item_authentication')
