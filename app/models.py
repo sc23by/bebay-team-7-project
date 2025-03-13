@@ -87,6 +87,8 @@ class Item(db.Model):
             return final_price * ((self.site_fee_percentage + self.expert_fee_percentage) / 100)
         return final_price * (self.site_fee_percentage / 100)
 
+    expert = db.relationship('User',foreign_keys=[expert_id],backref='assigned_items')
+
 # Waiting List Model
 class WaitingList(db.Model):
     id = db.Column(db.Integer, primary_key=True)
