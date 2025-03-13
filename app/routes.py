@@ -596,6 +596,22 @@ def notifications():
  
     return render_template('user_notifications.html', pagetitle='Notifications', form=form, notifications=notifications)
 
+# Route: Delete Notification
+@app.route('/notification/delete/<int:notification_id>', methods=['GET', 'POST'])
+@login_required
+def delete_notification(notification_id):
+    notification = Notification.query.get_or_404(notification_id)
+    
+    # Ensure the current user owns this notification
+    if notification.user_id != current_user.id:
+        flash("You are not authorized to delete this notification.", "danger")
+        return redirect(url_for('notifications'))
+    
+    db.session.delete(notification)
+    db.session.commit()
+    flash("Notification deleted.", "success")
+    return redirect(url_for('notifications'))
+
 # Route: List Item Page
 @app.route('/user/list_item', methods=['GET', 'POST'])
 @user_required
