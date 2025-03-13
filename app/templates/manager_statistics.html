@@ -16,13 +16,13 @@
                   Select Chart
                 </button>
                 <ul class="dropdown-menu">
-                  <li><a class="dropdown-item" href="#">Weekly Income</a></li>
+                  <li><a class="dropdown-item" href="#">Weekly Revenue</a></li>
                   <li><a class="dropdown-item" href="#">Weekly Cost</a></li>
                 </ul>
               </div>
-                <p class="card-text">Total Revenue: £</p>
-                <p class="card-text">Generated Income: £</p>
-                <p class="card-text">Percentage generated: £</p>
+                <p class="card-text">Total Revenue: £ {{ total_revenue }}</p>
+                <p class="card-text">Generated Income: £ {{ total_profit }}</p>
+                <p class="card-text">Site Fee Percentage generated: {{ generated_percentage }}%</p>
             </div>
             <div>
             <p class="card-text">Cost per posting: <form action="{{url_for('manager_statistics_edit')}}" method="POST">

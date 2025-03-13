@@ -671,8 +671,26 @@ def manager_statistics():
 
     bids = Bid.query.all()
 
-    for bid in bids:
-        item = Item.query.get(bid.item_id)
+    total_revenue = 0
+    total_profit = 0
+
+    sold_items = SoldItem.query.all()
+
+    for sold_item in sold_items:
+        total_revenue += sold_item.price 
+
+    items = Item.query.all()
+    
+    if items:
+        generated_percentage = items[0].site_fee_percentage
+
+    for item in items:
+        if item.sold_item:
+            final_price = item.sold_item[0].price
+            site_fee = item.calculate_fee(final_price, expert_approved=False)
+            total_profit += site_fee
+
+
 
     current_date = datetime.now()
     three_weeks_ago = current_date - timedelta(weeks=3)
@@ -728,7 +746,7 @@ def manager_statistics():
 
     img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
 
-    return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, week_labels=week_labels,values=values)
+    return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, week_labels=week_labels,values=values,total_revenue=total_revenue,total_profit=total_profit,generated_percentage=generated_percentage)
 
 @app.route('/manager/statistics/edit',methods=['GET','POST'])
 def manager_statistics_edit():
@@ -747,7 +765,7 @@ def manager_statistics_edit():
                     item.expert_fee_percentage = float(cost_expert)
 
             db.session.commit()
-
+        return redirect(url_for('manager_statistics'))
 
     return render_template('manager_statistics.html')
 
@@ -766,10 +784,9 @@ def manager_statistics_cost():
     for i in range(4):
         week_start = three_weeks_ago + timedelta(weeks=i)
         week_end = week_start + timedelta(days = 6,hours=23,minutes=59,seconds=59)
-
-
-    for sold_item in sold_items:
 """
+    
+
 
 
 #Route: Manager Account Page
