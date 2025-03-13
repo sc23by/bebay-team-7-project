@@ -19,10 +19,21 @@
     <p>Description: {{ item.description }}</p>
     <p>Starting Price: £{{ item.minimum_price }}</p>
     <p>Current Highest Bid: 
-        {% if highest_bid == "No bids yet" %}
-            No bids yet
+        <span id="highest_bid" data-item-id="{{ item.item_id }}">
+            {% if highest_bid == "No bids yet" %}
+                No bids yet
+            {% else %}
+                £{{ highest_bid }}
+            {% endif %}
+        </span>
+    </p>
+    <!-- Debug Information: Current Highest Bidder -->
+    <p style="color: red;">
+        DEBUG: Current Highest Bidder: 
+        {% if item.highest_bidder() %}
+            {{ item.highest_bidder().username }}
         {% else %}
-            <span id="highest_bid" data-item-id="{{ item.item_id }}">£{{ highest_bid }}</span>
+            None
         {% endif %}
     </p>
 

@@ -43,7 +43,7 @@ class PaymentInfo(db.Model):
     shipping_address = db.Column(db.String(500), nullable=True)
 
 # Sold item model
-class Solditem(db.Model):
+class SoldItem(db.Model):
     sold_id = db.Column(db.Integer, primary_key=True)
     item_id = db.Column(db.Integer, ForeignKey('item.item_id'), nullable=False)
     seller_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
@@ -72,7 +72,7 @@ class Item(db.Model):
     expert_fee_percentage = db.Column(db.Float, nullable=False,default=0.00)
     # Boolean for if item sold.
     sold = db.Column(db.Boolean, default=False)
-
+    
     
     def get_image_url(self):
         return url_for('static', filename=f'images/items/{self.item_image}')
@@ -114,7 +114,7 @@ class Bid(db.Model):
     bid_id = db.Column(db.Integer, primary_key=True)
     item_id = db.Column(db.Integer, ForeignKey('item.item_id'), nullable=False)
     user_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
-    bid_amount = db.Column(db.Numeric(10, 2), nullable=False)  # Allows precise bid values
+    bid_amount = db.Column(db.Numeric(10, 2), nullable=False)
     bid_date_time = db.Column(db.DateTime, nullable=False)
 
     user = db.relationship('User', backref='bids')

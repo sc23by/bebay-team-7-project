@@ -207,6 +207,7 @@ class ListItemForm(FlaskForm):
 
 class BidForm(FlaskForm):
     bid_amount = DecimalField("Your Bid (£)",
+        places=2,
         validators=[DataRequired(),
         NumberRange(min=0.01)],
         render_kw={"step": "0.01", "min": "0", "class": "currency-input"})
