@@ -27,8 +27,22 @@
                                         <span class="badge bg-danger">Not Available</span>
                                     {% endif %}
                                 </label>
-                               
-                              
+                                
+                                <!-- Display available time slots -->
+                                {% if expert_availability[expert.id] %}
+                                <div class="mt-2 ms-3">
+                                    <strong>Available Slots:</strong>
+                                    <select class="form-select mt-1" name="selected_time">
+                                        {% for slot in expert_availability[expert.id] %}
+                                            <option value="{{ slot.id }}">{{ slot.date }} - {{ slot.start_time }} ({{ slot.duration }}h)</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+
                     {% endfor %}
                 </tbody>
             </table>
