@@ -815,6 +815,20 @@ def manager_expert_availability():
     items = Item.query.all()
     experts = User.query.filter_by(priority=2).all()  # Fetch all experts (assuming priority=2 is expert)
 
+    # Fetch availability and map it to experts
+    expert_availability = {}
+
+    for expert in experts:
+        slots = ExpertAvailabilities.query.filter_by(user_id=expert.id).all()
+        expert_availability[expert.id] = [
+            {
+                "id": slot.availability_id,
+                "date": slot.date.strftime("%Y-%m-%d"),
+                "start_time": slot.start_time.strftime("%I:%M %p"),
+                "duration": slot.duration
+            }
+            for slot in slots
+        ]
 
 
     return render_template(
