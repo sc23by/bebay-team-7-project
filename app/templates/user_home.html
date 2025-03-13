@@ -31,20 +31,9 @@
                             {% endif %}
                         </p>
                         <p class="card-text">Shipping Price: £{{ item.shipping_cost }}</p>
-                        <!--
-                            <p class="card-text">Listing Time: {{ item.date_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-                            <p class="card-text">Expires On: {{ item.expiration_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-                            <p>Time Left: 
-                                {% if item.time_left.total_seconds() > 0 %}
-                                    {{ item.time_left.days }} days,
-                                    {{ item.time_left.seconds // 3600 }} hours,
-                                    {{ (item.time_left.seconds // 60) % 60 }} minutes,
-                                    {{ item.time_left.seconds % 60 }} seconds
-                                {% else %}
-                                    Expired
-                                {% endif %}
-                            </p>
-                        -->
+                        <td>
+                            {% if item.date_time %}
+                                {{ item.date_time.strftime('%Y-%m-%d %I:%M %p') }}
                         
                         
                         <a href="{{ url_for('user_item_details', item_id=item.item_id) }}" class="btn btn-primary">
