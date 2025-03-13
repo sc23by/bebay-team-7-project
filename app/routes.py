@@ -691,7 +691,6 @@ def manager_statistics():
             total_profit += site_fee
 
 
-
     current_date = datetime.now()
     three_weeks_ago = current_date - timedelta(weeks=3)
 
@@ -711,9 +710,10 @@ def manager_statistics():
 
         for item in expired_items:
             if item.sold_item:
-                final_price = item.sold_item[0].price
-                site_fee = item.calculate_fee(final_price, expert_approved=False)
-                weekly_revenue += site_fee
+                for sold_item in item.sold_item:
+                    final_price = sold_item.price
+                    site_fee = item.calculate_fee(final_price, expert_approved=False)
+                    weekly_revenue += site_fee
 
         values.append(weekly_revenue)
 
@@ -770,7 +770,7 @@ def manager_statistics_edit():
     return render_template('manager_statistics.html')
 
 
-"""
+
 @app.route('/manager/statistics/cost',methods=['GET','POST'])
 def manager_statistics_cost():
     sold_items = SoldItem.query.all()
@@ -779,15 +779,74 @@ def manager_statistics_cost():
     three_weeks_ago = current_date - timedelta(weeks=3)
 
     weeks = []
-    values = []
+    expert_fee_value = []
+    cost_value = []
 
     for i in range(4):
         week_start = three_weeks_ago + timedelta(weeks=i)
         week_end = week_start + timedelta(days = 6,hours=23,minutes=59,seconds=59)
-"""
-    
+        
+        expired_items = Item.query.filter(
+            Item.expiration_time >= week_start,
+            Item.expiration_time <= week_end            
+        ).all()
 
+        items = Item.query.all()
 
+        weekly_expert_fee = 0
+
+        for item in items:
+            if item.sold_item:
+                if item.expert_approved:
+
+                    final_price = sold_item.price
+                    site_fee = item_calculate_fee(final_price,expert_approved=False)
+
+                    for sold_item in item.sold_item:
+                        
+                        expert_fee = item.calculate_fee(final_price,expert_approved=True) - site_fee
+                        weekly_expert_fee += expert_fee
+
+                        item_cost = final_price - (expert_fee + site_fee)
+                else:
+                    for sold_item in item.sold_item:
+                        item_cost = final_price - site_fee
+                    weekly_expert_fee = 0
+
+        expert_fee_value.append(weekly_expert_fee)
+        cost_value.append(item_cost)
+                        
+        weeks.append({
+            'week_start': week_start.strftime('%m-%d'),
+            'week_end': week_end.strftime('%m-%d')
+        })
+
+    week_labels = []
+
+    for week in weeks:
+        week_labels.append(f"{week['week_start']} - {week['week_end']}")    
+
+    plt.figure(figsize=(10,6))
+
+    x=np.arrange(len(expert_fee_value))
+
+    plt.bar(x, expert_fee_value, label='Expert Fee')
+    plt.bar(x,item_cost, label='Item Cost')
+    plt.autoscale(axis='y')
+
+    plt.xlabe('Week')
+    plt.ylabel('GBP')
+    plt.title('Weekly Cost')
+
+    img = io.BytesIO()
+    plt.sacefig(img,format='png')
+    img.seek(0)
+
+    ratio = [0.75]
+
+    img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
+
+    render_template('manager_statistics_cost.html',image_data = image_data, ratio = ratio, week_labels=week_labels, cost_values = cost_values, expert_fee_value = expert_fee_value)
 
 #Route: Manager Account Page
 @app.route('/manager/accounts',methods=['GET','POST'])
