@@ -13,9 +13,18 @@
         <p class="card-text"><strong>Shipping Cost:</strong> £{{ item_to_authenticate.shipping_cost }}</p>
         <p class="card-text"><strong>Description:</strong> {{ item_to_authenticate.description }}</p>
 
-    <form action="{{ url_for('approve_item', item_id=item_to_authenticate.item_id) }}" method="POST">
-        <button type="submit">Approve</button>
-    </form>
+
+        <div class="d-flex justify-content-between">
+
+            <form action="{{ url_for('approve_item', item_id=item_to_authenticate.item_id) }}" method="POST">
+                <button type="submit">Approve</button>
+            </form>
+
+            <form action="{{ url_for('decline_item', item_id=item_to_authenticate.item_id) }}" method="POST">
+                <button type="submit">Unknown</button>
+            </form>
+            
+        </div>
 
     </div>
 </div>
