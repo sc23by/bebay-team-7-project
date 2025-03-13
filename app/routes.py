@@ -621,8 +621,9 @@ def expert_assignments():
 def expert_item_authentication(item_id):
 
     item_to_authenticate = Item.query.get(item_id)
-    return render_template('expert_item_authentication.html',item_to_authenticate=item_to_authenticate)
-
+    experts = User.query.filter(User.priority == 2)
+    return render_template('expert_item_authentication.html', item_to_authenticate=item_to_authenticate, experts=experts)
+    
 @app.route('/expert/approve_item/<int:item_id>', methods=['POST'])
 @expert_required
 def approve_item(item_id):
@@ -640,6 +641,12 @@ def decline_item(item_id):
     item_to_approve = Item.query.get(item_id)
     item_to_approve.approved = False
     db.session.commit()
+
+    return redirect(url_for('expert_assignments'))
+
+@app.route('/expert/reassign_item/<int:item_id>', methods=['POST'])
+@expert_required
+def reassign_item(item_id):
 
     return redirect(url_for('expert_assignments'))
 
