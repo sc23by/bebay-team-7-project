@@ -35,11 +35,11 @@
 
             <!-- Search Bar -->
             <div class="collapse navbar-collapse d-flex justify-content-center mx-auto">
-                <form class="form-inline">
+                <form class="form-inline" action="{{url_for('search')}}" method = "GET">
                     <div class="input-group">
-                        <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                        <input type="text" class="search-input" name="query" placeholder="Search...">
                         <div class="input-group-append">
-                            <button class="fas fa-search" type="submit"></button>
+                            <button class="search-input" type="submit">🔍</button>
                         </div>
                     </div>
                 </form>
@@ -80,5 +80,6 @@
     <script src="{{ url_for('static', filename='js/watchlist.js') }}"></script> 
     <script src="{{ url_for('static', filename='js/sort_watchlist.js') }}"></script> 
     <script src="{{ url_for('static', filename='js/sort_items.js') }}"></script> 
+    <script src="{{ url_for('static', filename='js/highest_bid.js') }}"></script> 
 </body>
 </html>

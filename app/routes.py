@@ -194,7 +194,6 @@ def logout():
     logout_user()
     return redirect(url_for('guest_home'))
 
-
 # User Pages
 
 # Route: Logged In Page
@@ -214,6 +213,23 @@ def user_home():
         item_bids[item.item_id] = highest_bid if highest_bid is not None else None 
 
     return render_template('user_home.html', pagetitle='User Home', items = items, item_bids = item_bids)
+
+# Route: Search in navbar
+@app.route('/user/search', methods = ['GET'])
+def search():
+    search_query = request.args.get('query', '').strip()
+
+    if not search_query:
+        items = Item.query.all()
+    else:
+        items = Item.query.filter(Item.item_name.ilike(f"%{search_query}%")).all()
+
+    item_bids = {}
+    for item in items:
+        highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item.item_id).scalar()
+        item_bids[item.item_id] = highest_bid if highest_bid is not None else None 
+    
+    return render_template("user_home.html", items = items, item_bids = item_bids)
 
 # Route: Watch
 @app.route('/user/watch', methods=['POST'])
@@ -316,6 +332,7 @@ def account():
         user.first_name=info_form.first_name.data
         user.last_name=info_form.last_name.data
         db.session.commit()
+        flash('Information updated successfully!', 'success')
     
     # if username is updated, validate then update in db
     if username_form.update_username.data and username_form.validate_on_submit():
@@ -334,23 +351,35 @@ def account():
             user.email=email_form.email.data
             db.session.commit()
             flash('Email updated successfully!', 'success')
+    
 
     # if password is updated, update in db
     if password_form.update_privacy.data and password_form.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(password_form.new_password.data)
+        user.password = hashed_password
+        db.session.commit()
+        flash('Password updated successfully!', 'success')
+    
+
+    # validation error handeling
+    if info_form.update_info.data and not info_form.validate_on_submit():
+        flash('Invalid first or last name (only letters are allowed).', 'danger')
+
+    if username_form.username.data and not username_form.validate_on_submit():
+        flash('Invalid username.', 'danger')
+    
+    if email_form.email.data and not email_form.validate_on_submit():
+        flash('Invalid email address.', 'danger')
+
+    if password_form.update_privacy.data and not password_form.validate_on_submit():
         if password_form.new_password.data != password_form.confirm_password.data:
             flash('Passwords do not match.', 'danger')
-        else:
-            hashed_password = bcrypt.generate_password_hash(password_form.new_password.data)
-            user.password = hashed_password
-            db.session.commit()
-            flash('Password updated successfully!', 'success')
 
     # if payment info is updated, update in db
     if card_form.update_card.data and card_form.validate_on_submit():
         # Update existing payment info for current user
         payment_info.payment_type = card_form.card_number.data
         payment_info.shipping_address = card_form.shipping_address.data
-
         db.session.commit()
         flash('Payment info updated successfully!', 'success')
 
@@ -593,11 +622,15 @@ def place_bid(item_id):
             db.session.add(new_bid)
             db.session.commit()
             flash("Bid placed successfully!", "success")
-            return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
 
+            # if AJAX request, update highest bid on page
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"success": True, "new_highest_bid": f"£{bid_amount:.2f}"})
 
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+            return redirect(url_for('user_item_details', item_id=item_id))
     
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+             
     return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
 
 

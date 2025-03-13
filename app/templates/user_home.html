@@ -22,11 +22,9 @@
                         <!--
                             <p class="card-text">Description: {{ item.description }}</p>
                         -->
-
                         {% if item.approved %}
                             <span class="badge bg-success">Approved</span>
                         {% endif %}
-                        
                         <p class="card-text">Starting Price: £{{ item.minimum_price }}</p>
                         <p class="card-text">Current Highest Bid: 
                             {% if item_bids[item.item_id] is none %}

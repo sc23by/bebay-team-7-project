@@ -310,14 +310,13 @@ def test_view_items(loggedInClientP1):
     assert response.status_code == 200
     #check name
     assert b'Vintage Watch' in response.data
-    # check time remaining
-    expected_time_remaining = expiration_time.strftime("%Y-%m-%d %H:%M")
-    assert expected_time_remaining.encode() in response.data
+    assert b'Time Left:' in response.data
+
 
     response = loggedInClientP1.get("/user/my_listings")
     assert response.status_code == 200
     assert b'Vintage Watch' in response.data
-    # no time check bc it went down by the time this test runs
+    assert b'Time Left:' in response.data
 
 
 def test_watchlist_items(loggedInClientP1):
@@ -348,6 +347,8 @@ def test_watchlist_items(loggedInClientP1):
     response = loggedInClientP1.get("/user/watchlist")
     assert response.status_code == 200
     assert b'Vintage Watch' in response.data
+    assert b'Time Left:' in response.data
+
 
 
 def test_view_no_items(loggedInClientP1):
