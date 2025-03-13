@@ -864,6 +864,19 @@ def assign_expert():
     item_id = request.form.get('item_id')
     selected_time_id = request.form.get('selected_time')
 
+    item = Item.query.get(item_id)
+    selected_time = ExpertAvailabilities.query.get(selected_time_id)
+
+    if item and expert_id and selected_time:
+        item.expert_id = expert_id
+        item.date_time = datetime.combine(selected_time.date, selected_time.start_time)
+        
+        # Remove assigned slot from availability
+        db.session.delete(selected_time)
+        db.session.commit()
+
+        flash(f'Expert assigned successfully for {item.date_time.strftime("%Y-%m-%d %I:%M %p")}', 'success')
+
     return redirect(url_for('manager_expert_availability'))
 
 
