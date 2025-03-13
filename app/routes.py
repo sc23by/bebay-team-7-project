@@ -830,6 +830,9 @@ def manager_expert_availability():
             for slot in slots
         ]
 
+    # Fetch assigned and unassigned items
+    assigned_items = Item.query.filter(Item.expert_id.isnot(None)).all()
+    unassigned_items = Item.query.filter(Item.expert_id.is_(None)).all()
 
     return render_template(
         'manager_expert_availability.html',
