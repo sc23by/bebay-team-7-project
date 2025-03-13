@@ -87,13 +87,13 @@ class UserInfoForm(FlaskForm):
         Regexp('^[A-Za-z]+$', message="First name should only contain letters.")
     ])
 
-    last_name = StringField('First Name', validators=[
+    last_name = StringField('Last Name', validators=[
         DataRequired(), 
-        Length(min=2, max=30, message="First name must be 2-30 characters."),
-        Regexp('^[A-Za-z]+$', message="First name should only contain letters.")
+        Length(min=2, max=30, message="Last name must be 2-30 characters."),
+        Regexp('^[A-Za-z]+$', message="Last name should only contain letters.")
     ]) 
 
-    update_info = SubmitField('Update Info')
+    update_info = SubmitField('Edit')
 
 # Form for changing password
 class ChangeUsernameForm(FlaskForm):
@@ -101,12 +101,11 @@ class ChangeUsernameForm(FlaskForm):
     Allows user to change username
     """
     username = StringField('Username', validators=[
-        DataRequired(), 
         Length(min=3, max=20, message="Username must be 3-20 characters."),
         Regexp('^[A-Za-z0-9_]+$', message="Only letters, numbers, and underscores allowed.")
     ])
 
-    update_username = SubmitField('Edit')
+    update_username = SubmitField('Edit Username')
 
 # Form for changing password
 class ChangeEmailForm(FlaskForm):
@@ -114,11 +113,10 @@ class ChangeEmailForm(FlaskForm):
     Allows user to change email
     """
     email = StringField('Email', validators=[
-        DataRequired(), 
-        Email(message="Invalid email address.")
+        Email()
     ])
 
-    update_email = SubmitField('Edit')
+    update_email = SubmitField('Edit Email')
 
 # Form for changing password
 class ChangePasswordForm(FlaskForm):
@@ -126,13 +124,11 @@ class ChangePasswordForm(FlaskForm):
     Allows user to change password
     """
     new_password = PasswordField('Password', validators=[
-        DataRequired(),
         strong_password
     ])
 
     confirm_password = PasswordField('Confirm Password', validators=[
-        DataRequired(),
-        EqualTo('new_password', message="Passwords must match.")
+        EqualTo('new_password')
     ])
 
     update_privacy = SubmitField('Change Password')
@@ -143,11 +139,9 @@ class CardInfoForm(FlaskForm):
     Allows user to update card information
     """
     card_number = StringField('Card Number', validators=[
-        DataRequired(), 
     ])
 
     shipping_address = StringField('Shipping Address', validators=[
-        DataRequired(), 
     ])
 
     update_card = SubmitField('Update Card Info')

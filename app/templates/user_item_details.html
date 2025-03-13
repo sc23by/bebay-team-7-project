@@ -1,5 +1,4 @@
 {% extends "base_user.html" %}
-
 {% block content %}
 <div class="container">
     <!-- Flash Messages -->
@@ -12,7 +11,12 @@
         </div>
     {% endif %}
     {% endwith %}
-    <h2>{{ item.item_name }}</h2>
+    <h2>{{ item.item_name }}
+
+        {% if item.approved %}
+            <span class="badge bg-success">Approved</span>
+        {% endif %}
+        </h2>
     <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
          class="img-fluid" alt="{{ item.item_name }}">
     
@@ -27,16 +31,6 @@
             {% endif %}
         </span>
     </p>
-    <!-- Debug Information: Current Highest Bidder -->
-    <p style="color: red;">
-        DEBUG: Current Highest Bidder: 
-        {% if item.highest_bidder() %}
-            {{ item.highest_bidder().username }}
-        {% else %}
-            None
-        {% endif %}
-    </p>
-
     <p>Shipping Price: £{{ item.shipping_cost }}</p>
     <p>Listing Time: {{ item.date_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
     <p>Expires On: {{ item.expiration_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>

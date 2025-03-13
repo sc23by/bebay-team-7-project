@@ -2,7 +2,7 @@
 
 ## Installation
 
-All dependencies can be installed by running the `flaskSetupVenv.sh` script.
+All dependencies can be installed by running the `RequirementsSetup.sh` script.
 
 ### Steps to Install:
 
@@ -38,3 +38,7 @@ pytest <test/filename> -vs
 ```
 
 for more information on tests. (flask venv must be running first - use `source flask/bin/acivate`).
+
+If you change the database after running the initial migrations make sure you run in the terminal:
+**flask db migrate**
+**flask db upgrade**

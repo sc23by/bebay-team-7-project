@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", function() {
                                     <p class="card-text">Price: £${ item.minimum_price }</p>
                                     <p class="card-text">Shipping Price: £${ item.shipping_cost }</p>
                                     
-                                    <a href="user/item_details/${ item_id=item.item_id}" class="btn btn-primary">
+                                    <a href="/user/item_details/${item.item_id}" class="btn btn-primary">
                                         View Details
                                     </a>
                     
@@ -43,9 +43,6 @@ document.addEventListener("DOMContentLoaded", function() {
                                         `<span class="fa fa-heart" data-item-id="${item.item_id}"></span>
                                         <input type="hidden" name="watch" value="0">
                                     `}
-                                    <a href="{{ url_for('user_item_details', item_id=item.item_id) }}" class="btn btn-primary">
-                                        View Details
-                                    </a>
                                 </div>
                             </div>
                         `;
