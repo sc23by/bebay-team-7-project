@@ -853,6 +853,30 @@ def manager_expert_availability():
 
 
 
+@app.route('/assign_expert', methods=['POST'])
+@login_required
+def assign_expert():
+    if current_user.priority < 2:  # Ensure only managers can assign experts
+        flash("Unauthorized Action", "danger")
+        return redirect(url_for('index'))
+
+    expert_id = request.form.get('selected_expert')
+    item_id = request.form.get('item_id')
+    selected_time_id = request.form.get('selected_time')
+
+    return redirect(url_for('manager_expert_availability'))
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
