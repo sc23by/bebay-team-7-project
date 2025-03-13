@@ -804,10 +804,24 @@ def manager_auth_assignments():
 
 
 
+#Route: Manager's view to be able to identify experts availability
+@app.route('/manager/expert_availability')
+@login_required
+def manager_expert_availability():
+    if current_user.priority < 2:  # Ensure only managers can access
+        flash("Unauthorized Access", "danger")
+        return redirect(url_for('index'))
 
 
 
-
+    return render_template(
+        'manager_expert_availability.html',
+        items=items,
+        experts=experts,
+        expert_availability=expert_availability,
+        assigned_items=assigned_items,
+        unassigned_items=unassigned_items
+    )
 
 
 
