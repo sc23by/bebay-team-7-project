@@ -623,7 +623,7 @@ def expert_item_authentication(item_id):
     item_to_authenticate = Item.query.get(item_id)
     experts = User.query.filter(User.priority == 2)
     return render_template('expert_item_authentication.html', item_to_authenticate=item_to_authenticate, experts=experts)
-    
+
 @app.route('/expert/approve_item/<int:item_id>', methods=['POST'])
 @expert_required
 def approve_item(item_id):
@@ -648,6 +648,13 @@ def decline_item(item_id):
 @expert_required
 def reassign_item(item_id):
 
+    new_expert_id = request.form.get('reassign_expert')
+    
+    item_to_be_reassigned = Item.query.get(item_id)
+    
+    item_to_be_reassigned.expert_id = new_expert_id
+    
+    db.session.commit()
     return redirect(url_for('expert_assignments'))
 
 #Route: Expert Messaging Page
