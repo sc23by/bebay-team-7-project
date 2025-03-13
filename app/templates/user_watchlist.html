@@ -6,7 +6,7 @@
     <div class="row vh-100">
         <!-- Sidebar -->
         <div class="col-md-3 col-lg-2 bg-white shadow-sm p-4">
-            <div class="d-grid gap-2">
+            <div class="d-grid gap-2 ">
                 <form action="{{ url_for('watchlist') }}" method="POST">
                     {{ form.hidden_tag() }}
 
@@ -32,7 +32,7 @@
             <div id="watchlist_sort" class="row row-cols-3 row-cols-md-5 g-4">
                 {% for item in watched_items %}
                 <div class="col">
-                    <div class="card h-100">
+                    <div class="card h-100 {{ 'expired-item' if item.time_left.total_seconds() <= 0 else '' }}">
                         <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
                              class="card-img-top" alt="{{ item.item_name }}">
                         <div class="card-body">
