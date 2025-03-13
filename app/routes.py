@@ -610,7 +610,7 @@ def place_bid(item_id):
 @expert_required
 def expert_assignments():
 
-    assigned_items = Item.query.filter_by(expert_id=current_user.id, approved=False).all()
+    assigned_items = Item.query.filter_by(expert_id=current_user.id, approved=None).all()
 
     return render_template('expert_assignments.html',items=assigned_items)
 
@@ -626,6 +626,11 @@ def expert_item_authentication(item_id):
 @app.route('/expert/approve_item/<int:item_id>', methods=['POST'])
 @expert_required
 def approve_item(item_id):
+
+    item_to_approve = Item.query.get(item_id)
+    item_to_approve.approved = True
+    db.session.commit()
+
     return redirect(url_for('expert_assignments'))
 
 #Route: Expert Messaging Page
