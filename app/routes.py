@@ -793,15 +793,12 @@ def manager_listings_update_number(username,update_number):
 @app.route('/manager/authentication')
 def manager_auth_assignments():
     assignments = [
+        {"name": "Item A", "status": "Assigned", "role": "Expert"},
+        {"name": "Item B", "status": "Unassigned"},
+        {"name": "Item C", "status": "Assigned", "role": "Expert"},
+        {"name": "Item D", "status": "Unassigned"}
     ]
     return render_template('manager_authentication.html', assignments=assignments)
-
-
-
-
-
-
-
 
 
 #Route: Manager's view to be able to identify experts availability
@@ -842,8 +839,6 @@ def manager_expert_availability():
         assigned_items=assigned_items,
         unassigned_items=unassigned_items
     )
-
-
 @app.route('/assign_expert', methods=['POST'])
 @login_required
 def assign_expert():
@@ -869,9 +864,6 @@ def assign_expert():
         flash(f'Expert assigned successfully for {item.date_time.strftime("%Y-%m-%d %I:%M %p")}', 'success')
 
     return redirect(url_for('manager_expert_availability'))
-
-
-
 
 @app.route('/unassign_expert', methods=['POST'])
 @login_required
@@ -900,19 +892,6 @@ def unassign_expert():
         flash('Expert unassigned successfully!', 'warning')
 
     return redirect(url_for('manager_expert_availability'))
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #Route: Manager view of Items that are approved, recycled, and pending items
 @app.route('/manager/overview')
@@ -943,3 +922,19 @@ def manager_fees():
             flash("Fees updated successfully!", "success")
             
     return render_template("manager_fees.html", fee_config=fee_config)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
