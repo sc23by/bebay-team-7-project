@@ -23,6 +23,8 @@ pip install email_validator
 pip install coverage 
 pip install pytest
 pip install matplotlib
+pip install flask-socketio
+
 
 flask db init
 flask db migrate -m "Initial migration"
