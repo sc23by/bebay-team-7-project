@@ -730,8 +730,25 @@ def manager_statistics():
 
     return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, week_labels=week_labels,values=values)
 
-@app.route('/manager/statistics/edit',methods=['GET'])
+@app.route('/manager/statistics/edit',methods=['GET','POST'])
 def manager_statistics_edit():
+
+    if request.method == 'POST':
+        cost_site = request.form.get('site')
+        cost_expert = request.form.get('expert')
+
+        items = Item.query.all()
+
+        if items:
+            for item in items:
+                if cost_site:
+                    item.site_fee_percentage = float(cost_site)
+                if cost_expert:
+                    item.expert_fee_percentage = float(cost_expert)
+
+            db.session.commit()
+
+
     return render_template('manager_statistics.html')
 
 
