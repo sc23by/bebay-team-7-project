@@ -25,4 +25,24 @@ document.addEventListener("DOMContentLoaded", function() {
         updateCountdown(); // Update immediately
         setInterval(updateCountdown, 1000); // Update every second
     }
+    
+    function sendExpirationNotification(itemId) {
+        if (Notification.permission === "granted") {
+            new Notification("Auction Ended", {
+                body: `The auction for item #${itemId} has ended.`,
+                icon: "/static/images/auction-icon.png" // Replace with your own icon
+            });
+        } else if (Notification.permission !== "denied") {
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    new Notification("Auction Ended", {
+                        body: `The auction for item #${itemId} has ended.`,
+                        icon: "/static/images/auction-icon.png"
+                    });
+                }
+            });
+        } else {
+            alert(`The auction for item #${itemId} has ended!`);
+        }
+    }
 });
