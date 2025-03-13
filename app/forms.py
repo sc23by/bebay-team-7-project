@@ -191,7 +191,7 @@ class ListItemForm(FlaskForm):
 
     minutes = SelectField(
         'Minutes', 
-        choices=[(str(i), f"{i} minute{'s' if i != 1 else ''}") for i in range(0, 60, 5)], 
+        choices=[(str(i), f"{i} minute{'s' if i != 1 else ''}") for i in range(0, 60, 1)], 
         validators=[DataRequired()]
     )
     

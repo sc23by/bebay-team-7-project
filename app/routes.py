@@ -12,6 +12,7 @@ import os
 import uuid
 from datetime import datetime, timedelta
 from sqlalchemy import desc
+import stripe
 # Parses data sent by JS
 import json
 
@@ -607,14 +608,12 @@ def place_bid(item_id):
             db.session.add(new_bid)
             db.session.commit()
             flash("Bid placed successfully!", "success")
-            return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
 
+    # Get the highest bidder's ID
+    highest_bidder = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
+    highest_bidder_id = highest_bidder.user_id if highest_bidder else None
 
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
-    
-    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
-
-
+    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid, highest_bidder_id=highest_bidder_id)
 
 
 # Expert Pages
@@ -860,3 +859,86 @@ def manager_fees():
     return render_template("manager_fees.html", fee_config=fee_config)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+stripe.api_key = current_app.config['sk_test_51R1327JKMwWxJC9sVfnEkayuhNi5oBfLWhrKtwDL0bogNn2SAIfcw0BLE2YMrpodi8cLxssPNe9gSdwjDeSb0xgH00b3S8JsMU']
+
+@app.route('/pay/<int:item_id>', methods=['POST'])
+@login_required
+def pay_for_item(item_id):
+    item = Item.query.get_or_404(item_id)
+    
+    # Check if the auction has expired and if the current user is the highest bidder
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
+    winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
+
+    if not winning_bid or winning_bid.user_id != current_user.id:
+        flash("You are not the winning bidder!", "danger")
+        return redirect(url_for('user_item_details', item_id=item_id))
+    
+    # Create a Stripe Checkout Session
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'gbp',
+                    'product_data': {
+                        'name': item.item_name,
+                    },
+                    'unit_amount': int(highest_bid * 100),  # Convert to pence
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url=url_for('payment_success', item_id=item_id, _external=True),
+            cancel_url=url_for('user_item_details', item_id=item_id, _external=True),
+        )
+        return jsonify({'checkout_url': session.url})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+
+
+
+# Success route
+@app.route('/payment_success/<int:item_id>')
+@login_required
+def payment_success(item_id):
+    item = Item.query.get_or_404(item_id)
+
+    # Mark item as sold
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
+    winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
+
+    if winning_bid and winning_bid.user_id == current_user.id:
+        sold_item = Solditem(
+            item_id=item_id,
+            seller_id=item.seller_id,
+            buyer_id=current_user.id,
+            price=highest_bid
+        )
+        db.session.add(sold_item)
+        db.session.commit()
+        flash("Payment successful! The item has been marked as sold.", "success")
+    else:
+        flash("Payment failed or unauthorized access.", "danger")
+
+    return redirect(url_for('user_home'))

@@ -55,7 +55,36 @@
             {{ form.submit(class="btn btn-primary") }}
         </div>
     </form>
+    
+
+
+    {% if item.time_left.total_seconds() <= 0 and highest_bid != "No bids yet" %}
+    {% if current_user.id == highest_bidder_id %}
+        <button id="pay-now" class="btn btn-success">Pay Now</button>
+        <script>
+            document.getElementById('pay-now').addEventListener('click', function () {
+                fetch("{{ url_for('pay_for_item', item_id=item.item_id) }}", {
+                    method: "POST"
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.checkout_url) {
+                        window.location.href = data.checkout_url;
+                    } else {
+                        alert("Payment Error: " + data.error);
+                    }
+                });
+            });
+        </script>
+    {% endif %}
+{% endif %}
+
    
     <a href="{{ url_for('user_home') }}" class="btn btn-secondary">Back to Listings</a>
 </div>
+
+
+
+
+
 {% endblock %}
