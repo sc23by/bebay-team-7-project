@@ -2,14 +2,25 @@
 {% block content %}
 
 <h1>Authentication Assignments</h1>
+<div class="row row-cols-3 row-cols-md-5 g-4">
+    {% if items %}
+        {% for item in items %}
+            <div class="col">
+                <div class="card h-100">
+                    <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
+                        class="card-img-top" alt="{{ item.item_name }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ item.item_name }}</h5>
+                        <a href="{{ url_for('expert_item_authentication', item_id=item.item_id) }}" 
+                           class="btn btn-primary">Review Item</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-center text-muted">No items to authenticate!</p>
+    {% endif %}
 </div>
-
-
-
-<div>
-    <a href="{{ url_for('expert_item_authentication') }}" class="btn btn-primary">Example Item</a>
-</div>
-
 
 
 {% endblock %}
