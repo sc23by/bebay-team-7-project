@@ -23,6 +23,19 @@
         <div class="col-md-9 col-lg-10 p-5">
             <h2 class="mb-4">Notifications</h2>
 
+            {% if notifications %}
+                <ul class="list-group">
+                    {% for notification in notifications %}
+                        <li class="list-group-item {% if not notification.read %}list-group-item-warning{% endif %}">
+                            <p class="mb-1">{{ notification.message }}</p>
+                            <small class="text-muted">{{ notification.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">No new notifications.</p>
+            {% endif %}
+            
         </div>
     </div>
 

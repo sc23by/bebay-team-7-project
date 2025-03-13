@@ -2,7 +2,7 @@ from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, request, flash, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
-from app.models import FeeConfig, User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo
+from app.models import FeeConfig, User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo, Notification
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -113,6 +113,55 @@ def allowed_file(filename):
     ext = filename.rsplit('.', 1)[1].lower()
     return ext in app.config['ALLOWED_EXTENSIONS']
 
+# Function: Expired Auctions
+def check_expired_auctions():
+    """Check for expired auctions and send notifications."""
+    with current_app.app_context():
+        expired_items = Item.query.filter(Item.expiration_time <= datetime.utcnow(), Item.sold == False).all()
+        print("EXPIRED CHECK")
+        for item in expired_items:
+            highest_bid = item.highest_bid()
+            highest_bidder = item.highest_bidder()
+
+            # Notify highest bidder if they exist
+            if highest_bidder:
+                win_notification = Notification(
+                    user_id=highest_bidder.id,
+                    message=f"Congratulations! You have won the auction for '{item.item_name}' with a bid of £{highest_bid:.2f}."
+                )
+                db.session.add(win_notification)
+
+            # Notify all previous bidders (updated: using item.item_id instead of item.id)
+            previous_bidders = db.session.query(Bid.user_id).filter(Bid.item_id == item.item_id).distinct().all()
+            for bidder in previous_bidders:
+                if highest_bidder and bidder[0] == highest_bidder.id:
+                    continue
+                notification = Notification(
+                    user_id=bidder[0],
+                    message=f"The auction for '{item.item_name}' has ended."
+                )
+                db.session.add(notification)
+
+            # Notify the seller
+            if highest_bidder:
+                seller_notification = Notification(
+                    user_id=item.seller_id,
+                    message=f"Your item '{item.item_name}' has been sold to {highest_bidder.username} for £{highest_bid:.2f}."
+                )
+            else:
+                seller_notification = Notification(
+                    user_id=item.seller_id,
+                    message=f"Your item '{item.item_name}' has expired with no bids."
+                )
+            db.session.add(seller_notification)
+            
+            # Mark item as sold
+            item.sold = True
+            db.session.commit()
+
+            # Broadcast auction end event (updated: using item.item_id)
+            socketio.emit('auction_ended', {'item_id': item.item_id, 'winner_id': highest_bidder.id if highest_bidder else None})
+
 
 # Guest Pages
 
@@ -210,11 +259,8 @@ def user_home():
         ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
     ).all()
     
-    item_bids = {}
-    for item in items:
-        highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item.item_id).scalar()
-        item_bids[item.item_id] = highest_bid if highest_bid is not None else None 
-
+    item_bids = {item.item_id: item.highest_bid() for item in items}
+    
     return render_template('user_home.html', pagetitle='User Home', items = items, item_bids = item_bids)
 
 # Route: Search in navbar
@@ -430,10 +476,7 @@ def my_listings():
 
     items = Item.query.filter_by(seller_id=current_user.id).all()
 
-    item_bids = {}
-    for item in items:
-        highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item.item_id).scalar()
-        item_bids[item.item_id] = highest_bid if highest_bid is not None else None 
+    item_bids = {item.item_id: item.highest_bid() for item in items}
 
     waiting_list = db.session.query(WaitingList.item_id).all()
     waiting_list = [item[0] for item in waiting_list]
@@ -519,7 +562,11 @@ def notifications():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    return render_template('user_notifications.html', pagetitle='Notifications', form=form)
+    notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.timestamp.desc()).all()
+    Notification.query.filter_by(user_id=current_user.id, read=False).update({"read": True})
+    db.session.commit()
+ 
+    return render_template('user_notifications.html', pagetitle='Notifications', form=form, notifications=notifications)
 
 # Route: List Item Page
 @app.route('/user/list_item', methods=['GET', 'POST'])
@@ -588,10 +635,8 @@ def user_item_details(item_id):
     item = Item.query.get_or_404(item_id)  # Fetch the item or return 404
     form=BidForm()
 
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
-    # If no bid exists, set highest_bid to "No bids yet"
-    if highest_bid is None:
-        highest_bid = "No bids yet"
+    highest_bid = item.highest_bid() or "No bids yet"
+
     return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
 
 # Route: Placing a bid
@@ -606,13 +651,19 @@ def handle_new_bid(data):
         emit('bid_error', {'message': 'Item not found!'}, room=request.sid)
         return
 
+    # Check if the user is trying to bid on their own item
+    if item.seller_id == current_user.id:
+        emit('bid_error', {'message': 'You cannot bid on your own item!'}, room=request.sid)
+        return
+    
     # Check if the auction has expired
     if datetime.utcnow() > item.expiration_time:
         emit('bid_error', {'message': 'Bidding has ended for this item.'}, room=request.sid)
         return
 
     # Get the current highest bid
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+    highest_bid = item.highest_bid() or item.minimum_price
+    previous_highest_bidder = item.highest_bidder()
 
     # Validate bid amount
     if bid_amount <= highest_bid:
@@ -627,13 +678,23 @@ def handle_new_bid(data):
         bid_date_time=datetime.utcnow()
     )
     db.session.add(new_bid)
+
+    # Notify the previous highest bidder if they were outbid
+    if previous_highest_bidder and previous_highest_bidder.id != current_user.id:
+        notification = Notification(
+            user_id=previous_highest_bidder.id,
+            message=f"You have been outbid on '{item.item_name}'. The new highest bid is £{bid_amount:.2f}."
+        )
+        db.session.add(notification)
+
     db.session.commit()
 
     # Notify all users of the new highest bid
-    emit('update_bid', {'item_id': item_id, 'new_bid': bid_amount}, broadcast=True)
+    emit('update_bid', {'item_id': item_id, 'new_bid': bid_amount})
 
     # Notify the bidder that the bid was successful
     emit('bid_success', {'message': 'Bid placed successfully!'}, room=request.sid)
+
 
 
 # Expert Pages
