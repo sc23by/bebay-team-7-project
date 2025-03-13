@@ -883,6 +883,21 @@ def unassign_expert():
     item_id = request.form.get('item_id')
     item = Item.query.get(item_id)
 
+    if item and item.expert_id:  # Only unassign if there's an expert assigned
+        # Restore expert availability
+        restored_availability = ExpertAvailabilities(
+            user_id=item.expert_id,
+            date=item.date_time.date(),
+            start_time=item.date_time.time(),
+            duration=1
+        )
+        db.session.add(restored_availability)
+
+        item.expert_id = None
+        item.date_time = None
+        db.session.commit()
+        
+        flash('Expert unassigned successfully!', 'warning')
 
     return redirect(url_for('manager_expert_availability'))
 
