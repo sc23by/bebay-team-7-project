@@ -115,6 +115,23 @@
             {% endfor %}
         ];
     {% endfor %}
+
+    function showAvailability(expertId) {
+        const availabilityList = document.getElementById("availability-list");
+        availabilityList.innerHTML = "";
+
+        if (expertAvailability[expertId]) {
+            expertAvailability[expertId].forEach(slot => {
+                const li = document.createElement("li");
+                li.classList.add("list-group-item");
+                li.innerHTML = `${slot.date} - ${slot.start_time} 
+                    <input type="radio" name="selected_time" value="${slot.id}">`;
+                availabilityList.appendChild(li);
+            });
+        }
+    }
+
+
 </script>
 
 {% endblock %}
