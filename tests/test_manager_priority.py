@@ -35,3 +35,26 @@ def test_manager_account_change_priority(loggedInClientP3):
         assert updated_user is not None
         assert updated_user.priority != priority
         assert updated_user.priority == 2 
+
+def test_manager_account_change_priority_invalid(loggedInClientP3):
+    print(f"{Colours.YELLOW}Testing manager accounts page - change account priority to invalid number:{Colours.RESET}")
+
+    with app.app_context():
+        user = User(username='promotion',
+                    email='existing@example.com',
+                    password=bcrypt.generate_password_hash('password'),
+                    first_name='firstname',
+                    last_name='lastname',
+                    priority=1)
+        db.session.add(user)
+        db.session.commit()
+        priority = user.priority
+        username = user.username
+
+    response = loggedInClientP3.get(f'/manager/accounts/{username}/5')
+    assert response.status_code == 302
+
+    with app.app_context():
+        updated_user = User.query.filter_by(username=username).first()
+        assert updated_user is not None
+        assert updated_user.priority == priority
