@@ -1,3 +1,4 @@
+
 from app import db
 from flask import url_for
 from flask_login import UserMixin
@@ -86,6 +87,9 @@ class Item(db.Model):
         if expert_approved:
             return final_price * ((self.site_fee_percentage + self.expert_fee_percentage) / 100)
         return final_price * (self.site_fee_percentage / 100)
+# Establish a relationship with User model (expert)
+    expert = db.relationship('User', foreign_keys=[expert_id], backref='assigned_items')
+
 
 # Waiting List Model
 class WaitingList(db.Model):
