@@ -246,7 +246,6 @@ def logout():
     logout_user()
     return redirect(url_for('guest_home'))
 
-
 # User Pages
 
 # Route: Logged In Page
@@ -263,6 +262,23 @@ def user_home():
     item_bids = {item.item_id: item.highest_bid() for item in items}
     
     return render_template('user_home.html', pagetitle='User Home', items = items, item_bids = item_bids)
+
+# Route: Search in navbar
+@app.route('/user/search', methods = ['GET'])
+def search():
+    search_query = request.args.get('query', '').strip()
+
+    if not search_query:
+        items = Item.query.all()
+    else:
+        items = Item.query.filter(Item.item_name.ilike(f"%{search_query}%")).all()
+
+    item_bids = {}
+    for item in items:
+        highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item.item_id).scalar()
+        item_bids[item.item_id] = highest_bid if highest_bid is not None else None 
+    
+    return render_template("user_home.html", items = items, item_bids = item_bids)
 
 # Route: Watch
 @app.route('/user/watch', methods=['POST'])
@@ -365,6 +381,7 @@ def account():
         user.first_name=info_form.first_name.data
         user.last_name=info_form.last_name.data
         db.session.commit()
+        flash('Information updated successfully!', 'success')
     
     # if username is updated, validate then update in db
     if username_form.update_username.data and username_form.validate_on_submit():
@@ -383,23 +400,35 @@ def account():
             user.email=email_form.email.data
             db.session.commit()
             flash('Email updated successfully!', 'success')
+    
 
     # if password is updated, update in db
     if password_form.update_privacy.data and password_form.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(password_form.new_password.data)
+        user.password = hashed_password
+        db.session.commit()
+        flash('Password updated successfully!', 'success')
+    
+
+    # validation error handeling
+    if info_form.update_info.data and not info_form.validate_on_submit():
+        flash('Invalid first or last name (only letters are allowed).', 'danger')
+
+    if username_form.username.data and not username_form.validate_on_submit():
+        flash('Invalid username.', 'danger')
+    
+    if email_form.email.data and not email_form.validate_on_submit():
+        flash('Invalid email address.', 'danger')
+
+    if password_form.update_privacy.data and not password_form.validate_on_submit():
         if password_form.new_password.data != password_form.confirm_password.data:
             flash('Passwords do not match.', 'danger')
-        else:
-            hashed_password = bcrypt.generate_password_hash(password_form.new_password.data)
-            user.password = hashed_password
-            db.session.commit()
-            flash('Password updated successfully!', 'success')
 
     # if payment info is updated, update in db
     if card_form.update_card.data and card_form.validate_on_submit():
         # Update existing payment info for current user
         payment_info.payment_type = card_form.card_number.data
         payment_info.shipping_address = card_form.shipping_address.data
-
         db.session.commit()
         flash('Payment info updated successfully!', 'success')
 
@@ -674,13 +703,53 @@ def handle_new_bid(data):
 @app.route('/expert/assignments')
 @expert_required
 def expert_assignments():
-    return render_template('expert_assignments.html')
+
+    assigned_items = Item.query.filter_by(expert_id=current_user.id, approved=None).all()
+
+    return render_template('expert_assignments.html',items=assigned_items)
+
 
 #Route: Expert Authentication Page
-@app.route('/expert/item_authentication')
+@app.route('/expert/item_authentication/<int:item_id>')
 @expert_required
-def expert_item_authentication():
-    return render_template('expert_item_authentication.html')
+def expert_item_authentication(item_id):
+
+    item_to_authenticate = Item.query.get(item_id)
+    experts = User.query.filter(User.priority == 2)
+    return render_template('expert_item_authentication.html', item_to_authenticate=item_to_authenticate, experts=experts)
+
+@app.route('/expert/approve_item/<int:item_id>', methods=['POST'])
+@expert_required
+def approve_item(item_id):
+
+    item_to_approve = Item.query.get(item_id)
+    item_to_approve.approved = True
+    db.session.commit()
+
+    return redirect(url_for('expert_assignments'))
+
+@app.route('/expert/decline_item/<int:item_id>', methods=['POST'])
+@expert_required
+def decline_item(item_id):
+
+    item_to_approve = Item.query.get(item_id)
+    item_to_approve.approved = False
+    db.session.commit()
+
+    return redirect(url_for('expert_assignments'))
+
+@app.route('/expert/reassign_item/<int:item_id>', methods=['POST'])
+@expert_required
+def reassign_item(item_id):
+
+    new_expert_id = request.form.get('reassign_expert')
+    
+    item_to_be_reassigned = Item.query.get(item_id)
+    
+    item_to_be_reassigned.expert_id = new_expert_id
+    
+    db.session.commit()
+    return redirect(url_for('expert_assignments'))
 
 #Route: Expert Messaging Page
 @app.route('/expert/messaging')

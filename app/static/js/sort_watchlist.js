@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", function() {
                                         <h5 class="card-title">${item.item_name}</h5>
                                         <p class="card-text">Start Time: ${item.date_time}</p>
                                         <p class="card-text">Price: £${item.minimum_price}</p>
-                                        <a href="{{ url_for('user_item_details', item_id=item.item_id) }}" class="btn btn-primary">
+                                        <a href="/user/item_details/${item.item_id}" class="btn btn-primary">
                                             View Details
                                         </a>
                                         ${item.is_watched ? 
