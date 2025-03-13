@@ -610,7 +610,7 @@ def place_bid(item_id):
 @expert_required
 def expert_assignments():
 
-    assigned_items = Item.query.filter_by(expert_id=current_user.id).all()
+    assigned_items = Item.query.filter_by(expert_id=current_user.id, approved=False).all()
 
     return render_template('expert_assignments.html',items=assigned_items)
 
