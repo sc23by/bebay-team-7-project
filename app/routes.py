@@ -731,6 +731,7 @@ def manager_statistics():
     return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, week_labels=week_labels,values=values)
 
 
+
 #Route: Manager Account Page
 @app.route('/manager/accounts',methods=['GET','POST'])
 def manager_accounts():
