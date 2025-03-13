@@ -730,6 +730,29 @@ def manager_statistics():
 
     return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, week_labels=week_labels,values=values)
 
+@app.route('/manager/statistics/edit',methods=['GET'])
+def manager_statistics_edit():
+    return render_template('manager_statistics.html')
+
+
+"""
+@app.route('/manager/statistics/cost',methods=['GET','POST'])
+def manager_statistics_cost():
+    sold_items = SoldItem.query.all()
+
+    current_date = datetime.now()
+    three_weeks_ago = current_date - timedelta(weeks=3)
+
+    weeks = []
+    values = []
+
+    for i in range(4):
+        week_start = three_weeks_ago + timedelta(weeks=i)
+        week_end = week_start + timedelta(days = 6,hours=23,minutes=59,seconds=59)
+
+
+    for sold_item in sold_items:
+"""
 
 
 #Route: Manager Account Page

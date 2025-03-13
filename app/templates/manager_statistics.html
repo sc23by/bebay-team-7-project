@@ -25,7 +25,9 @@
                 <p class="card-text">Percentage generated: £</p>
             </div>
             <div>
-            <p class="card-text">Cost per posting: <button>edit</button></p>
+            <p class="card-text">Cost per posting: <form action="{{url_for('manager_statistics_edit')}}" method="POST">
+              <input placeholder="Edit Cost"></input>
+              <button>Edit</button></form></p>
             </div>
           </div>
         </div>
