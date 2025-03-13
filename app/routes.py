@@ -332,6 +332,7 @@ def account():
         user.first_name=info_form.first_name.data
         user.last_name=info_form.last_name.data
         db.session.commit()
+        flash('Information updated successfully!', 'success')
     
     # if username is updated, validate then update in db
     if username_form.update_username.data and username_form.validate_on_submit():
@@ -350,16 +351,29 @@ def account():
             user.email=email_form.email.data
             db.session.commit()
             flash('Email updated successfully!', 'success')
+    
 
     # if password is updated, update in db
     if password_form.update_privacy.data and password_form.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(password_form.new_password.data)
+        user.password = hashed_password
+        db.session.commit()
+        flash('Password updated successfully!', 'success')
+    
+
+    # validation error handeling
+    if info_form.update_info.data and not info_form.validate_on_submit():
+        flash('Invalid first or last name (only letters are allowed).', 'danger')
+
+    if username_form.username.data and not username_form.validate_on_submit():
+        flash('Invalid username.', 'danger')
+    
+    if email_form.email.data and not email_form.validate_on_submit():
+        flash('Invalid email address.', 'danger')
+
+    if password_form.update_privacy.data and not password_form.validate_on_submit():
         if password_form.new_password.data != password_form.confirm_password.data:
             flash('Passwords do not match.', 'danger')
-        else:
-            hashed_password = bcrypt.generate_password_hash(password_form.new_password.data)
-            user.password = hashed_password
-            db.session.commit()
-            flash('Password updated successfully!', 'success')    
 
     # if payment info is updated, update in db
     if card_form.update_card.data and card_form.validate_on_submit():
@@ -680,7 +694,16 @@ def expert_availability():
         return redirect(url_for('expert_availability'))
 
     else:
-        return render_template('expert_availability.html')
+
+        availabilites = ExpertAvailabilities.query.filter_by(user_id=user_id).all()
+
+        filled_timeslots = []
+
+        for timeslot in availabilites:
+            filled_timeslots.append({"date": str(timeslot.date), "start_time":str(timeslot.start_time)[:5]})
+
+
+        return render_template('expert_availability.html',filled_timeslots=filled_timeslots)
 
 #Route: Expert Account Page
 @app.route('/expert/account')

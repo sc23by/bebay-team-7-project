@@ -37,7 +37,16 @@
                              class="card-img-top" alt="{{ item.item_name }}">
                         <div class="card-body">
                             <h5 class="card-title">{{ item.item_name }}</h5>
-                            <p class="card-text">Start Time: {{ item.date_time.strftime('%H:%M') }}</p>
+                            <p>Time Left: 
+                                {% if item.time_left.total_seconds() > 0 %}
+                                    {{ item.time_left.days }} days,
+                                    {{ item.time_left.seconds // 3600 }} hours,
+                                    {{ (item.time_left.seconds // 60) % 60 }} minutes,
+                                    {{ item.time_left.seconds % 60 }} seconds
+                                {% else %}
+                                    Expired
+                                {% endif %}
+                            </p>
                             <p class="card-text">Price: £{{ item.minimum_price }}</p>
                             <a href="{{ url_for('user_item_details', item_id=item.item_id) }}" class="btn btn-primary">
                                 View Details

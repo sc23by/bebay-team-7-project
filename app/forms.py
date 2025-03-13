@@ -105,7 +105,7 @@ class ChangeUsernameForm(FlaskForm):
         Regexp('^[A-Za-z0-9_]+$', message="Only letters, numbers, and underscores allowed.")
     ])
 
-    update_username = SubmitField('Edit')
+    update_username = SubmitField('Edit Username')
 
 # Form for changing password
 class ChangeEmailForm(FlaskForm):
@@ -116,7 +116,7 @@ class ChangeEmailForm(FlaskForm):
         Email()
     ])
 
-    update_email = SubmitField('Edit')
+    update_email = SubmitField('Edit Email')
 
 # Form for changing password
 class ChangePasswordForm(FlaskForm):

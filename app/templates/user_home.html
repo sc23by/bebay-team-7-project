@@ -11,6 +11,7 @@
     </select>
 
     <div id="items_sort"  class="row row-cols-3 row-cols-md-5 g-4">
+        {% if items %}
         {% for item in items %}
         <div class="col">
             <div class="card h-100 {{ 'expired-item' if item.time_left.total_seconds() <= 0 else '' }}">
@@ -18,6 +19,16 @@
                      class="card-img-top" alt="{{ item.item_name }}">
                 <div class="card-body">
                     <h5 class="card-title">{{ item.item_name }}</h5>
+                    <p>Time Left: 
+                        {% if item.time_left.total_seconds() > 0 %}
+                            {{ item.time_left.days }} days,
+                            {{ item.time_left.seconds // 3600 }} hours,
+                            {{ (item.time_left.seconds // 60) % 60 }} minutes,
+                            {{ item.time_left.seconds % 60 }} seconds
+                        {% else %}
+                            Expired
+                        {% endif %}
+                    </p>
                     <p class="card-text">Starting Price: £{{ item.minimum_price }}</p>
                     <p class="card-text">Current Highest Bid: 
                         {% if item_bids[item.item_id] is none %}
@@ -42,10 +53,13 @@
                         <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
                     {% endif %}
 
+                    </div>
                 </div>
             </div>
-        </div>
-        {% endfor %}
+            {% endfor %}
+        {% else %}
+            <p class="text-center text-muted">No items listed</p>
+        {% endif %}
     </div>
 
     <!-- Pagination buttons (optional)
