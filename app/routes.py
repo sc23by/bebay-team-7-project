@@ -608,11 +608,15 @@ def place_bid(item_id):
             db.session.add(new_bid)
             db.session.commit()
             flash("Bid placed successfully!", "success")
-            return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
 
+            # if AJAX request, update highest bid on page
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"success": True, "new_highest_bid": f"£{bid_amount:.2f}"})
 
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+            return redirect(url_for('user_item_details', item_id=item_id))
     
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+             
     return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
 
 
