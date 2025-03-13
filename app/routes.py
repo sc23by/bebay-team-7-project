@@ -113,6 +113,55 @@ def allowed_file(filename):
     ext = filename.rsplit('.', 1)[1].lower()
     return ext in app.config['ALLOWED_EXTENSIONS']
 
+# Function: Expired Auctions
+def check_expired_auctions():
+    """Check for expired auctions and send notifications."""
+    with current_app.app_context():
+        expired_items = Item.query.filter(Item.expiration_time <= datetime.utcnow(), Item.sold == False).all()
+        print("EXPIRED CHECK")
+        for item in expired_items:
+            highest_bid = item.highest_bid()
+            highest_bidder = item.highest_bidder()
+
+            # Notify highest bidder if they exist
+            if highest_bidder:
+                win_notification = Notification(
+                    user_id=highest_bidder.id,
+                    message=f"Congratulations! You have won the auction for '{item.item_name}' with a bid of £{highest_bid:.2f}."
+                )
+                db.session.add(win_notification)
+
+            # Notify all previous bidders (updated: using item.item_id instead of item.id)
+            previous_bidders = db.session.query(Bid.user_id).filter(Bid.item_id == item.item_id).distinct().all()
+            for bidder in previous_bidders:
+                if highest_bidder and bidder[0] == highest_bidder.id:
+                    continue
+                notification = Notification(
+                    user_id=bidder[0],
+                    message=f"The auction for '{item.item_name}' has ended."
+                )
+                db.session.add(notification)
+
+            # Notify the seller
+            if highest_bidder:
+                seller_notification = Notification(
+                    user_id=item.seller_id,
+                    message=f"Your item '{item.item_name}' has been sold to {highest_bidder.username} for £{highest_bid:.2f}."
+                )
+            else:
+                seller_notification = Notification(
+                    user_id=item.seller_id,
+                    message=f"Your item '{item.item_name}' has expired with no bids."
+                )
+            db.session.add(seller_notification)
+            
+            # Mark item as sold
+            item.sold = True
+            db.session.commit()
+
+            # Broadcast auction end event (updated: using item.item_id)
+            socketio.emit('auction_ended', {'item_id': item.item_id, 'winner_id': highest_bidder.id if highest_bidder else None})
+
 
 # Guest Pages
 
@@ -612,7 +661,7 @@ def handle_new_bid(data):
     db.session.commit()
 
     # Notify all users of the new highest bid
-    emit('update_bid', {'item_id': item_id, 'new_bid': bid_amount}, broadcast=True)
+    emit('update_bid', {'item_id': item_id, 'new_bid': bid_amount})
 
     # Notify the bidder that the bid was successful
     emit('bid_success', {'message': 'Bid placed successfully!'}, room=request.sid)

@@ -6,7 +6,9 @@ from flask_wtf.csrf import CSRFProtect
 from flask_bcrypt import Bcrypt
 from flask_socketio import SocketIO
 import os
-
+# For checking expired auctions
+import time
+import threading
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -61,5 +63,22 @@ def load_user(user_id):
 app.config['WTF_CSRF_ENABLED'] = False 
 
 from app import routes
+from app.routes import check_expired_auctions
+# Background Task: Periodically Check for Expired Auctions
+def run_scheduler():
+    from datetime import datetime
+    from app.routes import check_expired_auctions
+
+    print("Scheduler thread started.")
+    while True:
+        print(f"Scheduler running at: {datetime.utcnow()}")
+        with app.app_context():
+            check_expired_auctions()
+        print("Active threads:", threading.enumerate())
+        time.sleep(1)  # For testing; change back to 60 seconds when ready
 
 
+
+# Start the background thread
+scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+scheduler_thread.start()

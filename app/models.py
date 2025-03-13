@@ -70,6 +70,9 @@ class Item(db.Model):
     # Store the fixed fees at the time of listing
     site_fee_percentage = db.Column(db.Float, nullable=False,default=0.00)
     expert_fee_percentage = db.Column(db.Float, nullable=False,default=0.00)
+    # Boolean for if item sold.
+    sold = db.Column(db.Boolean, default=False)
+
     
     def get_image_url(self):
         return url_for('static', filename=f'images/items/{self.item_image}')
