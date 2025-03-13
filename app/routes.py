@@ -793,26 +793,33 @@ def manager_listings_update_number(username,update_number):
 @app.route('/manager/authentication')
 def manager_auth_assignments():
     assignments = [
-        {"name": "Item A", "status": "Assigned", "role": "Expert"},
-        {"name": "Item B", "status": "Unassigned"},
-        {"name": "Item C", "status": "Assigned", "role": "Expert"},
-        {"name": "Item D", "status": "Unassigned"}
     ]
     return render_template('manager_authentication.html', assignments=assignments)
 
 
-#Route: Manager's view to be able to identify experts availability
-@app.route('/manager/expert_availability')
-def manager_expert_availability():
-    item = {
 
-    }
 
-    experts = [
 
-    ]
 
-    return render_template('manager_expert_availability.html', item=item, experts=experts)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #Route: Manager view of Items that are approved, recycled, and pending items
@@ -844,5 +851,3 @@ def manager_fees():
             flash("Fees updated successfully!", "success")
             
     return render_template("manager_fees.html", fee_config=fee_config)
-
-
