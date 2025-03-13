@@ -33,6 +33,17 @@ app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg'}
 
+# Add Bebay email
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'bebayteam7@gmail.com'
+app.config['MAIL_PASSWORD'] = 'BebayTeam7123!'
+app.config['MAIL_DEFAULT_SENDER'] = ('Bebay Team', 'bebayteam7@gmail.com')
+
+from flask_mail import Mail
+mail = Mail(app)
+
 # Initialize extensions:
 # Database
 db = SQLAlchemy(app)

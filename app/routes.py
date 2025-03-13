@@ -17,6 +17,8 @@ import json
 # Websockets
 from flask_socketio import emit
 from . import socketio
+# Emails
+from flask_mail import Message
 
 # Decorators
 
@@ -130,6 +132,8 @@ def check_expired_auctions():
                     message=f"Congratulations! You have won the auction for '{item.item_name}' with a bid of £{highest_bid:.2f}."
                 )
                 db.session.add(win_notification)
+                # Send email notification to the winner
+                send_winner_email(highest_bidder, item, highest_bid)
 
             # Notify all previous bidders (updated: using item.item_id instead of item.id)
             previous_bidders = db.session.query(Bid.user_id).filter(Bid.item_id == item.item_id).distinct().all()
@@ -154,7 +158,7 @@ def check_expired_auctions():
                     message=f"Your item '{item.item_name}' has expired with no bids."
                 )
             db.session.add(seller_notification)
-            
+
             # Mark item as sold
             item.sold = True
             db.session.commit()
@@ -162,6 +166,21 @@ def check_expired_auctions():
             # Broadcast auction end event (updated: using item.item_id)
             socketio.emit('auction_ended', {'item_id': item.item_id, 'winner_id': highest_bidder.id if highest_bidder else None})
 
+def send_winner_email(winner, item, highest_bid):
+    subject = f"You have won the auction for {item.item_name}!"
+    recipients = [winner.email]
+    body = f"""
+Hi {winner.username},
+
+Congratulations! You have won the auction for '{item.item_name}' with a bid of £{highest_bid:.2f}.
+
+Thank you for participating in Bebay auctions!
+
+Best regards,
+The Bebay Team
+"""
+    msg = Message(subject=subject, recipients=recipients, body=body)
+    mail.send(msg)
 
 # Guest Pages
 
