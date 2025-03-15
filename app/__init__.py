@@ -5,6 +5,7 @@ from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from flask_bcrypt import Bcrypt
 import os
+import stripe
 
 
 # Initialize Flask app
@@ -55,6 +56,9 @@ def load_user(user_id):
 
  # Disables CSRF protection
 app.config['WTF_CSRF_ENABLED'] = False 
+
+# Loading configuration from config.py
+app.config.from_object('config')
 
 from app import routes
 
