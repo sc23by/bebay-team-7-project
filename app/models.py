@@ -1,3 +1,4 @@
+
 from app import db
 from flask import url_for
 from flask_login import UserMixin
@@ -44,11 +45,17 @@ class PaymentInfo(db.Model):
 
 # Sold item model
 class Solditem(db.Model):
-    sold_id = db.Column(db.Integer, primary_key=True)
-    item_id = db.Column(db.Integer, ForeignKey('item.item_id'), nullable=False)
-    seller_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
-    buyer_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
-    price = db.Column(db.Float, nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.item_id'), nullable=False)
+    seller_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    buyer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    price = db.Column(db.Numeric(10, 2), nullable=False)
+    sold_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    item = db.relationship('Item', backref='sold_item', lazy=True)
+    seller = db.relationship('User', foreign_keys=[seller_id], backref='sold_items')
+    buyer = db.relationship('User', foreign_keys=[buyer_id], backref='purchased_items')
+
 
 # Item model
 class Item(db.Model):
@@ -86,6 +93,9 @@ class Item(db.Model):
         if expert_approved:
             return final_price * ((self.site_fee_percentage + self.expert_fee_percentage) / 100)
         return final_price * (self.site_fee_percentage / 100)
+# Establish a relationship with User model (expert)
+    expert = db.relationship('User', foreign_keys=[expert_id], backref='assigned_items')
+
 
 # Waiting List Model
 class WaitingList(db.Model):
