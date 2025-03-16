@@ -945,8 +945,21 @@ def payment_success(item_id):
     highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
     winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
 
+    if winning_bid and winning_bid.user_id == current_user.id:
+        sold_item = Solditem(
+            item_id=item_id,
+            seller_id=item.seller_id,
+            buyer_id=current_user.id,
+            price=highest_bid
+        )
+        db.session.add(sold_item)
+        db.session.commit()
+        flash("Payment successful! The item has been marked as sold.", "success")
+    else:
+        flash("Payment failed or unauthorized access.", "danger")
 
     return redirect(url_for('user_home'))
+
 
 
 
