@@ -800,49 +800,41 @@ def manager_auth_assignments():
     ]
     return render_template('manager_authentication.html', assignments=assignments)
 
-
-#Route: Manager's view to be able to identify experts availability
 @app.route('/manager/expert_availability')
 @login_required
 def manager_expert_availability():
-    if current_user.priority < 2:  # Ensure only managers can access
+    if current_user.priority < 2:
         flash("Unauthorized Access", "danger")
         return redirect(url_for('index'))
 
-    items = Item.query.all()
-    experts = User.query.filter_by(priority=2).all()  # Fetch all experts (assuming priority=2 is expert)
-
-    # Fetch availability and map it to experts
-    expert_availability = {}
-
-    for expert in experts:
-        slots = ExpertAvailabilities.query.filter_by(user_id=expert.id).all()
-        expert_availability[expert.id] = [
+    experts = User.query.filter_by(priority=2).all()
+    
+    expert_availability = {
+        expert.id: [
             {
                 "id": slot.availability_id,
                 "date": slot.date.strftime("%Y-%m-%d"),
                 "start_time": slot.start_time.strftime("%I:%M %p"),
                 "duration": slot.duration
-            }
-            for slot in slots
-        ]
+            } for slot in ExpertAvailabilities.query.filter_by(user_id=expert.id).all()
+        ] for expert in experts
+    }
 
-    # Fetch assigned and unassigned items
     assigned_items = Item.query.filter(Item.expert_id.isnot(None)).all()
     unassigned_items = Item.query.filter(Item.expert_id.is_(None)).all()
 
     return render_template(
         'manager_expert_availability.html',
-        items=items,
         experts=experts,
         expert_availability=expert_availability,
         assigned_items=assigned_items,
         unassigned_items=unassigned_items
     )
+
 @app.route('/assign_expert', methods=['POST'])
 @login_required
 def assign_expert():
-    if current_user.priority < 2:  # Ensure only managers can assign experts
+    if current_user.priority < 2:
         flash("Unauthorized Action", "danger")
         return redirect(url_for('index'))
 
@@ -851,14 +843,13 @@ def assign_expert():
     selected_time_id = request.form.get('selected_time')
 
     item = Item.query.get(item_id)
-    selected_time = ExpertAvailabilities.query.get(selected_time_id)
+    selected_time = ExpertAvailabilities.query.filter_by(availability_id=selected_time_id, user_id=expert_id).first()
 
-    if item and expert_id and selected_time:
+    if item and selected_time:
         item.expert_id = expert_id
         item.date_time = datetime.combine(selected_time.date, selected_time.start_time)
-        
-        # Remove assigned slot from availability
-        db.session.delete(selected_time)
+
+        db.session.delete(selected_time)  # Remove from availability
         db.session.commit()
 
         flash(f'Expert assigned successfully for {item.date_time.strftime("%Y-%m-%d %I:%M %p")}', 'success')
@@ -868,15 +859,14 @@ def assign_expert():
 @app.route('/unassign_expert', methods=['POST'])
 @login_required
 def unassign_expert():
-    if current_user.priority < 2:  # Ensure only managers can access
+    if current_user.priority < 2:
         flash("Unauthorized Action", "danger")
         return redirect(url_for('index'))
 
     item_id = request.form.get('item_id')
     item = Item.query.get(item_id)
 
-    if item and item.expert_id:  # Only unassign if there's an expert assigned
-        # Restore expert availability
+    if item and item.expert_id:
         restored_availability = ExpertAvailabilities(
             user_id=item.expert_id,
             date=item.date_time.date(),
