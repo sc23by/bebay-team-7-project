@@ -69,3 +69,31 @@
 
     <a href="{{ url_for('user_home') }}" class="btn btn-secondary">Back to Listings</a>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    function updateTimeLeft() {
+        fetch("{{ url_for('get_time_left', item_id=item.item_id) }}")
+        .then(response => response.json())
+        .then(data => {
+            let timeLeftElement = document.getElementById("time-left");
+            let payNowButton = document.getElementById("pay-now");
+
+            if (data.time_left === "Expired") {
+                timeLeftElement.innerHTML = "Expired";
+
+                // Show Pay Now button immediately if it exists
+                if (payNowButton) {
+                    payNowButton.style.display = "block";
+                }
+            } else {
+                timeLeftElement.innerHTML = data.time_left;
+            }
+        });
+    }
+ });
+
+
+</script>
+
+{% endblock %}
