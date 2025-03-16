@@ -3,6 +3,7 @@ from flask import render_template, redirect, url_for, request, flash, current_ap
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
 from app.models import FeeConfig, User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo
+from app.models import Solditem
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -568,14 +569,24 @@ def user_list_item():
 # Route: For clicking on an item to see more detail
 @app.route('/item/<int:item_id>')
 def user_item_details(item_id):
-    item = Item.query.get_or_404(item_id)  # Fetch the item or return 404
-    form=BidForm()
+    item = Item.query.get_or_404(item_id)
+    form = BidForm()
 
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
-    # If no bid exists, set highest_bid to "No bids yet"
-    if highest_bid is None:
-        highest_bid = "No bids yet"
-    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
+    # Ensure expiration_time and date_time are not None
+    if item.date_time is None:
+        item.date_time = datetime.utcnow()  # Provide a default timestamp
+
+    if item.expiration_time is None:
+        item.expiration_time = datetime.utcnow() + timedelta(days=7)  # Example: 7 days from now
+
+    # Get the current highest bid
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or "No bids yet"
+
+    # Get highest bidder ID
+    highest_bidder = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
+    highest_bidder_id = highest_bidder.user_id if highest_bidder else None
+
+    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid, highest_bidder_id=highest_bidder_id)
 
 # Route: Placing a bid
 @app.route('/item/<int:item_id>/bid', methods=['GET', 'POST'])
@@ -860,59 +871,18 @@ def manager_fees():
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-stripe.api_key = current_app.config['sk_test_51R1327JKMwWxJC9sVfnEkayuhNi5oBfLWhrKtwDL0bogNn2SAIfcw0BLE2YMrpodi8cLxssPNe9gSdwjDeSb0xgH00b3S8JsMU']
-
 @app.route('/pay/<int:item_id>', methods=['POST'])
 @login_required
 def pay_for_item(item_id):
+    """
+    Creates a Stripe Checkout Session for the highest bidder,
+    including the shipping cost in the total payment amount.
+    """
     item = Item.query.get_or_404(item_id)
-    
-    # Check if the auction has expired and if the current user is the highest bidder
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
-    winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
 
-    if not winning_bid or winning_bid.user_id != current_user.id:
-        flash("You are not the winning bidder!", "danger")
-        return redirect(url_for('user_item_details', item_id=item_id))
-    
-    # Create a Stripe Checkout Session
-    try:
-        session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[{
-                'price_data': {
-                    'currency': 'gbp',
-                    'product_data': {
-                        'name': item.item_name,
-                    },
-                    'unit_amount': int(highest_bid * 100),  # Convert to pence
-                },
-                'quantity': 1,
-            }],
-            mode='payment',
-            success_url=url_for('payment_success', item_id=item_id, _external=True),
-            cancel_url=url_for('user_item_details', item_id=item_id, _external=True),
-        )
-        return jsonify({'checkout_url': session.url})
 
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
+    # Create Stripe Checkout Session
 
 
 
@@ -924,21 +894,13 @@ def pay_for_item(item_id):
 def payment_success(item_id):
     item = Item.query.get_or_404(item_id)
 
-    # Mark item as sold
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
-    winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
-
-    if winning_bid and winning_bid.user_id == current_user.id:
-        sold_item = Solditem(
-            item_id=item_id,
-            seller_id=item.seller_id,
-            buyer_id=current_user.id,
-            price=highest_bid
-        )
-        db.session.add(sold_item)
-        db.session.commit()
-        flash("Payment successful! The item has been marked as sold.", "success")
-    else:
-        flash("Payment failed or unauthorized access.", "danger")
-
     return redirect(url_for('user_home'))
+
+
+
+
+@app.route('/get_time_left/<int:item_id>')
+def get_time_left(item_id):
+    """
+    API to fetch remaining time for an item.
+    """
