@@ -91,8 +91,36 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     }
- });
 
+    // Run the time check immediately on page load
+    updateTimeLeft();
+
+    // Reduce delay: Update countdown every 500ms instead of 1000ms
+    setInterval(updateTimeLeft, 500);
+
+    // Pay Now button functionality
+    document.getElementById("pay-now")?.addEventListener("click", function () {
+        let shippingCost = parseFloat("{{ item.shipping_cost }}");
+        let highestBid = parseFloat("{{ highest_bid }}");
+        let totalPrice = highestBid + shippingCost;
+
+        fetch("{{ url_for('pay_for_item', item_id=item.item_id) }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ total_price: totalPrice })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.checkout_url) {
+                window.location.href = data.checkout_url;
+            } else {
+                alert("Payment Error: " + data.error);
+            }
+        });
+    });
+});
 
 </script>
 
