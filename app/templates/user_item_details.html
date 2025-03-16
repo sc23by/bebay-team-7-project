@@ -58,3 +58,14 @@
         </div>
     </form>
 
+<!-- Pay Now Button (Initially Hidden If Auction is Still Active) -->
+{% if highest_bid != "No bids yet" and current_user.id == highest_bidder_id %}
+    <button id="pay-now" class="btn btn-success"
+        {% if item.time_left.total_seconds() > 0 %} style="display: none;" {% endif %}>
+        Pay Now
+    </button>
+{% endif %}
+
+
+    <a href="{{ url_for('user_home') }}" class="btn btn-secondary">Back to Listings</a>
+</div>
