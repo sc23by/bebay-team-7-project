@@ -883,6 +883,36 @@ def pay_for_item(item_id):
 
 
     # Create Stripe Checkout Session
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price_data': {
+                        'currency': 'gbp',
+                        'product_data': {'name': item.item_name},
+                        'unit_amount': int(bid_price * 100),  # Convert bid price to pence
+                    },
+                    'quantity': 1,
+                },
+                {
+                    'price_data': {
+                        'currency': 'gbp',
+                        'product_data': {'name': 'Shipping Cost'},
+                        'unit_amount': int(shipping_price * 100),  # Convert shipping price to pence
+                    },
+                    'quantity': 1,
+                }
+            ],
+            mode='payment',
+            success_url=url_for('payment_success', item_id=item_id, _external=True),
+            cancel_url=url_for('user_item_details', item_id=item_id, _external=True),
+        )
+        return jsonify({'checkout_url': session.url})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 
 
