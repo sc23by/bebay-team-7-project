@@ -6,44 +6,35 @@
         <h4 class="fw-bold mb-3">Expert Availability Assignment</h4>
 
         <div class="row">
-            <!-- Left Section: Expert List with Availability -->
             <div class="col-md-6">
                 <div class="card border-0 shadow-sm p-3">
                     <h5 class="fw-semibold">Experts</h5>
-                    
-                    <!-- Expert Selection Form -->
                     <form method="POST" action="{{ url_for('assign_expert') }}">
                         <input type="hidden" name="item_id" id="selectedItemId">
                         
                         <div class="list-group" style="max-height: 250px; overflow-y: auto;">
                             {% for expert in experts %}
-                            <div class="list-group-item expert-container">
-                                <label class="d-flex justify-content-between align-items-center">
-                                    <input type="radio" name="selected_expert" value="{{ expert.id }}" onclick="showAvailability({{ expert.id }})">
-                                    <span>{{ expert.first_name }} {{ expert.last_name }}</span>
+                            <div class="list-group-item">
+                                <label>
+                                    <input type="radio" name="selected_expert" value="{{ expert.id }}" onclick="updateAvailability({{ expert.id }})">
+                                    {{ expert.first_name }} {{ expert.last_name }}
                                     {% if expert_availability[expert.id] %}
                                         <span class="badge bg-success">Available</span>
                                     {% else %}
                                         <span class="badge bg-danger">Not Available</span>
                                     {% endif %}
                                 </label>
-                                
-                                <!-- Display available time slots -->
-                                {% if expert_availability[expert.id] %}
-                                <div class="mt-2 ms-3">
-                                    <strong>Available Slots:</strong>
-                                    <select class="form-select mt-1" name="selected_time">
-                                        {% for slot in expert_availability[expert.id] %}
-                                            <option value="{{ slot.id }}">{{ slot.date }} - {{ slot.start_time }} ({{ slot.duration }}h)</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                {% endif %}
                             </div>
                             {% endfor %}
                         </div>
 
-                        <!-- Confirm Assignment Button -->
+                        <div id="availabilityContainer" class="mt-3 d-none">
+                            <h6>Available Time Slots</h6>
+                            <select class="form-select mt-1" name="selected_time" id="availabilityDropdown">
+                                <option value="">Select a time slot</option>
+                            </select>
+                        </div>
+
                         <div class="d-grid mt-3">
                             <button class="btn btn-success" type="submit">Confirm Assignment</button>
                         </div>
@@ -51,15 +42,14 @@
                 </div>
             </div>
 
-            <!-- Right Section: Unassign Items -->
             <div class="col-md-6">
                 <div class="card border-0 shadow-sm p-3">
                     <h5 class="fw-semibold">Unassigned Items</h5>
                     <div class="list-group" style="max-height: 250px; overflow-y: auto;">
                         {% for item in unassigned_items %}
-                        <label class="list-group-item d-flex justify-content-between align-items-center">
+                        <label class="list-group-item">
                             <input type="radio" name="selected_item" value="{{ item.item_id }}" onclick="selectItem({{ item.item_id }})">
-                            <span>{{ item.item_name }}</span>
+                            {{ item.item_name }}
                         </label>
                         {% endfor %}
                     </div>
@@ -67,74 +57,60 @@
             </div>
         </div>
 
-        <!-- Assigned Items -->
         <h4 class="fw-bold mt-4">Assigned Items</h4>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Item Name</th>
-                        <th>Expert</th>
-                        <th>Time Slot</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in assigned_items %}
-                    <tr>
-                        <td>{{ item.item_name }}</td>
-                        <td>{{ item.expert.first_name }} {{ item.expert.last_name }}</td>
-                        <td>{{ item.date_time.strftime('%Y-%m-%d %I:%M %p') }}</td>
-                        <td>
-                            <form method="POST" action="{{ url_for('unassign_expert') }}">
-                                <input type="hidden" name="item_id" value="{{ item.item_id }}">
-                                <button class="btn btn-danger btn-sm" type="submit">Unassign</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Item Name</th>
+                    <th>Expert</th>
+                    <th>Time Slot</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in assigned_items %}
+                <tr>
+                    <td>{{ item.item_name }}</td>
+                    <td>{{ item.expert.first_name }} {{ item.expert.last_name }}</td>
+                    <td>{{ item.date_time.strftime('%Y-%m-%d %I:%M %p') }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('unassign_expert') }}">
+                            <input type="hidden" name="item_id" value="{{ item.item_id }}">
+                            <button class="btn btn-danger btn-sm" type="submit">Unassign</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 
-
-
-
-<!-- JavaScript to Handle Selections and Update UI -->
 <script>
-    let selectedItemId = null;
-    let expertAvailability = {};
-
-    {% for expert in experts %}
-        expertAvailability[{{ expert.id }}] = [
-            {% for slot in expert.availability %}
-                { id: "{{ slot.id }}", date: "{{ slot.date }}", start_time: "{{ slot.start_time }}" }
-            {% endfor %}
-        ];
-    {% endfor %}
-
-    function showAvailability(expertId) {
-        const availabilityList = document.getElementById("availability-list");
-        availabilityList.innerHTML = "";
-
-        if (expertAvailability[expertId]) {
-            expertAvailability[expertId].forEach(slot => {
-                const li = document.createElement("li");
-                li.classList.add("list-group-item");
-                li.innerHTML = `${slot.date} - ${slot.start_time} 
-                    <input type="radio" name="selected_time" value="${slot.id}">`;
-                availabilityList.appendChild(li);
-            });
-        }
-    }
+    let expertAvailability = {{ expert_availability | tojson }};
 
     function selectItem(itemId) {
         document.getElementById("selectedItemId").value = itemId;
-        selectedItemId = itemId;
+    }
+
+    function updateAvailability(expertId) {
+        let availabilityDropdown = document.getElementById("availabilityDropdown");
+        let availabilityContainer = document.getElementById("availabilityContainer");
+
+        // Clear previous options
+        availabilityDropdown.innerHTML = '<option value="">Select a time slot</option>';
+
+        if (expertAvailability[expertId] && expertAvailability[expertId].length > 0) {
+            expertAvailability[expertId].forEach(slot => {
+                let option = document.createElement("option");
+                option.value = slot.id;
+                option.textContent = `${slot.date} - ${slot.start_time} (${slot.duration}h)`;
+                availabilityDropdown.appendChild(option);
+            });
+            availabilityContainer.classList.remove("d-none");
+        } else {
+            availabilityContainer.classList.add("d-none");
+        }
     }
 </script>
-
 {% endblock %}
