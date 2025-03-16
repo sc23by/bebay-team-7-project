@@ -941,8 +941,12 @@ def pay_for_item(item_id):
 def payment_success(item_id):
     item = Item.query.get_or_404(item_id)
 
-    return redirect(url_for('user_home'))
+    # Mark item as sold
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
+    winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
 
+
+    return redirect(url_for('user_home'))
 
 
 
