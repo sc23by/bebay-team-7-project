@@ -871,6 +871,7 @@ def manager_fees():
 
 
 
+
 @app.route('/pay/<int:item_id>', methods=['POST'])
 @login_required
 def pay_for_item(item_id):
@@ -880,7 +881,21 @@ def pay_for_item(item_id):
     """
     item = Item.query.get_or_404(item_id)
 
+    # Get highest bid
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
+    winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
 
+    # Ensure the current user is the highest bidder
+    if not winning_bid or winning_bid.user_id != current_user.id:
+        flash("You are not the winning bidder!", "danger")
+        return redirect(url_for('user_item_details', item_id=item_id))
+
+    # Convert to float to ensure proper calculations
+    bid_price = float(highest_bid)
+    shipping_price = float(item.shipping_cost)
+
+    # Calculate total checkout cost (Winning Bid + Shipping Cost)
+    total_price = bid_price + shipping_price
 
     # Create Stripe Checkout Session
     try:
@@ -912,6 +927,8 @@ def pay_for_item(item_id):
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
 
 
 
