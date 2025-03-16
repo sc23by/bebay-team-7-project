@@ -12,6 +12,7 @@
         </div>
     {% endif %}
     {% endwith %}
+    
     <h2>{{ item.item_name }}</h2>
     <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
          class="img-fluid" alt="{{ item.item_name }}">
@@ -30,14 +31,16 @@
     <p>Expires On: {{ item.expiration_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
 
     <p>Time Left: 
-        {% if item.time_left.total_seconds() > 0 %}
-            {{ item.time_left.days }} days,
-            {{ item.time_left.seconds // 3600 }} hours,
-            {{ (item.time_left.seconds // 60) % 60 }} minutes,
-            {{ item.time_left.seconds % 60 }} seconds
-        {% else %}
-            Expired
-        {% endif %}
+        <span id="time-left">
+            {% if item.time_left.total_seconds() > 0 %}
+                {{ item.time_left.days }} days,
+                {{ item.time_left.seconds // 3600 }} hours,
+                {{ (item.time_left.seconds // 60) % 60 }} minutes,
+                {{ item.time_left.seconds % 60 }} seconds
+            {% else %}
+                Expired
+            {% endif %}
+        </span>
     </p>
 
     <!-- Bid Form (Initially Hidden If Auction Expired) -->

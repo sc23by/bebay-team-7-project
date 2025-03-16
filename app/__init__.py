@@ -60,6 +60,9 @@ app.config['WTF_CSRF_ENABLED'] = False
 # Loading configuration from config.py
 app.config.from_object('config')
 
+# Correct way to set Stripe API key
+stripe.api_key = app.config['STRIPE_SECRET_KEY']
+
 from app import routes
 
 

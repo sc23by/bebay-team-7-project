@@ -871,7 +871,7 @@ def manager_fees():
 
 
 
-
+# Payment for item using stripe route
 @app.route('/pay/<int:item_id>', methods=['POST'])
 @login_required
 def pay_for_item(item_id):
@@ -928,13 +928,6 @@ def pay_for_item(item_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
-
-
-
-
-
-
 # Success route
 @app.route('/payment_success/<int:item_id>')
 @login_required
@@ -962,6 +955,7 @@ def payment_success(item_id):
 
 
 
+# API to fetch get remaining time on auction for an item in real time
 @app.route('/get_time_left/<int:item_id>')
 def get_time_left(item_id):
     """
@@ -976,3 +970,9 @@ def get_time_left(item_id):
         time_left = "Expired"
 
     return jsonify({"time_left": time_left})
+
+
+
+
+
+

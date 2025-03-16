@@ -1,4 +1,3 @@
-
 from app import db
 from flask import url_for
 from flask_login import UserMixin
@@ -94,7 +93,6 @@ class Item(db.Model):
             return final_price * ((self.site_fee_percentage + self.expert_fee_percentage) / 100)
         return final_price * (self.site_fee_percentage / 100)
 
-
 # Waiting List Model
 class WaitingList(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -124,4 +122,3 @@ class FeeConfig(db.Model):
             db.session.add(fee)
             db.session.commit()
         return fee
-
