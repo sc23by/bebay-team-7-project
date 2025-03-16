@@ -66,7 +66,7 @@ class Item(db.Model):
     expiration_time = db.Column(db.DateTime, nullable=True)  
     approved = db.Column(db.Boolean, default=False)
     shipping_cost = db.Column(db.Numeric(10,2), nullable=False)
-    expert_payment_percentage = db.Column(db.Float, nullable=False, default=0.00) # Default can be changed by managers
+    expert_payment_percentage = db.Column(db.Float, nullable=False, default=50.0) # Default can be changed by managers
     expert_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = True)
     # Store the fixed fees at the time of listing
     site_fee_percentage = db.Column(db.Float, nullable=False,default=0.00)
@@ -105,19 +105,3 @@ class Bid(db.Model):
     user_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
     bid_amount = db.Column(db.Numeric(10, 2), nullable=False)  # Allows precise bid values
     bid_date_time = db.Column(db.DateTime, nullable=False)
-
-# Fee Configuration Model (New)
-class FeeConfig(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    site_fee_percentage = db.Column(db.Float, nullable=False, default=1.0)  # Default 1%
-    expert_fee_percentage = db.Column(db.Float, nullable=False, default=4.0)  # Default 4%
-
-    @staticmethod
-    def get_current_fees():
-        fee = FeeConfig.query.first()
-        if not fee:
-            fee = FeeConfig(site_fee_percentage=1.0, expert_fee_percentage=4.0)
-            db.session.add(fee)
-            db.session.commit()
-        return fee
-

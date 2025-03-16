@@ -2,7 +2,7 @@ from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, request, flash, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
-from app.models import FeeConfig, User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo
+from app.models import User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -841,6 +841,8 @@ def assign_expert():
     expert_id = request.form.get('selected_expert')
     item_id = request.form.get('item_id')
     selected_time_id = request.form.get('selected_time')
+    expert_payment_percentage = request.form.get('expert_payment_percentage', type=float)
+
 
     item = Item.query.get(item_id)
     selected_time = ExpertAvailabilities.query.filter_by(availability_id=selected_time_id, user_id=expert_id).first()
@@ -848,6 +850,7 @@ def assign_expert():
     if item and selected_time:
         item.expert_id = expert_id
         item.date_time = datetime.combine(selected_time.date, selected_time.start_time)
+        item.expert_payment_percentage = expert_payment_percentage  # Save the percentage
 
         db.session.delete(selected_time)  # Remove from availability
         db.session.commit()
@@ -895,23 +898,6 @@ def manager_overview():
                            rejected_items=[],
                            pending_items=[])
 
-# Route for Manager to Update Fees
-@app.route('/manager/fees', methods=['GET', 'POST'])
-def manager_fees():
-    fee_config = FeeConfig.get_current_fees()
-    
-    if request.method == 'POST':
-        site_fee = request.form.get('site_fee', type=float)
-        expert_fee = request.form.get('expert_fee', type=float)
-
-        if site_fee is not None and expert_fee is not None:
-            fee_config.site_fee_percentage = site_fee
-            fee_config.expert_fee_percentage = expert_fee
-            db.session.commit()
-            print(f"Updated Fees: Site - {fee_config.site_fee_percentage}%, Expert - {fee_config.expert_fee_percentage}%")  # Debugging
-            flash("Fees updated successfully!", "success")
-            
-    return render_template("manager_fees.html", fee_config=fee_config)
 
 
 
@@ -924,7 +910,23 @@ def manager_fees():
 
 
 
+@app.route('/update_expert_payment', methods=['POST'])
+@login_required
+def update_expert_payment():
+    if current_user.priority < 2:
+        flash("Unauthorized Action", "danger")
+        return redirect(url_for('index'))
 
+    item_id = request.form.get('item_id')
+    expert_payment_percentage = request.form.get('expert_payment_percentage', type=float)
 
+    item = Item.query.get(item_id)
+
+    if item and item.expert_id:  # Ensure the item is assigned to an expert
+        item.expert_payment_percentage = expert_payment_percentage
+        db.session.commit()
+        flash(f'Expert payment percentage updated to {expert_payment_percentage}%', 'success')
+
+    return redirect(url_for('manager_expert_availability'))
 
 
