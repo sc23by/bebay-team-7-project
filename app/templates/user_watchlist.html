@@ -6,7 +6,7 @@
     <div class="row vh-100">
         <!-- Sidebar -->
         <div class="col-md-3 col-lg-2 bg-white shadow-sm p-4">
-            <div class="d-grid gap-2">
+            <div class="d-grid gap-2 ">
                 <form action="{{ url_for('watchlist') }}" method="POST">
                     {{ form.hidden_tag() }}
 
@@ -32,14 +32,25 @@
             <div id="watchlist_sort" class="row row-cols-3 row-cols-md-5 g-4">
                 {% for item in watched_items %}
                 <div class="col">
-                    <div class="card h-100">
+                    <div class="card h-100 {{ 'expired-item' if item.time_left.total_seconds() <= 0 else '' }}">
                         <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
                              class="card-img-top" alt="{{ item.item_name }}">
                         <div class="card-body">
                             <h5 class="card-title">{{ item.item_name }}</h5>
-                            <p class="card-text">Start Time: {{ item.date_time.strftime('%H:%M') }}</p>
+                            <p>Time Left: 
+                                {% if item.time_left.total_seconds() > 0 %}
+                                    {{ item.time_left.days }} days,
+                                    {{ item.time_left.seconds // 3600 }} hours,
+                                    {{ (item.time_left.seconds // 60) % 60 }} minutes,
+                                    {{ item.time_left.seconds % 60 }} seconds
+                                {% else %}
+                                    Expired
+                                {% endif %}
+                            </p>
                             <p class="card-text">Price: £{{ item.minimum_price }}</p>
-                            <input type="button" value="Bid">
+                            <a href="{{ url_for('user_item_details', item_id=item.item_id) }}" class="btn btn-primary">
+                                View Details
+                            </a>
                             {% if item in current_user.watchlist %}
                                 <span class="fa fa-heart selected" data-value="{{ current_user.watchlist | default(0) }}"
                                     data-item-id="{{ item.item_id }}"></span>

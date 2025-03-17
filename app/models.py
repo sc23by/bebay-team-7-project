@@ -66,7 +66,7 @@ class Item(db.Model):
     hours = db.Column(db.Integer, nullable=False, default=0)
     minutes = db.Column(db.Integer, nullable=False, default=0)
     expiration_time = db.Column(db.DateTime, nullable=True)  
-    approved = db.Column(db.Boolean, default=False)
+    approved = db.Column(db.Boolean, default=None, nullable=True)
     shipping_cost = db.Column(db.Numeric(10,2), nullable=False)
     expert_payment_percentage = db.Column(db.Float, nullable=False, default=0.00) # Default can be changed by managers
     expert_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = True)
@@ -84,6 +84,8 @@ class Item(db.Model):
     @property
     def time_left(self):
         """Calculate remaining time from now until expiration."""
+        if self.expiration_time is None:
+            return timedelta(0)  # Return zero time if expiration_time is None
         remaining = self.expiration_time - datetime.utcnow()
         return max(remaining, timedelta(0))  # Ensure it doesn't go negative
 
@@ -91,6 +93,20 @@ class Item(db.Model):
         if expert_approved:
             return final_price * ((self.site_fee_percentage + self.expert_fee_percentage) / 100)
         return final_price * (self.site_fee_percentage / 100)
+
+    expert = db.relationship('User',foreign_keys=[expert_id],backref='assigned_items')
+
+    def highest_bid(self):
+        """Returns the highest bid amount."""
+        highest_bid = Bid.query.filter_by(item_id=self.item_id).order_by(Bid.bid_amount.desc()).first()
+        return highest_bid.bid_amount if highest_bid else None
+
+    def highest_bidder(self):
+        """Returns the user who placed the highest bid."""
+        highest_bid = self.highest_bid()  # Use the existing method
+        if highest_bid:
+            return Bid.query.filter_by(item_id=self.item_id, bid_amount=highest_bid).first().user
+        return None
 
 # Waiting List Model
 class WaitingList(db.Model):
@@ -104,8 +120,10 @@ class Bid(db.Model):
     bid_id = db.Column(db.Integer, primary_key=True)
     item_id = db.Column(db.Integer, ForeignKey('item.item_id'), nullable=False)
     user_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
-    bid_amount = db.Column(db.Numeric(10, 2), nullable=False)  # Allows precise bid values
+    bid_amount = db.Column(db.Numeric(10, 2), nullable=False)
     bid_date_time = db.Column(db.DateTime, nullable=False)
+
+    user = db.relationship('User', backref='bids')
 
 # Fee Configuration Model (New)
 class FeeConfig(db.Model):
@@ -121,3 +139,10 @@ class FeeConfig(db.Model):
             db.session.add(fee)
             db.session.commit()
         return fee
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    message = db.Column(db.String(500), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    read = db.Column(db.Boolean, default=False)

@@ -27,7 +27,9 @@ document.addEventListener("DOMContentLoaded", function() {
                                         <h5 class="card-title">${item.item_name}</h5>
                                         <p class="card-text">Start Time: ${item.date_time}</p>
                                         <p class="card-text">Price: £${item.minimum_price}</p>
-                                        <input type="button" value="Bid">
+                                        <a href="/user/item_details/${item.item_id}" class="btn btn-primary">
+                                            View Details
+                                        </a>
                                         ${item.is_watched ? 
                                             `<span class="fa fa-heart selected" data-item-id="${item.item_id}"></span>
                                             <input type="hidden" name="watch" value="1">`
