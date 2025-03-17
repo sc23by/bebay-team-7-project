@@ -873,9 +873,13 @@ def manager_statistics_cost():
 #Route: Manager Account Page
 @app.route('/manager/accounts',methods=['GET','POST'])
 def manager_accounts():
-    accounts = User.query.all()
+    page = request.args.get('page',1,type=int)
+    per_page = 5
 
-    return render_template("manager_accounts.html",accounts=accounts)
+    total_pages = User.query.paginate(page=page, per_page=per_page,error_out=False)
+
+
+    return render_template("manager_accounts.html",accounts=accounts_per_page.items,page=page,total_pages=total_pages)
 
 @app.route('/manager/accounts/<username>/<int:update_number>',methods=['GET','POST'])
 def manager_accounts_update_number(username,update_number):
