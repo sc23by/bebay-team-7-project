@@ -61,9 +61,18 @@
 
 <!--Page buttons-->
 <div>
+  {% if page > 1 %}
+  <a href="{{ url_for('manager_accounts',page = page - 1)}}">
+    <button>&laquo;</button>
+  </a>
     <button>&laquo;</button>
     page
-    <button>&raquo;</button>
+
+  {% if page < total_pages %}
+    <a href="{{url_for('manager_accounts', page = page+1)}}">
+      <button>&raquo;</button>
+    </a>
+
 </div>
 
 {% endblock %}
