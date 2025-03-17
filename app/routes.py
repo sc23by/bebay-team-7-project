@@ -731,8 +731,11 @@ def manager_statistics():
 
 
     plt.figure(figsize=(10,6))
-    plt.bar(week_labels, values)
+
+    plt.bar(week_labels, values,label='Weekly Revenue')
     plt.autoscale(axis='y')
+
+    plt.legend()
 
     plt.xlabel('Week')
     plt.ylabel('GBP')
@@ -854,6 +857,7 @@ def manager_statistics_cost():
     plt.bar(week_labels, expert_fee_value, label='Expert Fee')
     plt.bar(week_labels, cost_value, bottom = expert_fee_value, label='Item Cost')
     plt.autoscale(axis='y')
+    plt.legend()
 
     plt.xlabel('Week')
     plt.ylabel('GBP')
