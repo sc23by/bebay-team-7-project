@@ -2,7 +2,7 @@ from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, request, flash, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
-from app.models import FeeConfig, User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo, Notification, SoldItem
+from app.models import FeeConfig, User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo, Notification, SoldItem, UserMessage
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -273,6 +273,34 @@ def logout():
     """
     logout_user()
     return redirect(url_for('guest_home'))
+
+@app.route('/messages')
+@login_required
+def messages():
+    # Fetch conversation history using the renamed model
+    messages = UserMessage.query.filter(
+        ((UserMessage.sender_id == current_user.id) | (UserMessage.recipient_id == current_user.id))
+    ).order_by(UserMessage.timestamp).all()
+    return render_template('messages.html', messages=messages)
+
+@socketio.on('send_message')
+def handle_send_message(data):
+    # Create a new message using the UserMessage model
+    print("Received send_message with data:", data)  # Debug print
+    message = UserMessage(
+        sender_id=data['sender_id'],
+        recipient_id=data['recipient_id'],
+        content=data['content']
+    )
+    db.session.add(message)
+    db.session.commit()
+    # Broadcast the message back to clients
+    socketio.emit('receive_message', {
+        'sender_id': data['sender_id'],
+        'recipient_id': data['recipient_id'],
+        'content': data['content'],
+        'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+    })
 
 # User Pages
 

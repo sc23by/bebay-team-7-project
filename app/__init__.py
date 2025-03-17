@@ -87,7 +87,7 @@ def run_scheduler():
         #print(f"Scheduler running at: {datetime.utcnow()}")
         with app.app_context():
             check_expired_auctions()
-        #print("Active threads:", threading.enumerate())
+        print("Active threads:", threading.enumerate())
         time.sleep(1)  # For testing; change back to 60 seconds when ready
 
 
