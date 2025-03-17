@@ -808,7 +808,7 @@ def manager_expert_availability():
         return redirect(url_for('index'))
 
     experts = User.query.filter_by(priority=2).all()
-    
+
     expert_availability = {
         expert.id: [
             {
@@ -821,15 +821,19 @@ def manager_expert_availability():
     }
 
     assigned_items = Item.query.filter(Item.expert_id.isnot(None)).all()
-    unassigned_items = Item.query.filter(Item.expert_id.is_(None)).all()
+
+    # Fetch only items that are in the WaitingList
+    unassigned_items = db.session.query(Item).join(WaitingList, Item.item_id == WaitingList.item_id).all()
 
     return render_template(
         'manager_expert_availability.html',
         experts=experts,
         expert_availability=expert_availability,
         assigned_items=assigned_items,
-        unassigned_items=unassigned_items
+        unassigned_items=unassigned_items  # Now only from the WaitingList
     )
+
+
 
 @app.route('/assign_expert', methods=['POST'])
 @login_required
@@ -851,6 +855,12 @@ def assign_expert():
         item.expert_id = expert_id
         item.date_time = datetime.combine(selected_time.date, selected_time.start_time)
         item.expert_payment_percentage = expert_payment_percentage  # Save the percentage
+        
+        # Remove the item from WaitingList once assigned
+        waiting_item = WaitingList.query.filter_by(item_id=item_id).first()
+        if waiting_item:
+            db.session.delete(waiting_item)
+
 
         db.session.delete(selected_time)  # Remove from availability
         db.session.commit()
@@ -870,6 +880,7 @@ def unassign_expert():
     item = Item.query.get(item_id)
 
     if item and item.expert_id:
+        # Restore the expert's availability
         restored_availability = ExpertAvailabilities(
             user_id=item.expert_id,
             date=item.date_time.date(),
@@ -878,13 +889,24 @@ def unassign_expert():
         )
         db.session.add(restored_availability)
 
+        # Add back to the waiting list
+        waiting_item = WaitingList.query.filter_by(item_id=item_id).first()
+        if not waiting_item:  # Ensure it doesn't already exist in the waiting list
+            new_waiting_entry = WaitingList(
+                item_id=item_id
+            )
+            db.session.add(new_waiting_entry)
+
+        # Remove expert assignment
         item.expert_id = None
         item.date_time = None
+
         db.session.commit()
         
-        flash('Expert unassigned successfully!', 'warning')
+        flash('Expert unassigned successfully! Item has been added back to the waiting list.', 'warning')
 
     return redirect(url_for('manager_expert_availability'))
+
 
 #Route: Manager view of Items that are approved, recycled, and pending items
 @app.route('/manager/overview')
