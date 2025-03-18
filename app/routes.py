@@ -1296,17 +1296,24 @@ def manager_expert_availability():
         .all()
     )
 
-
-    # Fetch approved and rejected items that are assigned to an expert
+    # Fetch approved and rejected items that are assigned to an expert AND NOT in the Waiting List
     approved_items = (
         db.session.query(Item)
-        .filter(Item.expert_id.isnot(None), Item.approved.is_(True))
+        .filter(
+            Item.expert_id.isnot(None),
+            Item.approved.is_(True),
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id))  # Exclude items in WaitingList
+        )
         .all()
     )
 
     rejected_items = (
         db.session.query(Item)
-        .filter(Item.expert_id.isnot(None), Item.approved.is_(False))
+        .filter(
+            Item.expert_id.isnot(None),
+            Item.approved.is_(False),
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id))  # Exclude items in WaitingList
+        )
         .all()
     )
 

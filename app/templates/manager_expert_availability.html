@@ -20,9 +20,9 @@
                                         {{ expert.first_name }} {{ expert.last_name }}
                                         
                                         {% if expert.id in available_experts_48h %}
-                                            <span class="badge bg-primary">Available in 48h</span>
+                                            <span class="badge bg-success">Available for next 48h</span>
                                         {% elif expert_availability[expert.id] %}
-                                            <span class="badge bg-success">Available</span>
+                                            <span class="badge bg-warning">Available after 48h</span>
                                         {% else %}
                                             <span class="badge bg-danger">Not Available</span>
                                         {% endif %}
