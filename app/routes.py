@@ -848,17 +848,21 @@ def decline_item(item_id):
     flash("Item rejected successfully.", "success")
     return redirect(url_for('expert_assignments'))
 
+# Route: Reassign item button
 @app.route('/expert/reassign_item/<int:item_id>', methods=['POST'])
 @expert_required
 def reassign_item(item_id):
-
-    new_expert_id = request.form.get('reassign_expert')
-    
+    """
+    Removes the assigned expert from an item, making it available for reassignment.
+    """
     item_to_be_reassigned = Item.query.get(item_id)
-    
-    item_to_be_reassigned.expert_id = new_expert_id
-    
+
+    # Remove the expert assignment
+    item_to_be_reassigned.expert_id = None
+
     db.session.commit()
+    flash("Expert unassigned successfully.", "warning")
+
     return redirect(url_for('expert_assignments'))
 
 #Route: Expert Messaging Page
@@ -1261,7 +1265,14 @@ def manager_expert_availability():
         ] for expert in experts
     }
 
-    assigned_items = Item.query.filter(Item.expert_id.isnot(None)).all()
+    assigned_items = (
+        db.session.query(Item)
+        .join(WaitingList, Item.item_id == WaitingList.item_id)
+        .filter(Item.expert_id.isnot(None))
+        .all()
+    )
+
+
 
     # Fetch only items that are in the WaitingList
     unassigned_items = (
