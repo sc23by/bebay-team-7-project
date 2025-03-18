@@ -1236,7 +1236,7 @@ def manager_expert_availability():
         unassigned_items=unassigned_items  # Now only from the WaitingList
     )
 
-
+# ASSIGNING/ UNASSIGN EXPERTS
 
 @app.route('/assign_expert', methods=['POST'])
 @manager_required
@@ -1263,12 +1263,8 @@ def assign_expert():
     return redirect(url_for('manager_expert_availability'))
 
 @app.route('/unassign_expert', methods=['POST'])
-@login_required
+@manager_required
 def unassign_expert():
-    if current_user.priority < 2:
-        flash("Unauthorized Action", "danger")
-        return redirect(url_for('index'))
-
     item_id = request.form.get('item_id')
     item = Item.query.get(item_id)
 
@@ -1281,14 +1277,6 @@ def unassign_expert():
             duration=1
         )
         db.session.add(restored_availability)
-
-        # Add back to the waiting list
-        waiting_item = WaitingList.query.filter_by(item_id=item_id).first()
-        if not waiting_item:  # Ensure it doesn't already exist in the waiting list
-            new_waiting_entry = WaitingList(
-                item_id=item_id
-            )
-            db.session.add(new_waiting_entry)
 
         # Remove expert assignment
         item.expert_id = None
@@ -1354,7 +1342,7 @@ def manager_fees():
 
 
 
-
+# STRIPE
 
 # Payment for item using stripe route
 @app.route('/pay/<int:item_id>', methods=['POST'])
