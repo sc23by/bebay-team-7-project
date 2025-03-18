@@ -80,9 +80,15 @@ class Item(db.Model):
     #relationship
     bids = db.relationship('Bid',backref='item',lazy=True)
     sold_item = db.relationship('SoldItem',backref='item',lazy=True)
+
     
     def get_image_url(self):
         return url_for('static', filename=f'images/items/{self.item_image}')
+    
+    @property
+    def sold(self):
+        """Check if this item is in the SoldItem table."""
+        return self.sold_item is not None
 
     @property
     def time_left(self):
