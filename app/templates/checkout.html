@@ -1,0 +1,25 @@
+{% extends "base_user.html" %}
+{% block content %}
+    <div class="container mt-5">
+        <h2>Checkout for {{ item.item_name }}</h2>
+        <p><strong>Highest Bid:</strong> £{{ highest_bid.bid_amount }}</p>
+        <p><strong>Shipping Cost:</strong> £{{ item.shipping_cost }}</p>
+        <p><strong>Total Amount:</strong> £{{ highest_bid.bid_amount + item.shipping_cost }}</p>
+
+        <button id="checkout-button" class="btn btn-primary">Proceed to Payment</button>
+
+        <script src="https://js.stripe.com/v3/"></script>
+        <script>
+            document.getElementById("checkout-button").addEventListener("click", function () {
+                fetch("{{ url_for('create_checkout_session', item_id=item.item_id) }}", {
+                    method: "POST",
+                })
+                .then(response => response.json())
+                .then(session => {
+                    window.location.href = session.url;
+                })
+                .catch(error => console.error("Error:", error));
+            });
+        </script>
+    </div>
+{% endblock %}

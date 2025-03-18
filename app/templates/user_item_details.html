@@ -1,5 +1,4 @@
 {% extends "base_user.html" %}
-
 {% block content %}
 <div class="container">
     <!-- Flash Messages -->
@@ -12,50 +11,113 @@
         </div>
     {% endif %}
     {% endwith %}
-    <h2>{{ item.item_name }}</h2>
+    <h2>{{ item.item_name }}
+
+        {% if item.approved %}
+            <span class="badge bg-success">Approved</span>
+        {% endif %}
+    </h2>
     <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
          class="img-fluid" alt="{{ item.item_name }}">
     
     <p>Description: {{ item.description }}</p>
     <p>Starting Price: £{{ item.minimum_price }}</p>
     <p>Current Highest Bid: 
-        {% if highest_bid == "No bids yet" %}
-            No bids yet
-        {% else %}
-            £{{ highest_bid }}
-        {% endif %}
+        <span id="highest_bid" data-item-id="{{ item.item_id }}">
+            {% if highest_bid == "No bids yet" %}
+                No bids yet
+            {% else %}
+                £{{ highest_bid }}
+            {% endif %}
+        </span>
     </p>
     <p>Shipping Price: £{{ item.shipping_cost }}</p>
     <p>Listing Time: {{ item.date_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
     <p>Expires On: {{ item.expiration_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
 
     <p>Time Left: 
-        {% if item.time_left.total_seconds() > 0 %}
-            {{ item.time_left.days }} days,
-            {{ item.time_left.seconds // 3600 }} hours,
-            {{ (item.time_left.seconds // 60) % 60 }} minutes,
-            {{ item.time_left.seconds % 60 }} seconds
-        {% else %}
-            Expired
-        {% endif %}
+        <span class="time_left"
+              data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
+        </span>
     </p>
-
-    <form method="POST" action="{{ url_for('place_bid', item_id=item.item_id) }}">
-        {{ form.hidden_tag() }}
     
+    
+    <!-- Bidding Form (Initially Hidden If Auction is Still Active) -->
+    <form onsubmit="event.preventDefault(); placeBid({{ item.item_id }});">
+        {{ form.hidden_tag() }}
         <div class="form-group">
             <label for="bid_amount">Enter Bid</label>
             <div class="input-group">
                 <span class="input-group-text">£</span>
-                {{ form.bid_amount(class="form-control", id="bid_amount", placeholder="0.00") }}
+                <input type="number" id="bid_amount" class="form-control" placeholder="0.00" required>
             </div>
         </div>
-    
-        <div class="mt-2">
-            {{ form.submit(class="btn btn-primary") }}
-        </div>
+        <button type="submit" class="btn btn-primary mt-2">Place Bid</button>
     </form>
-   
+
+    <!-- Pay Now Button (Initially Hidden If Auction is Still Active) -->
+    {% if highest_bid != "No bids yet" and current_user.id == highest_bidder_id %}
+        <button id="pay-now" class="btn btn-success"
+            {% if item.time_left.total_seconds() > 0 %} style="display: none;" {% endif %}>
+            Pay Now
+        </button>
+    {% endif %}
+
     <a href="{{ url_for('user_home') }}" class="btn btn-secondary">Back to Listings</a>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    function updateTimeLeft() {
+        fetch("{{ url_for('get_time_left', item_id=item.item_id) }}")
+        .then(response => response.json())
+        .then(data => {
+            let timeLeftElement = document.getElementById("time-left");
+            let payNowButton = document.getElementById("pay-now");
+
+            if (data.time_left === "Expired") {
+                timeLeftElement.innerHTML = "Expired";
+
+                // Show Pay Now button immediately if it exists
+                if (payNowButton) {
+                    payNowButton.style.display = "block";
+                }
+            } else {
+                timeLeftElement.innerHTML = data.time_left;
+            }
+        });
+    }
+
+    // Run the time check immediately on page load
+    updateTimeLeft();
+
+    // Reduce delay: Update countdown every 500ms instead of 1000ms
+    setInterval(updateTimeLeft, 500);
+
+    // Pay Now button functionality
+    document.getElementById("pay-now")?.addEventListener("click", function () {
+        let shippingCost = parseFloat("{{ item.shipping_cost }}");
+        let highestBid = parseFloat("{{ highest_bid }}");
+        let totalPrice = highestBid + shippingCost;
+
+        fetch("{{ url_for('pay_for_item', item_id=item.item_id) }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ total_price: totalPrice })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.checkout_url) {
+                window.location.href = data.checkout_url;
+            } else {
+                alert("Payment Error: " + data.error);
+            }
+        });
+    });
+});
+
+</script>
+
 {% endblock %}

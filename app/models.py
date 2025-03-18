@@ -43,13 +43,19 @@ class PaymentInfo(db.Model):
     payment_type = db.Column(db.String(30), nullable=True)
     shipping_address = db.Column(db.String(500), nullable=True)
 
+
 # Sold item model
-class Solditem(db.Model):
+class SoldItem(db.Model):
     sold_id = db.Column(db.Integer, primary_key=True)
     item_id = db.Column(db.Integer, ForeignKey('item.item_id'), nullable=False)
     seller_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
     buyer_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
     price = db.Column(db.Float, nullable=False)
+    sold_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    seller = db.relationship('User', foreign_keys=[seller_id], backref='sold_items')
+    buyer = db.relationship('User', foreign_keys=[buyer_id], backref='purchased_items')
+
 
 # Item model
 class Item(db.Model):
@@ -64,13 +70,19 @@ class Item(db.Model):
     hours = db.Column(db.Integer, nullable=False, default=0)
     minutes = db.Column(db.Integer, nullable=False, default=0)
     expiration_time = db.Column(db.DateTime, nullable=True)  
-    approved = db.Column(db.Boolean, default=False)
+    approved = db.Column(db.Boolean, default=None, nullable=True)
     shipping_cost = db.Column(db.Numeric(10,2), nullable=False)
     expert_payment_percentage = db.Column(db.Float, nullable=False, default=50.0) # Default can be changed by managers
     expert_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = True)
     # Store the fixed fees at the time of listing
-    site_fee_percentage = db.Column(db.Float, nullable=False,default=0.00)
-    expert_fee_percentage = db.Column(db.Float, nullable=False,default=0.00)
+    site_fee_percentage = db.Column(db.Float, nullable=False,default=1.00)
+    expert_fee_percentage = db.Column(db.Float, nullable=False,default=4.00)
+    # Store whether item was sold or just expired
+    sold = db.Column(db.Boolean, default=False)
+    #relationship
+    bids = db.relationship('Bid',backref='item',lazy=True)
+    sold_item = db.relationship('SoldItem',backref='item',lazy=True)
+
     
     def get_image_url(self):
         return url_for('static', filename=f'images/items/{self.item_image}')
@@ -91,6 +103,32 @@ class Item(db.Model):
     expert = db.relationship('User', foreign_keys=[expert_id], backref='assigned_items')
 
 
+    expert = db.relationship('User',foreign_keys=[expert_id],backref='assigned_items')
+
+    def highest_bid(self):
+        """Returns the highest bid amount."""
+        highest_bid = Bid.query.filter_by(item_id=self.item_id).order_by(Bid.bid_amount.desc()).first()
+        return highest_bid.bid_amount if highest_bid else None
+
+    def highest_bidder(self):
+        """Returns the user who placed the highest bid."""
+        highest_bid = self.highest_bid()  # Use the existing method
+        if highest_bid:
+            return Bid.query.filter_by(item_id=self.item_id, bid_amount=highest_bid).first().user
+        return None
+    
+    def highest_bid(self):
+        """Returns the highest bid amount."""
+        highest_bid = Bid.query.filter_by(item_id=self.item_id).order_by(Bid.bid_amount.desc()).first()
+        return highest_bid.bid_amount if highest_bid else None
+
+    def highest_bidder(self):
+        """Returns the user who placed the highest bid."""
+        highest_bid = self.highest_bid()  # Use the existing method
+        if highest_bid:
+            return Bid.query.filter_by(item_id=self.item_id, bid_amount=highest_bid).first().user
+        return None
+
 # Waiting List Model
 class WaitingList(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -103,5 +141,36 @@ class Bid(db.Model):
     bid_id = db.Column(db.Integer, primary_key=True)
     item_id = db.Column(db.Integer, ForeignKey('item.item_id'), nullable=False)
     user_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
-    bid_amount = db.Column(db.Numeric(10, 2), nullable=False)  # Allows precise bid values
+    bid_amount = db.Column(db.Numeric(10, 2), nullable=False)
     bid_date_time = db.Column(db.DateTime, nullable=False)
+
+    user = db.relationship('User', backref='bids')
+
+# Fee Configuration Model (New)
+class FeeConfig(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    site_fee_percentage = db.Column(db.Float, nullable=False, default=1.0)  # Default 1%
+    expert_fee_percentage = db.Column(db.Float, nullable=False, default=4.0)  # Default 4%
+
+    @staticmethod
+    def get_current_fees():
+        fee = FeeConfig.query.first()
+        if not fee:
+            fee = FeeConfig(site_fee_percentage=1.0, expert_fee_percentage=4.0)
+            db.session.add(fee)
+            db.session.commit()
+        return fee
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    message = db.Column(db.String(500), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    read = db.Column(db.Boolean, default=False)
+
+class UserMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)

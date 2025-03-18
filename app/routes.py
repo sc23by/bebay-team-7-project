@@ -2,7 +2,7 @@ from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, request, flash, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
-from app.models import User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo
+from app.models import User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo, Notification, SoldItem, UserMessage, FeeConfig
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -12,9 +12,16 @@ import os
 import uuid
 from datetime import datetime, timedelta
 from sqlalchemy import desc
+import numpy as np
+import stripe
 # Parses data sent by JS
 import json
-
+# Websockets
+from flask_socketio import emit
+from . import socketio
+# Emails
+from flask_mail import Message
+from app import mail
 # Decorators
 
 # Guest-only access decorator
@@ -110,6 +117,81 @@ def allowed_file(filename):
     ext = filename.rsplit('.', 1)[1].lower()
     return ext in app.config['ALLOWED_EXTENSIONS']
 
+# Function: Expired Auctions
+def check_expired_auctions():
+    """Check for expired auctions and send notifications."""
+    with current_app.app_context():
+        expired_items = Item.query.filter(Item.expiration_time <= datetime.utcnow(), Item.sold == False).all()
+        #print("EXPIRED CHECK")
+        for item in expired_items:
+            highest_bid = item.highest_bid()
+            highest_bidder = item.highest_bidder()
+
+            # Notify highest bidder if they exist
+            if highest_bidder:
+                win_notification = Notification(
+                    user_id=highest_bidder.id,
+                    message=f"Congratulations! You have won the auction for '{item.item_name}' with a bid of £{highest_bid:.2f}."
+                )
+                db.session.add(win_notification)
+                # Send email notification to the winner
+                send_winner_email(highest_bidder, item, highest_bid)
+
+            # Notify all previous bidders (updated: using item.item_id instead of item.id)
+            previous_bidders = db.session.query(Bid.user_id).filter(Bid.item_id == item.item_id).distinct().all()
+            for bidder in previous_bidders:
+                if highest_bidder and bidder[0] == highest_bidder.id:
+                    continue
+                notification = Notification(
+                    user_id=bidder[0],
+                    message=f"The auction for '{item.item_name}' has ended."
+                )
+                db.session.add(notification)
+
+            # Notify the seller
+            if highest_bidder:
+                seller_notification = Notification(
+                    user_id=item.seller_id,
+                    message=f"Your item '{item.item_name}' has been sold to {highest_bidder.username} for £{highest_bid:.2f}."
+                )
+
+                sold_item = SoldItem(
+                    item_id=item.item_id,
+                    seller_id=item.seller_id,
+                    buyer_id=highest_bidder.id,
+                    price=float(highest_bid)
+                )
+                db.session.add(sold_item)
+            else:
+                seller_notification = Notification(
+                    user_id=item.seller_id,
+                    message=f"Your item '{item.item_name}' has expired with no bids."
+                )
+            db.session.add(seller_notification)
+
+            # Mark item as sold
+            item.sold = True
+
+            db.session.commit()
+
+            # Broadcast auction end event (updated: using item.item_id)
+            socketio.emit('auction_ended', {'item_id': item.item_id, 'winner_id': highest_bidder.id if highest_bidder else None})
+
+def send_winner_email(winner, item, highest_bid):
+    subject = f"You have won the auction for {item.item_name}!"
+    recipients = [winner.email]
+    body = f"""
+Hi {winner.username},
+
+Congratulations! You have won the auction for '{item.item_name}' with a bid of £{highest_bid:.2f}.
+
+Thank you for participating in Bebay auctions!
+
+Best regards,
+The Bebay Team
+"""
+    msg = Message(subject=subject, recipients=recipients, body=body)
+    mail.send(msg)
 
 # Guest Pages
 
@@ -194,6 +276,33 @@ def logout():
     logout_user()
     return redirect(url_for('guest_home'))
 
+@app.route('/messages')
+@login_required
+def messages():
+    # Fetch conversation history using the renamed model
+    messages = UserMessage.query.filter(
+        ((UserMessage.sender_id == current_user.id) | (UserMessage.recipient_id == current_user.id))
+    ).order_by(UserMessage.timestamp).all()
+    return render_template('messages.html', messages=messages)
+
+@socketio.on('send_message')
+def handle_send_message(data):
+    # Create a new message using the UserMessage model
+    print("Received send_message with data:", data)  # Debug print
+    message = UserMessage(
+        sender_id=data['sender_id'],
+        recipient_id=data['recipient_id'],
+        content=data['content']
+    )
+    db.session.add(message)
+    db.session.commit()
+    # Broadcast the message back to clients
+    socketio.emit('receive_message', {
+        'sender_id': data['sender_id'],
+        'recipient_id': data['recipient_id'],
+        'content': data['content'],
+        'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+    })
 
 # User Pages
 
@@ -208,12 +317,26 @@ def user_home():
         ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
     ).all()
     
+    item_bids = {item.item_id: item.highest_bid() for item in items}
+    
+    return render_template('user_home.html', pagetitle='User Home', items = items, item_bids = item_bids)
+
+# Route: Search in navbar
+@app.route('/user/search', methods = ['GET'])
+def search():
+    search_query = request.args.get('query', '').strip()
+
+    if not search_query:
+        items = Item.query.all()
+    else:
+        items = Item.query.filter(Item.item_name.ilike(f"%{search_query}%")).all()
+
     item_bids = {}
     for item in items:
         highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item.item_id).scalar()
         item_bids[item.item_id] = highest_bid if highest_bid is not None else None 
-
-    return render_template('user_home.html', pagetitle='User Home', items = items, item_bids = item_bids)
+    
+    return render_template("user_home.html", items = items, item_bids = item_bids)
 
 # Route: Watch
 @app.route('/user/watch', methods=['POST'])
@@ -316,6 +439,7 @@ def account():
         user.first_name=info_form.first_name.data
         user.last_name=info_form.last_name.data
         db.session.commit()
+        flash('Information updated successfully!', 'success')
     
     # if username is updated, validate then update in db
     if username_form.update_username.data and username_form.validate_on_submit():
@@ -334,23 +458,35 @@ def account():
             user.email=email_form.email.data
             db.session.commit()
             flash('Email updated successfully!', 'success')
+    
 
     # if password is updated, update in db
     if password_form.update_privacy.data and password_form.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(password_form.new_password.data)
+        user.password = hashed_password
+        db.session.commit()
+        flash('Password updated successfully!', 'success')
+    
+
+    # validation error handeling
+    if info_form.update_info.data and not info_form.validate_on_submit():
+        flash('Invalid first or last name (only letters are allowed).', 'danger')
+
+    if username_form.username.data and not username_form.validate_on_submit():
+        flash('Invalid username.', 'danger')
+    
+    if email_form.email.data and not email_form.validate_on_submit():
+        flash('Invalid email address.', 'danger')
+
+    if password_form.update_privacy.data and not password_form.validate_on_submit():
         if password_form.new_password.data != password_form.confirm_password.data:
             flash('Passwords do not match.', 'danger')
-        else:
-            hashed_password = bcrypt.generate_password_hash(password_form.new_password.data)
-            user.password = hashed_password
-            db.session.commit()
-            flash('Password updated successfully!', 'success')
 
     # if payment info is updated, update in db
     if card_form.update_card.data and card_form.validate_on_submit():
         # Update existing payment info for current user
         payment_info.payment_type = card_form.card_number.data
         payment_info.shipping_address = card_form.shipping_address.data
-
         db.session.commit()
         flash('Payment info updated successfully!', 'success')
 
@@ -398,10 +534,7 @@ def my_listings():
 
     items = Item.query.filter_by(seller_id=current_user.id).all()
 
-    item_bids = {}
-    for item in items:
-        highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item.item_id).scalar()
-        item_bids[item.item_id] = highest_bid if highest_bid is not None else None 
+    item_bids = {item.item_id: item.highest_bid() for item in items}
 
     waiting_list = db.session.query(WaitingList.item_id).all()
     waiting_list = [item[0] for item in waiting_list]
@@ -487,7 +620,27 @@ def notifications():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    return render_template('user_notifications.html', pagetitle='Notifications', form=form)
+    notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.timestamp.desc()).all()
+    Notification.query.filter_by(user_id=current_user.id, read=False).update({"read": True})
+    db.session.commit()
+ 
+    return render_template('user_notifications.html', pagetitle='Notifications', form=form, notifications=notifications)
+
+# Route: Delete Notification
+@app.route('/notification/delete/<int:notification_id>', methods=['GET', 'POST'])
+@login_required
+def delete_notification(notification_id):
+    notification = Notification.query.get_or_404(notification_id)
+    
+    # Ensure the current user owns this notification
+    if notification.user_id != current_user.id:
+        flash("You are not authorized to delete this notification.", "danger")
+        return redirect(url_for('notifications'))
+    
+    db.session.delete(notification)
+    db.session.commit()
+    flash("Notification deleted.", "success")
+    return redirect(url_for('notifications'))
 
 # Route: List Item Page
 @app.route('/user/list_item', methods=['GET', 'POST'])
@@ -553,53 +706,80 @@ def user_list_item():
 # Route: For clicking on an item to see more detail
 @app.route('/item/<int:item_id>')
 def user_item_details(item_id):
-    item = Item.query.get_or_404(item_id)  # Fetch the item or return 404
-    form=BidForm()
-
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
-    # If no bid exists, set highest_bid to "No bids yet"
-    if highest_bid is None:
-        highest_bid = "No bids yet"
-    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
-
-# Route: Placing a bid
-@app.route('/item/<int:item_id>/bid', methods=['GET', 'POST'])
-@user_required
-def place_bid(item_id):
     item = Item.query.get_or_404(item_id)
     form = BidForm()
 
-    # Check if the auction has expired
-    if datetime.utcnow() > item.expiration_time:
-        flash("Bidding has ended for this item.", "danger")
-        return redirect(url_for('user_item_details', item_id=item_id))
+    # Ensure expiration_time and date_time are not None
+    if item.date_time is None:
+        item.date_time = datetime.utcnow()  # Provide a default timestamp
+
+    if item.expiration_time is None:
+        item.expiration_time = datetime.utcnow() + timedelta(days=7)  # Example: 7 days from now
 
     # Get the current highest bid
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or "No bids yet"
 
-    if form.validate_on_submit():
-        bid_amount = form.bid_amount.data
+    # Get highest bidder ID
+    highest_bidder = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
+    highest_bidder_id = highest_bidder.user_id if highest_bidder else None
 
-        # Check if bid is valid
-        if bid_amount <= highest_bid:
-            flash("Your bid must be higher than the current highest bid!", "danger")
-        else:
-            new_bid = Bid(
-                item_id=item_id,
-                user_id=current_user.id,
-                bid_amount=bid_amount,
-                bid_date_time=datetime.utcnow()
-            )
-            db.session.add(new_bid)
-            db.session.commit()
-            flash("Bid placed successfully!", "success")
-            return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
+    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid, highest_bidder_id=highest_bidder_id)
 
+# Route: Placing a bid
+@socketio.on('new_bid')
+def handle_new_bid(data):
+    """Handle new bid via WebSocket."""
+    item_id = data.get('item_id')
+    bid_amount = float(data.get('bid_amount'))
 
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or item.minimum_price
+    item = Item.query.get(item_id)
+    if not item:
+        emit('bid_error', {'message': 'Item not found!'}, room=request.sid)
+        return
+
+    # Check if the user is trying to bid on their own item
+    if item.seller_id == current_user.id:
+        emit('bid_error', {'message': 'You cannot bid on your own item!'}, room=request.sid)
+        return
     
-    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
+    # Check if the auction has expired
+    if datetime.utcnow() > item.expiration_time:
+        emit('bid_error', {'message': 'Bidding has ended for this item.'}, room=request.sid)
+        return
 
+    # Get the current highest bid
+    highest_bid = item.highest_bid() or item.minimum_price
+    previous_highest_bidder = item.highest_bidder()
+
+    # Validate bid amount
+    if bid_amount <= highest_bid:
+        emit('bid_error', {'message': 'Your bid must be higher than the current highest bid!'}, room=request.sid)
+        return
+
+    # Save new bid
+    new_bid = Bid(
+        item_id=item_id,
+        user_id=current_user.id,
+        bid_amount=bid_amount,
+        bid_date_time=datetime.utcnow()
+    )
+    db.session.add(new_bid)
+
+    # Notify the previous highest bidder if they were outbid
+    if previous_highest_bidder and previous_highest_bidder.id != current_user.id:
+        notification = Notification(
+            user_id=previous_highest_bidder.id,
+            message=f"You have been outbid on '{item.item_name}'. The new highest bid is £{bid_amount:.2f}."
+        )
+        db.session.add(notification)
+
+    db.session.commit()
+
+    # Notify all users of the new highest bid
+    emit('update_bid', {'item_id': item_id, 'new_bid': bid_amount})
+
+    # Notify the bidder that the bid was successful
+    emit('bid_success', {'message': 'Bid placed successfully!'}, room=request.sid)
 
 
 
@@ -609,13 +789,53 @@ def place_bid(item_id):
 @app.route('/expert/assignments')
 @expert_required
 def expert_assignments():
-    return render_template('expert_assignments.html')
+
+    assigned_items = Item.query.filter_by(expert_id=current_user.id, approved=None).all()
+
+    return render_template('expert_assignments.html',items=assigned_items)
+
 
 #Route: Expert Authentication Page
-@app.route('/expert/item_authentication')
+@app.route('/expert/item_authentication/<int:item_id>')
 @expert_required
-def expert_item_authentication():
-    return render_template('expert_item_authentication.html')
+def expert_item_authentication(item_id):
+
+    item_to_authenticate = Item.query.get(item_id)
+    experts = User.query.filter(User.priority == 2)
+    return render_template('expert_item_authentication.html', item_to_authenticate=item_to_authenticate, experts=experts)
+
+@app.route('/expert/approve_item/<int:item_id>', methods=['POST'])
+@expert_required
+def approve_item(item_id):
+
+    item_to_approve = Item.query.get(item_id)
+    item_to_approve.approved = True
+    db.session.commit()
+
+    return redirect(url_for('expert_assignments'))
+
+@app.route('/expert/decline_item/<int:item_id>', methods=['POST'])
+@expert_required
+def decline_item(item_id):
+
+    item_to_approve = Item.query.get(item_id)
+    item_to_approve.approved = False
+    db.session.commit()
+
+    return redirect(url_for('expert_assignments'))
+
+@app.route('/expert/reassign_item/<int:item_id>', methods=['POST'])
+@expert_required
+def reassign_item(item_id):
+
+    new_expert_id = request.form.get('reassign_expert')
+    
+    item_to_be_reassigned = Item.query.get(item_id)
+    
+    item_to_be_reassigned.expert_id = new_expert_id
+    
+    db.session.commit()
+    return redirect(url_for('expert_assignments'))
 
 #Route: Expert Messaging Page
 @app.route('/expert/messaging')
@@ -694,24 +914,220 @@ def manager_home():
 #Route: Manager Stats Page
 @app.route('/manager/statistics', methods=['GET','POST'])
 @manager_required
-def manager_stats():
-    ratio = [34,32,16,20]
-    labels = ['Generated income','Customer cost','Postal cost','Experts cost']
-    colors=['red','green','blue','orange']
+def manager_statistics():
 
-    plt.pie(ratio, labels=labels,colors=colors,autopct=lambda p: f'{p:.1f}%\n £ {p * sum(ratio) / 100:.0f}')
+    bids = Bid.query.all()
+
+    total_revenue = 0
+    total_profit = 0
+
+    sold_items = SoldItem.query.all()
+
+    for sold_item in sold_items:
+        total_revenue += sold_item.price 
+
+    items = Item.query.all()
+    
+    if items:
+        generated_percentage = items[0].site_fee_percentage
+
+    for item in items:
+        if item.sold_item:
+            final_price = item.sold_item[0].price
+            site_fee = item.calculate_fee(final_price, expert_approved=False)
+            total_profit += site_fee
+
+
+    current_date = datetime.now()
+    three_weeks_ago = current_date - timedelta(weeks=3)
+
+    weeks = []
+    values = []
+
+    for i in range(4):
+        week_start = three_weeks_ago + timedelta(weeks=i)
+        week_end = week_start + timedelta(days = 6,hours=23,minutes=59,seconds=59)
+
+        expired_items = Item.query.filter(
+            Item.expiration_time >= week_start,
+            Item.expiration_time <= week_end            
+        ).all()
+
+        weekly_revenue = 0
+
+        for item in expired_items:
+            if item.sold_item:
+                for sold_item in item.sold_item:
+                    final_price = sold_item.price
+                    site_fee = item.calculate_fee(final_price, expert_approved=False)
+                    weekly_revenue += site_fee
+
+        values.append(weekly_revenue)
+
+        weeks.append({
+            'week_start': week_start.strftime('%m-%d'),
+            'week_end': week_end.strftime('%m-%d')
+        })
+
+
+    week_labels = []
+
+    for week in weeks:
+        week_labels.append(f"{week['week_start']} - {week['week_end']}")    
+
+
+    plt.figure(figsize=(10,6))
+
+    plt.bar(week_labels, values,label='Weekly Revenue')
+    plt.autoscale(axis='y')
+
+    plt.legend()
+
+    plt.xlabel('Week')
+    plt.ylabel('GBP')
+    plt.title('Weekly Revenue')
+
+
     img = io.BytesIO()
-    plt.savefig(img, format='png')
+    plt.savefig(img,format='png')
     img.seek(0)
-    img_base64 = base64.b64encode(img.getvalue()).decode()
 
-    return render_template('manager_statistics.html',img_data=img_base64,ratio=ratio,labels=labels)
+    ratio = [0.75]
 
+    img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
+
+    return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, week_labels=week_labels,values=values,total_revenue=total_revenue,total_profit=total_profit,generated_percentage=generated_percentage)
+
+
+# FIXME - choose a maethod of selecting expert fee
+@app.route('/manager/statistics/edit',methods=['GET','POST'])
+def manager_statistics_edit():
+
+    if request.method == 'POST':
+        cost_site = request.form.get('site')
+        cost_expert = request.form.get('expert')
+
+        items = Item.query.all()
+
+        if items:
+            for item in items:
+                if cost_site:
+                    item.site_fee_percentage = float(cost_site)
+                if cost_expert:
+                    item.expert_fee_percentage = float(cost_expert)
+
+            db.session.commit()
+        return redirect(url_for('manager_statistics'))
+
+    return render_template('manager_statistics.html')
+
+# FIXME - choose a maethod of selecting expert fee
+
+@app.route('/manager/statistics/cost',methods=['GET','POST'])
+def manager_statistics_cost():
+
+    total_revenue = 0
+    total_profit = 0
+
+    sold_items = SoldItem.query.all()
+
+    for sold_item in sold_items:
+        total_revenue += sold_item.price 
+
+    items = Item.query.all()
+
+    for item in items:
+        if item.sold_item:
+            final_price = item.sold_item[0].price
+            site_fee = item.calculate_fee(final_price, expert_approved=False)
+            total_profit += site_fee
+    
+    if items:
+        generated_percentage = items[0].site_fee_percentage
+
+
+    sold_items = SoldItem.query.all()
+
+    current_date = datetime.now()
+    three_weeks_ago = current_date - timedelta(weeks=3)
+
+    weeks = []
+    expert_fee_value = []
+    cost_value = []
+
+    for i in range(4):
+        week_start = three_weeks_ago + timedelta(weeks=i)
+        week_end = week_start + timedelta(days = 6,hours=23,minutes=59,seconds=59)
+
+
+        expired_items = Item.query.filter(
+            Item.expiration_time >= week_start,
+            Item.expiration_time <= week_end            
+        ).all()
+
+
+        weekly_expert_fee = 0
+        item_cost = 0
+
+        for item in expired_items:
+            if item.sold_item:
+                for sold_item in item.sold_item:
+                        final_price = sold_item.price
+                        site_fee = item.calculate_fee(final_price,expert_approved=False)
+
+                        if item.approved:                        
+                    
+                            expert_fee = item.calculate_fee(final_price,expert_approved=True) - site_fee
+                            weekly_expert_fee += expert_fee
+
+                            item_cost = final_price - (expert_fee + site_fee)
+                        else:
+                            item_cost += final_price - site_fee
+                            weekly_expert_fee = 0
+
+        expert_fee_value.append(weekly_expert_fee)
+        cost_value.append(item_cost)
+                        
+        weeks.append({
+            'week_start': week_start.strftime('%m-%d'),
+            'week_end': week_end.strftime('%m-%d')
+        })
+
+    week_labels = []
+
+    for week in weeks:
+        week_labels.append(f"{week['week_start']} - {week['week_end']}")    
+
+    plt.figure(figsize=(10,6))
+
+    x=np.arange(len(expert_fee_value))
+
+    plt.bar(week_labels, expert_fee_value, label='Expert Fee')
+    plt.bar(week_labels, cost_value, bottom = expert_fee_value, label='Item Cost')
+    plt.autoscale(axis='y')
+    plt.legend()
+
+    plt.xlabel('Week')
+    plt.ylabel('GBP')
+    plt.title('Weekly Cost')
+
+    img = io.BytesIO()
+    plt.savefig(img,format='png')
+    img.seek(0)
+
+    ratio = [0.75]
+
+    img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
+
+
+    return render_template('manager_statistics_cost.html',img_data = img_base64, total_profit = total_profit, total_revenue = total_revenue, generated_percentage=generated_percentage)
 
 #Route: Manager Account Page
 @app.route('/manager/accounts',methods=['GET','POST'])
 def manager_accounts():
-    accounts = User.query.all()
+    page = request.args.get('page',1,type=int)
+    
+    accounts = User.query.paginate(page=page,per_page=1,error_out=False)
 
     return render_template("manager_accounts.html",accounts=accounts)
 
@@ -921,17 +1337,6 @@ def manager_overview():
                            pending_items=[])
 
 
-
-
-
-
-
-
-
-
-
-
-
 @app.route('/update_expert_payment', methods=['POST'])
 @login_required
 def update_expert_payment():
@@ -950,5 +1355,233 @@ def update_expert_payment():
         flash(f'Expert payment percentage updated to {expert_payment_percentage}%', 'success')
 
     return redirect(url_for('manager_expert_availability'))
+
+@app.route('/manager/fees', methods=['GET', 'POST'])
+def manager_fees():
+    fee_config = FeeConfig.get_current_fees()
+    
+    if request.method == 'POST':
+        site_fee = request.form.get('site_fee', type=float)
+        expert_fee = request.form.get('expert_fee', type=float)
+
+        if site_fee is not None and expert_fee is not None:
+            fee_config.site_fee_percentage = site_fee
+            fee_config.expert_fee_percentage = expert_fee
+            db.session.commit()
+            print(f"Updated Fees: Site - {fee_config.site_fee_percentage}%, Expert - {fee_config.expert_fee_percentage}%")  # Debugging
+            flash("Fees updated successfully!", "success")
+            
+    return render_template("manager_fees.html", fee_config=fee_config)
+
+
+# Payment for item using stripe route
+@app.route('/pay/<int:item_id>', methods=['POST'])
+@login_required
+def pay_for_item(item_id):
+    """
+    Creates a Stripe Checkout Session for the highest bidder,
+    including the shipping cost in the total payment amount.
+    """
+    item = Item.query.get_or_404(item_id)
+
+    # Get highest bid
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
+    winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
+
+    # Ensure the current user is the highest bidder
+    if not winning_bid or winning_bid.user_id != current_user.id:
+        flash("You are not the winning bidder!", "danger")
+        return redirect(url_for('user_item_details', item_id=item_id))
+
+    # Convert to float to ensure proper calculations
+    bid_price = float(highest_bid)
+    shipping_price = float(item.shipping_cost)
+
+    # Calculate total checkout cost (Winning Bid + Shipping Cost)
+    total_price = bid_price + shipping_price
+
+    # Create Stripe Checkout Session
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price_data': {
+                        'currency': 'gbp',
+                        'product_data': {'name': item.item_name},
+                        'unit_amount': int(bid_price * 100),  # Convert bid price to pence
+                    },
+                    'quantity': 1,
+                },
+                {
+                    'price_data': {
+                        'currency': 'gbp',
+                        'product_data': {'name': 'Shipping Cost'},
+                        'unit_amount': int(shipping_price * 100),  # Convert shipping price to pence
+                    },
+                    'quantity': 1,
+                }
+            ],
+            mode='payment',
+            success_url=url_for('payment_success', item_id=item_id, _external=True),
+            cancel_url=url_for('user_item_details', item_id=item_id, _external=True),
+        )
+        return jsonify({'checkout_url': session.url})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Success route
+@app.route('/payment_success/<int:item_id>')
+@login_required
+def payment_success(item_id):
+    item = Item.query.get_or_404(item_id)
+
+    # Mark item as sold
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
+    winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
+
+    if winning_bid and winning_bid.user_id == current_user.id:
+        sold_item = Solditem(
+            item_id=item_id,
+            seller_id=item.seller_id,
+            buyer_id=current_user.id,
+            price=highest_bid
+        )
+        db.session.add(sold_item)
+        db.session.commit()
+        flash("Payment successful! The item has been marked as sold.", "success")
+    else:
+        flash("Payment failed or unauthorized access.", "danger")
+
+    return redirect(url_for('user_home'))
+
+
+
+# API to fetch get remaining time on auction for an item in real time
+@app.route('/get_time_left/<int:item_id>')
+def get_time_left(item_id):
+    """
+    API to fetch remaining time for an item.
+    """
+    item = Item.query.get_or_404(item_id)
+    
+    # Calculate remaining time
+    if item.time_left.total_seconds() > 0:
+        time_left = f"{item.time_left.days} days, {item.time_left.seconds // 3600} hours, {(item.time_left.seconds // 60) % 60} minutes, {item.time_left.seconds % 60} seconds"
+    else:
+        time_left = "Expired"
+
+    return jsonify({"time_left": time_left})
+
+
+
+
+
+
+
+# Payment for item using stripe route
+@app.route('/pay/<int:item_id>', methods=['POST'])
+@login_required
+def pay_for_item(item_id):
+    """
+    Creates a Stripe Checkout Session for the highest bidder,
+    including the shipping cost in the total payment amount.
+    """
+    item = Item.query.get_or_404(item_id)
+
+    # Get highest bid
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
+    winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
+
+    # Ensure the current user is the highest bidder
+    if not winning_bid or winning_bid.user_id != current_user.id:
+        flash("You are not the winning bidder!", "danger")
+        return redirect(url_for('user_item_details', item_id=item_id))
+
+    # Convert to float to ensure proper calculations
+    bid_price = float(highest_bid)
+    shipping_price = float(item.shipping_cost)
+
+    # Calculate total checkout cost (Winning Bid + Shipping Cost)
+    total_price = bid_price + shipping_price
+
+    # Create Stripe Checkout Session
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price_data': {
+                        'currency': 'gbp',
+                        'product_data': {'name': item.item_name},
+                        'unit_amount': int(bid_price * 100),  # Convert bid price to pence
+                    },
+                    'quantity': 1,
+                },
+                {
+                    'price_data': {
+                        'currency': 'gbp',
+                        'product_data': {'name': 'Shipping Cost'},
+                        'unit_amount': int(shipping_price * 100),  # Convert shipping price to pence
+                    },
+                    'quantity': 1,
+                }
+            ],
+            mode='payment',
+            success_url=url_for('payment_success', item_id=item_id, _external=True),
+            cancel_url=url_for('user_item_details', item_id=item_id, _external=True),
+        )
+        return jsonify({'checkout_url': session.url})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Success route
+@app.route('/payment_success/<int:item_id>')
+@login_required
+def payment_success(item_id):
+    item = Item.query.get_or_404(item_id)
+
+    # Mark item as sold
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
+    winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
+
+    if winning_bid and winning_bid.user_id == current_user.id:
+        sold_item = Solditem(
+            item_id=item_id,
+            seller_id=item.seller_id,
+            buyer_id=current_user.id,
+            price=highest_bid
+        )
+        db.session.add(sold_item)
+        db.session.commit()
+        flash("Payment successful! The item has been marked as sold.", "success")
+    else:
+        flash("Payment failed or unauthorized access.", "danger")
+
+    return redirect(url_for('user_home'))
+
+
+
+# API to fetch get remaining time on auction for an item in real time
+@app.route('/get_time_left/<int:item_id>')
+def get_time_left(item_id):
+    """
+    API to fetch remaining time for an item.
+    """
+    item = Item.query.get_or_404(item_id)
+    
+    # Calculate remaining time
+    if item.time_left.total_seconds() > 0:
+        time_left = f"{item.time_left.days} days, {item.time_left.seconds // 3600} hours, {(item.time_left.seconds // 60) % 60} minutes, {item.time_left.seconds % 60} seconds"
+    else:
+        time_left = "Expired"
+
+    return jsonify({"time_left": time_left})
+
+
+
+
 
 
