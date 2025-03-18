@@ -4,6 +4,8 @@ from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
 from app.models import User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo, Notification, SoldItem, UserMessage, FeeConfig
 from functools import wraps
+import matplotlib
+matplotlib.use("Agg")  # Use a non-GUI backend
 import matplotlib.pyplot as plt
 import io
 import base64
@@ -975,6 +977,8 @@ def manager_statistics():
     
     if items:
         generated_percentage = items[0].site_fee_percentage
+    else:
+        generated_percentage = 1
 
     for item in items:
         if item.sold_item:
@@ -1089,6 +1093,8 @@ def manager_statistics_cost():
     
     if items:
         generated_percentage = items[0].site_fee_percentage
+    else:
+        generated_percentage = 1
 
 
     sold_items = SoldItem.query.all()
