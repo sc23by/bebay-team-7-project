@@ -110,3 +110,6 @@ def run_scheduler():
 if not scheduler_running:
     scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
     scheduler_thread.start()
+
+
+# threads are being continuously created and destroyed, this is taxing for the system maybe we can implement thread pool?
