@@ -814,12 +814,15 @@ def approve_item(item_id):
     item_to_approve = Item.query.get(item_id)
     # Approve item
     item_to_approve.approved = True
-    # Set expiration time
+    # Set start and expiration time
+    date_time = datetime.utcnow()
     item_to_approve.expiration_time = datetime.utcnow() + timedelta(
         item_to_approve.days,
         item_to_approve.hours,
         item_to_approve.minutes
     )
+    
+    
     # Remove from waiting list
     WaitingList.query.filter_by(item_id=item_id).delete()
 
