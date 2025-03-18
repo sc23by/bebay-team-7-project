@@ -930,6 +930,8 @@ def manager_statistics():
     
     if items:
         generated_percentage = items[0].site_fee_percentage
+    else:
+        generated_percentage = 1
 
     for item in items:
         if item.sold_item:
@@ -1042,6 +1044,8 @@ def manager_statistics_cost():
     
     if items:
         generated_percentage = items[0].site_fee_percentage
+    else:
+        generated_percentage = 1
 
 
     sold_items = SoldItem.query.all()
