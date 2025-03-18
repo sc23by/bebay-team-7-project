@@ -41,7 +41,6 @@
                             <input type="number" name="expert_payment_percentage" id="expertPayment" class="form-control" min="0" max="100" value="50">
                         </div>
 
-
                         <div class="d-grid mt-3">
                             <button class="btn btn-success" type="submit">Confirm Assignment</button>
                         </div>
@@ -62,7 +61,6 @@
                     </div>
                 </div>
             </div>
-            
 
         <h4 class="fw-bold mt-4">Assigned Items</h4>
         <table class="table table-hover">
@@ -71,6 +69,7 @@
                     <th>Item Name</th>
                     <th>Expert</th>
                     <th>Time Slot</th>
+                    <th>Expert Payment (%)</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -80,13 +79,7 @@
                     <td>{{ item.item_name }}</td>
                     <td>{{ item.expert.first_name }} {{ item.expert.last_name }}</td>
                     <td>{{ item.date_time.strftime('%Y-%m-%d %I:%M %p') }}</td>
-                    <td>
-                        <form method="POST" action="{{ url_for('update_expert_payment') }}">
-                            <input type="hidden" name="item_id" value="{{ item.item_id }}">
-                            <input type="number" name="expert_payment_percentage" class="form-control" min="0" max="100" value="{{ item.expert_payment_percentage }}">
-                            <button class="btn btn-sm btn-primary mt-2" type="submit">Update</button>
-                        </form>
-                    </td>
+                    <td>{{ item.expert_payment_percentage }}%</td> <!-- Display payment percentage -->
                     <td>
                         <form method="POST" action="{{ url_for('unassign_expert') }}">
                             <input type="hidden" name="item_id" value="{{ item.item_id }}">
@@ -116,15 +109,4 @@
 
         if (expertAvailability[expertId] && expertAvailability[expertId].length > 0) {
             expertAvailability[expertId].forEach(slot => {
-                let option = document.createElement("option");
-                option.value = slot.id;
-                option.textContent = `${slot.date} - ${slot.start_time} (${slot.duration}h)`;
-                availabilityDropdown.appendChild(option);
-            });
-            availabilityContainer.classList.remove("d-none");
-        } else {
-            availabilityContainer.classList.add("d-none");
-        }
-    }
-</script>
-{% endblock %}
+                let option =
