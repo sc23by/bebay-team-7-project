@@ -21,7 +21,7 @@
             </form>
 
             <form action="{{ url_for('decline_item', item_id=item_to_authenticate.item_id) }}" method="POST">
-                <button type="submit">Unknown</button>
+                <button type="submit">Reject</button>
             </form>
 
             <form method="POST" action="{{ url_for('reassign_item', item_id=item_to_authenticate.item_id) }}">
