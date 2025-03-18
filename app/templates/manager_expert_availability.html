@@ -91,6 +91,62 @@
             </tbody>
         </table>
     </div>
+    <h4 class="fw-bold mt-4">Approved Items</h4>
+<table class="table table-hover">
+    <thead class="table-light">
+        <tr>
+            <th>Item Name</th>
+            <th>Seller</th>
+            <th>Expert</th>
+            <th>Approval Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in approved_items %}
+        <tr>
+            <td>{{ item.item_name }}</td>
+            <td>{{ item.seller.first_name }} {{ item.seller.last_name }}</td>
+            <td>
+                {% if item.expert %}
+                    {{ item.expert.first_name }} {{ item.expert.last_name }}
+                {% else %}
+                    <span class="text-danger">Not Assigned</span>
+                {% endif %}
+            </td>
+            <td>{{ item.date_time.strftime('%Y-%m-%d %I:%M %p') }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+
+    <h4 class="fw-bold mt-4">Rejected Items</h4>
+    <table class="table table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Item Name</th>
+                <th>Seller</th>
+                <th>Expert</th>
+                <th>Rejection Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in rejected_items %}
+            <tr>
+                <td>{{ item.item_name }}</td>
+                <td>{{ item.seller.first_name }} {{ item.seller.last_name }}</td>
+                <td>
+                    {% if item.expert %}
+                        {{ item.expert.first_name }} {{ item.expert.last_name }}
+                    {% else %}
+                        <span class="text-danger">Not Assigned</span>
+                    {% endif %}
+                </td>
+                <td>{{ item.date_time.strftime('%Y-%m-%d %I:%M %p') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
 </div>
 
 <script>

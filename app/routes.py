@@ -1276,7 +1276,6 @@ def manager_expert_availability():
     )
 
 
-
     # Fetch only items that are in the WaitingList
     unassigned_items = (
         db.session.query(Item)
@@ -1286,13 +1285,28 @@ def manager_expert_availability():
     )
 
 
+    # Fetch approved and rejected items that are assigned to an expert
+    approved_items = (
+        db.session.query(Item)
+        .filter(Item.expert_id.isnot(None), Item.approved.is_(True))
+        .all()
+    )
+
+    rejected_items = (
+        db.session.query(Item)
+        .filter(Item.expert_id.isnot(None), Item.approved.is_(False))
+        .all()
+    )
+
     return render_template(
         'manager_expert_availability.html',
         experts=experts,
         expert_availability=expert_availability,
         assigned_items=assigned_items,
-        unassigned_items=unassigned_items  # Now only from the WaitingList
-    )
+        unassigned_items=unassigned_items,
+        approved_items=approved_items,
+        rejected_items=rejected_items
+)
 
 # ASSIGNING/ UNASSIGN EXPERTS
 
