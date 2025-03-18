@@ -1207,11 +1207,8 @@ def manager_listings_update_number(username,update_number):
 
 
 @app.route('/manager/expert_availability')
-@login_required
+@manager_required
 def manager_expert_availability():
-    if current_user.priority < 2:
-        flash("Unauthorized Access", "danger")
-        return redirect(url_for('index'))
 
     experts = User.query.filter_by(priority=2).all()
 
