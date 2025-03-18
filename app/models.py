@@ -85,10 +85,7 @@ class Item(db.Model):
     def get_image_url(self):
         return url_for('static', filename=f'images/items/{self.item_image}')
     
-    @property
-    def sold(self):
-        """Check if this item is in the SoldItem table."""
-        return self.sold_item is not None
+    sold = db.Column(db.Boolean, default=False)
 
     @property
     def time_left(self):

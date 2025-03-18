@@ -102,7 +102,7 @@ def run_scheduler():
         with app.app_context():
             check_expired_auctions()
         print(f"Active threads:{threading.enumerate()}\n")
-        time.sleep(30)
+        time.sleep(1)
 
 
 
