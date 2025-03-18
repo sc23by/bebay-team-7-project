@@ -73,7 +73,8 @@ class Item(db.Model):
     # Store the fixed fees at the time of listing
     site_fee_percentage = db.Column(db.Float, nullable=False,default=1.00)
     expert_fee_percentage = db.Column(db.Float, nullable=False,default=4.00)
-
+    # Store whether item was sold or just expired
+    sold = db.Column(db.Boolean, default=False)
     #relationship
     bids = db.relationship('Bid',backref='item',lazy=True)
     sold_item = db.relationship('SoldItem',backref='item',lazy=True)
