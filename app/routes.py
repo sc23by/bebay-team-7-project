@@ -809,9 +809,20 @@ def expert_item_authentication(item_id):
 def approve_item(item_id):
 
     item_to_approve = Item.query.get(item_id)
+    # Approve item
     item_to_approve.approved = True
+    # Set expiration time
+    item_to_approve.expiration_time = expiration_time = listing_time + timedelta(
+                days=int(form.days.data),
+                hours=int(form.hours.data),
+                minutes=int(form.minutes.data)
+            )
+    # Remove from waiting list
+    WaitingList.query.filter_by(item_id=item_id).delete()
+
     db.session.commit()
 
+    flash("Item approved successfully.", "success")
     return redirect(url_for('expert_assignments'))
 
 @app.route('/expert/decline_item/<int:item_id>', methods=['POST'])
