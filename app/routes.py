@@ -1257,6 +1257,18 @@ def manager_expert_availability():
 
     experts = User.query.filter_by(priority=2).all()
 
+    current_time = datetime.utcnow()
+    time_threshold = current_time + timedelta(hours=48)
+
+    # Store experts available in the next 48 hours
+    available_experts_48h = set(
+        slot.user_id
+        for slot in ExpertAvailabilities.query.filter(
+            ExpertAvailabilities.date >= current_time.date(),
+            ExpertAvailabilities.date <= time_threshold.date()
+        ).all()
+    )
+
     expert_availability = {
         expert.id: [
             {
@@ -1301,6 +1313,7 @@ def manager_expert_availability():
     return render_template(
         'manager_expert_availability.html',
         experts=experts,
+        available_experts_48h=available_experts_48h,
         expert_availability=expert_availability,
         assigned_items=assigned_items,
         unassigned_items=unassigned_items,
