@@ -1239,11 +1239,8 @@ def manager_expert_availability():
 
 
 @app.route('/assign_expert', methods=['POST'])
-@login_required
+@manager_required
 def assign_expert():
-    if current_user.priority < 2:
-        flash("Unauthorized Action", "danger")
-        return redirect(url_for('index'))
 
     expert_id = request.form.get('selected_expert')
     item_id = request.form.get('item_id')
