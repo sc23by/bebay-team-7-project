@@ -93,7 +93,7 @@ class UserInfoForm(FlaskForm):
         Regexp('^[A-Za-z]+$', message="Last name should only contain letters.")
     ]) 
 
-    update_info = SubmitField('Update Info')
+    update_info = SubmitField('Edit')
 
 # Form for changing password
 class ChangeUsernameForm(FlaskForm):
@@ -101,7 +101,6 @@ class ChangeUsernameForm(FlaskForm):
     Allows user to change username
     """
     username = StringField('Username', validators=[
-        DataRequired(), 
         Length(min=3, max=20, message="Username must be 3-20 characters."),
         Regexp('^[A-Za-z0-9_]+$', message="Only letters, numbers, and underscores allowed.")
     ])
@@ -114,7 +113,6 @@ class ChangeEmailForm(FlaskForm):
     Allows user to change email
     """
     email = StringField('Email', validators=[
-        DataRequired(), 
         Email()
     ])
 
@@ -126,12 +124,10 @@ class ChangePasswordForm(FlaskForm):
     Allows user to change password
     """
     new_password = PasswordField('Password', validators=[
-        DataRequired(),
         strong_password
     ])
 
     confirm_password = PasswordField('Confirm Password', validators=[
-        DataRequired(),
         EqualTo('new_password')
     ])
 
@@ -143,11 +139,9 @@ class CardInfoForm(FlaskForm):
     Allows user to update card information
     """
     card_number = StringField('Card Number', validators=[
-        DataRequired(), 
     ])
 
     shipping_address = StringField('Shipping Address', validators=[
-        DataRequired(), 
     ])
 
     update_card = SubmitField('Update Card Info')
@@ -207,6 +201,7 @@ class ListItemForm(FlaskForm):
 
 class BidForm(FlaskForm):
     bid_amount = DecimalField("Your Bid (£)",
+        places=2,
         validators=[DataRequired(),
         NumberRange(min=0.01)],
         render_kw={"step": "0.01", "min": "0", "class": "currency-input"})

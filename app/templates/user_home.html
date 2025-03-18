@@ -22,6 +22,9 @@
                         <!--
                             <p class="card-text">Description: {{ item.description }}</p>
                         -->
+                        {% if item.approved %}
+                            <span class="badge bg-success">Approved</span>
+                        {% endif %}
                         <p class="card-text">Starting Price: £{{ item.minimum_price }}</p>
                         <p class="card-text">Current Highest Bid: 
                             {% if item_bids[item.item_id] is none %}
@@ -30,16 +33,14 @@
                                 £{{ item_bids[item.item_id] }}
                             {% endif %}
                         </p>
-                        <p>Auction ends on: 
-                            {% if item.expiration_time is not none %}
-                              {{ item.expiration_time.strftime('%Y-%m-%d %H:%M') }}
-                            {% else %}
-                              <span class="text-muted">No expiration date</span>
-                            {% endif %}
-                          </p>
-                          
-                       
+                        <p class="card-text">Shipping Price: £{{ item.shipping_cost }}</p>
                         
+                        <p>Time Left: 
+                            <span class="time_left"
+                                  data-item-id="{{ item.item_id }}"
+                                  data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
+                            </span>
+                        </p>    
                         
                         <a href="{{ url_for('user_item_details', item_id=item.item_id) }}" class="btn btn-primary">
                             View Details

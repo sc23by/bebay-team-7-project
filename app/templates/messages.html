@@ -1,0 +1,49 @@
+<!-- expert_messaging.html -->
+{% extends "base_expert.html" %}
+{% block content %}
+<div id="messages">
+    <!-- Render past messages here -->
+    {% for message in messages %}
+        <div class="message">
+            <strong>{{ message.sender.username }}:</strong> {{ message.content }} 
+            <small>{{ message.timestamp.strftime('%H:%M') }}</small>
+        </div>
+    {% endfor %}
+</div>
+
+<form id="messageForm">
+    <input type="hidden" id="sender_id" value="{{ current_user.id }}">
+    <input type="text" id="recipient_id" placeholder="Recipient ID">
+    <textarea id="message_content" placeholder="Type your message"></textarea>
+    <button type="submit">Send</button>
+</form>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.0/socket.io.js"></script>
+
+<script>
+    const socket = io();
+
+    // Listen for incoming messages
+    socket.on('receive_message', function(data) {
+        const messagesDiv = document.getElementById('messages');
+        let messageDiv = document.createElement('div');
+        messageDiv.classList.add('message');
+        messageDiv.innerHTML = `<strong>${data.sender_id}:</strong> ${data.content} <small>${data.timestamp}</small>`;
+        messagesDiv.appendChild(messageDiv);
+    });
+
+    document.getElementById('messageForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const senderId = document.getElementById('sender_id').value;
+        const recipientId = document.getElementById('recipient_id').value;
+        const content = document.getElementById('message_content').value;
+        // Emit the send_message event
+        socket.emit('send_message', {
+            sender_id: senderId,
+            recipient_id: recipientId,
+            content: content
+        });
+        // Clear the form
+        document.getElementById('message_content').value = '';
+    });
+</script>
+{% endblock %}

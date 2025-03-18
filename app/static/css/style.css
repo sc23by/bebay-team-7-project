@@ -12,3 +12,15 @@
 .fa-heart.hover {
     color: rgb(107, 15, 15);
 }
+
+.expired-item {
+    opacity: 0.5;
+    /* Prevents interaction */
+    pointer-events: none;
+    filter: grayscale(100%);
+}
+
+.expired-text {
+    font-weight: bold;
+    color: gray;
+}
