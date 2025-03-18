@@ -790,7 +790,7 @@ def handle_new_bid(data):
 @expert_required
 def expert_assignments():
 
-    assigned_items = Item.query.filter_by(expert_id=current_user.id, approved=None).all()
+    assigned_items = Item.query.filter_by(expert_id=current_user.id).all()
 
     return render_template('expert_assignments.html',items=assigned_items)
 
@@ -1226,7 +1226,13 @@ def manager_expert_availability():
     assigned_items = Item.query.filter(Item.expert_id.isnot(None)).all()
 
     # Fetch only items that are in the WaitingList
-    unassigned_items = db.session.query(Item).join(WaitingList, Item.item_id == WaitingList.item_id).all()
+    unassigned_items = (
+        db.session.query(Item)
+        .join(WaitingList, Item.item_id == WaitingList.item_id)
+        .filter(Item.expert_id.is_(None))
+        .all()
+    )
+
 
     return render_template(
         'manager_expert_availability.html',
