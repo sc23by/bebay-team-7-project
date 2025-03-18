@@ -1241,7 +1241,6 @@ def manager_expert_availability():
 @app.route('/assign_expert', methods=['POST'])
 @manager_required
 def assign_expert():
-
     expert_id = request.form.get('selected_expert')
     item_id = request.form.get('item_id')
     selected_time_id = request.form.get('selected_time')
@@ -1256,12 +1255,6 @@ def assign_expert():
         item.date_time = datetime.combine(selected_time.date, selected_time.start_time)
         item.expert_payment_percentage = expert_payment_percentage  # Save the percentage
         
-        # Remove the item from WaitingList once assigned
-        waiting_item = WaitingList.query.filter_by(item_id=item_id).first()
-        if waiting_item:
-            db.session.delete(waiting_item)
-
-
         db.session.delete(selected_time)  # Remove from availability
         db.session.commit()
 
