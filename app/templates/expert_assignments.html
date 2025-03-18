@@ -2,6 +2,7 @@
 {% block content %}
 
 <h1>Authentication Assignments</h1>
+
 <div class="row row-cols-3 row-cols-md-5 g-4">
     {% if items %}
         {% for item in items %}
@@ -18,9 +19,8 @@
             </div>
         {% endfor %}
     {% else %}
-        <p class="text-center text-muted">No items to authenticate!</p>
+        <p class="text-center text-muted">No items assigned for authentication!</p>
     {% endif %}
 </div>
-
 
 {% endblock %}

@@ -789,10 +789,13 @@ def handle_new_bid(data):
 @app.route('/expert/assignments')
 @expert_required
 def expert_assignments():
+    # Fetch items assigned to the current expert AND in the waiting list
+    assigned_items = Item.query.filter(
+        Item.expert_id == current_user.id,
+        Item.item_id.in_(db.session.query(WaitingList.item_id))
+    ).all()
 
-    assigned_items = Item.query.filter_by(expert_id=current_user.id).all()
-
-    return render_template('expert_assignments.html',items=assigned_items)
+    return render_template('expert_assignments.html', items=assigned_items)
 
 
 #Route: Expert Authentication Page
@@ -812,11 +815,11 @@ def approve_item(item_id):
     # Approve item
     item_to_approve.approved = True
     # Set expiration time
-    item_to_approve.expiration_time = expiration_time = listing_time + timedelta(
-                days=int(form.days.data),
-                hours=int(form.hours.data),
-                minutes=int(form.minutes.data)
-            )
+    item_to_approve.expiration_time = datetime.utcnow() + timedelta(
+        item_to_approve.days,
+        item_to_approve.hours,
+        item_to_approve.minutes
+    )
     # Remove from waiting list
     WaitingList.query.filter_by(item_id=item_id).delete()
 
@@ -830,9 +833,19 @@ def approve_item(item_id):
 def decline_item(item_id):
 
     item_to_approve = Item.query.get(item_id)
+    # Reject item
     item_to_approve.approved = False
-    db.session.commit()
+    # Set expiration time
+    item_to_approve.expiration_time = datetime.utcnow() + timedelta(
+        item_to_approve.days,
+        item_to_approve.hours,
+        item_to_approve.minutes
+    )
+    # Remove from waiting list
+    WaitingList.query.filter_by(item_id=item_id).delete()
 
+    db.session.commit()
+    flash("Item rejected successfully.", "success")
     return redirect(url_for('expert_assignments'))
 
 @app.route('/expert/reassign_item/<int:item_id>', methods=['POST'])
@@ -903,11 +916,25 @@ def expert_availability():
 
         return render_template('expert_availability.html',filled_timeslots=filled_timeslots)
 
-#Route: Expert Account Page
 @app.route('/expert/account')
 @expert_required
 def expert_account():
-    return render_template('expert_account.html')
+    # Fetch items assigned to the current expert that are NOT in the waiting list
+    assigned_items = Item.query.filter(
+        Item.expert_id == current_user.id,
+        ~Item.item_id.in_(db.session.query(WaitingList.item_id))
+    ).all()
+
+    # Categorise items into approved and rejected
+    approved_items = [item for item in assigned_items if item.approved is True]
+    rejected_items = [item for item in assigned_items if item.approved is False]
+
+    return render_template(
+        'expert_account.html',
+        approved_items=approved_items,
+        rejected_items=rejected_items
+    )
+
 
 # Manager Pages
 
