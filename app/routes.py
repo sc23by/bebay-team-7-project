@@ -13,6 +13,7 @@ import uuid
 from datetime import datetime, timedelta
 from sqlalchemy import desc
 import numpy as np
+import stripe
 # Parses data sent by JS
 import json
 # Websockets
@@ -705,12 +706,24 @@ def user_list_item():
 # Route: For clicking on an item to see more detail
 @app.route('/item/<int:item_id>')
 def user_item_details(item_id):
-    item = Item.query.get_or_404(item_id)  # Fetch the item or return 404
-    form=BidForm()
+    item = Item.query.get_or_404(item_id)
+    form = BidForm()
 
-    highest_bid = item.highest_bid() or "No bids yet"
+    # Ensure expiration_time and date_time are not None
+    if item.date_time is None:
+        item.date_time = datetime.utcnow()  # Provide a default timestamp
 
-    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
+    if item.expiration_time is None:
+        item.expiration_time = datetime.utcnow() + timedelta(days=7)  # Example: 7 days from now
+
+    # Get the current highest bid
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or "No bids yet"
+
+    # Get highest bidder ID
+    highest_bidder = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
+    highest_bidder_id = highest_bidder.user_id if highest_bidder else None
+
+    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid, highest_bidder_id=highest_bidder_id)
 
 # Route: Placing a bid
 @socketio.on('new_bid')
@@ -1245,5 +1258,111 @@ def manager_fees():
             flash("Fees updated successfully!", "success")
             
     return render_template("manager_fees.html", fee_config=fee_config)
+
+
+
+# Payment for item using stripe route
+@app.route('/pay/<int:item_id>', methods=['POST'])
+@login_required
+def pay_for_item(item_id):
+    """
+    Creates a Stripe Checkout Session for the highest bidder,
+    including the shipping cost in the total payment amount.
+    """
+    item = Item.query.get_or_404(item_id)
+
+    # Get highest bid
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
+    winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
+
+    # Ensure the current user is the highest bidder
+    if not winning_bid or winning_bid.user_id != current_user.id:
+        flash("You are not the winning bidder!", "danger")
+        return redirect(url_for('user_item_details', item_id=item_id))
+
+    # Convert to float to ensure proper calculations
+    bid_price = float(highest_bid)
+    shipping_price = float(item.shipping_cost)
+
+    # Calculate total checkout cost (Winning Bid + Shipping Cost)
+    total_price = bid_price + shipping_price
+
+    # Create Stripe Checkout Session
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price_data': {
+                        'currency': 'gbp',
+                        'product_data': {'name': item.item_name},
+                        'unit_amount': int(bid_price * 100),  # Convert bid price to pence
+                    },
+                    'quantity': 1,
+                },
+                {
+                    'price_data': {
+                        'currency': 'gbp',
+                        'product_data': {'name': 'Shipping Cost'},
+                        'unit_amount': int(shipping_price * 100),  # Convert shipping price to pence
+                    },
+                    'quantity': 1,
+                }
+            ],
+            mode='payment',
+            success_url=url_for('payment_success', item_id=item_id, _external=True),
+            cancel_url=url_for('user_item_details', item_id=item_id, _external=True),
+        )
+        return jsonify({'checkout_url': session.url})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Success route
+@app.route('/payment_success/<int:item_id>')
+@login_required
+def payment_success(item_id):
+    item = Item.query.get_or_404(item_id)
+
+    # Mark item as sold
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
+    winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
+
+    if winning_bid and winning_bid.user_id == current_user.id:
+        sold_item = Solditem(
+            item_id=item_id,
+            seller_id=item.seller_id,
+            buyer_id=current_user.id,
+            price=highest_bid
+        )
+        db.session.add(sold_item)
+        db.session.commit()
+        flash("Payment successful! The item has been marked as sold.", "success")
+    else:
+        flash("Payment failed or unauthorized access.", "danger")
+
+    return redirect(url_for('user_home'))
+
+
+
+# API to fetch get remaining time on auction for an item in real time
+@app.route('/get_time_left/<int:item_id>')
+def get_time_left(item_id):
+    """
+    API to fetch remaining time for an item.
+    """
+    item = Item.query.get_or_404(item_id)
+    
+    # Calculate remaining time
+    if item.time_left.total_seconds() > 0:
+        time_left = f"{item.time_left.days} days, {item.time_left.seconds // 3600} hours, {(item.time_left.seconds // 60) % 60} minutes, {item.time_left.seconds % 60} seconds"
+    else:
+        time_left = "Expired"
+
+    return jsonify({"time_left": time_left})
+
+
+
+
 
 

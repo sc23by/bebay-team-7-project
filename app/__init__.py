@@ -6,6 +6,7 @@ from flask_wtf.csrf import CSRFProtect
 from flask_bcrypt import Bcrypt
 from flask_socketio import SocketIO
 import os
+import stripe
 # For checking expired auctions
 import time
 import threading
@@ -64,7 +65,7 @@ bcrypt = Bcrypt(app)
 csrf = CSRFProtect(app)
 
 # Websockets
-socketio = SocketIO(app)
+socketio = SocketIO(app, ping_interval=25, ping_timeout=60, max_http_buffer_size=1024)
 
 # User loader for Flask-Login
 @login_manager.user_loader
@@ -75,23 +76,40 @@ def load_user(user_id):
  # Disables CSRF protection
 app.config['WTF_CSRF_ENABLED'] = False 
 
+# Loading configuration from config.py
+app.config.from_object('config')
+
+# Correct way to set Stripe API key
+stripe.api_key = app.config['STRIPE_SECRET_KEY']
+
 from app import routes
 from app.routes import check_expired_auctions
+
+scheduler_running = False  
 # Background Task: Periodically Check for Expired Auctions
 def run_scheduler():
     from datetime import datetime
     from app.routes import check_expired_auctions
+    global scheduler_running
 
-    #print("Scheduler thread started.")
+    if scheduler_running:
+        return  # Avoid starting multiple threads
+
+    scheduler_running = True
+    print("Scheduler thread started.")
+
     while True:
-        #print(f"Scheduler running at: {datetime.utcnow()}")
         with app.app_context():
             check_expired_auctions()
-        print("Active threads:", threading.enumerate())
-        time.sleep(1)  # For testing; change back to 60 seconds when ready
+        print(f"Active threads:{threading.enumerate()}\n")
+        time.sleep(1)
 
 
 
 # Start the background thread
-scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
-scheduler_thread.start()
+if not scheduler_running:
+    scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+    scheduler_thread.start()
+
+
+# threads are being continuously created and destroyed, this is taxing for the system maybe we can implement thread pool?

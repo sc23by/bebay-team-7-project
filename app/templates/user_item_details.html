@@ -16,7 +16,7 @@
         {% if item.approved %}
             <span class="badge bg-success">Approved</span>
         {% endif %}
-        </h2>
+    </h2>
     <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
          class="img-fluid" alt="{{ item.item_name }}">
     
@@ -42,9 +42,9 @@
     </p>
     
     
-
-    <!-- Bidding Form -->
+    <!-- Bidding Form (Initially Hidden If Auction is Still Active) -->
     <form onsubmit="event.preventDefault(); placeBid({{ item.item_id }});">
+        {{ form.hidden_tag() }}
         <div class="form-group">
             <label for="bid_amount">Enter Bid</label>
             <div class="input-group">
@@ -55,6 +55,69 @@
         <button type="submit" class="btn btn-primary mt-2">Place Bid</button>
     </form>
 
+    <!-- Pay Now Button (Initially Hidden If Auction is Still Active) -->
+    {% if highest_bid != "No bids yet" and current_user.id == highest_bidder_id %}
+        <button id="pay-now" class="btn btn-success"
+            {% if item.time_left.total_seconds() > 0 %} style="display: none;" {% endif %}>
+            Pay Now
+        </button>
+    {% endif %}
+
     <a href="{{ url_for('user_home') }}" class="btn btn-secondary">Back to Listings</a>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    function updateTimeLeft() {
+        fetch("{{ url_for('get_time_left', item_id=item.item_id) }}")
+        .then(response => response.json())
+        .then(data => {
+            let timeLeftElement = document.getElementById("time-left");
+            let payNowButton = document.getElementById("pay-now");
+
+            if (data.time_left === "Expired") {
+                timeLeftElement.innerHTML = "Expired";
+
+                // Show Pay Now button immediately if it exists
+                if (payNowButton) {
+                    payNowButton.style.display = "block";
+                }
+            } else {
+                timeLeftElement.innerHTML = data.time_left;
+            }
+        });
+    }
+
+    // Run the time check immediately on page load
+    updateTimeLeft();
+
+    // Reduce delay: Update countdown every 500ms instead of 1000ms
+    setInterval(updateTimeLeft, 500);
+
+    // Pay Now button functionality
+    document.getElementById("pay-now")?.addEventListener("click", function () {
+        let shippingCost = parseFloat("{{ item.shipping_cost }}");
+        let highestBid = parseFloat("{{ highest_bid }}");
+        let totalPrice = highestBid + shippingCost;
+
+        fetch("{{ url_for('pay_for_item', item_id=item.item_id) }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ total_price: totalPrice })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.checkout_url) {
+                window.location.href = data.checkout_url;
+            } else {
+                alert("Payment Error: " + data.error);
+            }
+        });
+    });
+});
+
+</script>
+
 {% endblock %}

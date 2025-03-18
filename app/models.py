@@ -42,6 +42,7 @@ class PaymentInfo(db.Model):
     payment_type = db.Column(db.String(30), nullable=True)
     shipping_address = db.Column(db.String(500), nullable=True)
 
+
 # Sold item model
 class SoldItem(db.Model):
     sold_id = db.Column(db.Integer, primary_key=True)
@@ -49,8 +50,10 @@ class SoldItem(db.Model):
     seller_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
     buyer_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
     price = db.Column(db.Float, nullable=False)
-
+    sold_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    seller = db.relationship('User', foreign_keys=[seller_id], backref='sold_items')
+    buyer = db.relationship('User', foreign_keys=[buyer_id], backref='purchased_items')
 
 
 # Item model
@@ -78,9 +81,12 @@ class Item(db.Model):
     #relationship
     bids = db.relationship('Bid',backref='item',lazy=True)
     sold_item = db.relationship('SoldItem',backref='item',lazy=True)
+
     
     def get_image_url(self):
         return url_for('static', filename=f'images/items/{self.item_image}')
+    
+    sold = db.Column(db.Boolean, default=False)
 
     @property
     def time_left(self):
