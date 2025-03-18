@@ -2,7 +2,7 @@ from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, request, flash, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
-from app.models import FeeConfig, User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo, Notification, SoldItem, UserMessage
+from app.models import User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo, Notification, SoldItem, UserMessage, FeeConfig
 from functools import wraps
 import matplotlib.pyplot as plt
 import io
@@ -789,10 +789,13 @@ def handle_new_bid(data):
 @app.route('/expert/assignments')
 @expert_required
 def expert_assignments():
+    # Fetch items assigned to the current expert AND in the waiting list
+    assigned_items = Item.query.filter(
+        Item.expert_id == current_user.id,
+        Item.item_id.in_(db.session.query(WaitingList.item_id))
+    ).all()
 
-    assigned_items = Item.query.filter_by(expert_id=current_user.id, approved=None).all()
-
-    return render_template('expert_assignments.html',items=assigned_items)
+    return render_template('expert_assignments.html', items=assigned_items)
 
 
 #Route: Expert Authentication Page
@@ -809,9 +812,23 @@ def expert_item_authentication(item_id):
 def approve_item(item_id):
 
     item_to_approve = Item.query.get(item_id)
+    # Approve item
     item_to_approve.approved = True
+    # Set start and expiration time
+    date_time = datetime.utcnow()
+    item_to_approve.expiration_time = datetime.utcnow() + timedelta(
+        item_to_approve.days,
+        item_to_approve.hours,
+        item_to_approve.minutes
+    )
+    
+    
+    # Remove from waiting list
+    WaitingList.query.filter_by(item_id=item_id).delete()
+
     db.session.commit()
 
+    flash("Item approved successfully.", "success")
     return redirect(url_for('expert_assignments'))
 
 @app.route('/expert/decline_item/<int:item_id>', methods=['POST'])
@@ -819,22 +836,36 @@ def approve_item(item_id):
 def decline_item(item_id):
 
     item_to_approve = Item.query.get(item_id)
+    # Reject item
     item_to_approve.approved = False
-    db.session.commit()
+    # Set expiration time
+    item_to_approve.expiration_time = datetime.utcnow() + timedelta(
+        item_to_approve.days,
+        item_to_approve.hours,
+        item_to_approve.minutes
+    )
+    # Remove from waiting list
+    WaitingList.query.filter_by(item_id=item_id).delete()
 
+    db.session.commit()
+    flash("Item rejected successfully.", "success")
     return redirect(url_for('expert_assignments'))
 
+# Route: Reassign item button
 @app.route('/expert/reassign_item/<int:item_id>', methods=['POST'])
 @expert_required
 def reassign_item(item_id):
-
-    new_expert_id = request.form.get('reassign_expert')
-    
+    """
+    Removes the assigned expert from an item, making it available for reassignment.
+    """
     item_to_be_reassigned = Item.query.get(item_id)
-    
-    item_to_be_reassigned.expert_id = new_expert_id
-    
+
+    # Remove the expert assignment
+    item_to_be_reassigned.expert_id = None
+
     db.session.commit()
+    flash("Expert unassigned successfully.", "warning")
+
     return redirect(url_for('expert_assignments'))
 
 #Route: Expert Messaging Page
@@ -892,11 +923,25 @@ def expert_availability():
 
         return render_template('expert_availability.html',filled_timeslots=filled_timeslots)
 
-#Route: Expert Account Page
 @app.route('/expert/account')
 @expert_required
 def expert_account():
-    return render_template('expert_account.html')
+    # Fetch items assigned to the current expert that are NOT in the waiting list
+    assigned_items = Item.query.filter(
+        Item.expert_id == current_user.id,
+        ~Item.item_id.in_(db.session.query(WaitingList.item_id))
+    ).all()
+
+    # Categorise items into approved and rejected
+    approved_items = [item for item in assigned_items if item.approved is True]
+    rejected_items = [item for item in assigned_items if item.approved is False]
+
+    return render_template(
+        'expert_account.html',
+        approved_items=approved_items,
+        rejected_items=rejected_items
+    )
+
 
 # Manager Pages
 
@@ -998,6 +1043,8 @@ def manager_statistics():
 
     return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, week_labels=week_labels,values=values,total_revenue=total_revenue,total_profit=total_profit,generated_percentage=generated_percentage)
 
+
+# FIXME - choose a maethod of selecting expert fee
 @app.route('/manager/statistics/edit',methods=['GET','POST'])
 def manager_statistics_edit():
 
@@ -1019,7 +1066,7 @@ def manager_statistics_edit():
 
     return render_template('manager_statistics.html')
 
-
+# FIXME - choose a maethod of selecting expert fee
 
 @app.route('/manager/statistics/cost',methods=['GET','POST'])
 def manager_statistics_cost():
@@ -1203,30 +1250,137 @@ def manager_listings_update_number(username,update_number):
     else:
         return "User not found", 404
 
-#Route: Manager view sorting all the authentication assignments
-@app.route('/manager/authentication')
-def manager_auth_assignments():
-    assignments = [
-        {"name": "Item A", "status": "Assigned", "role": "Expert"},
-        {"name": "Item B", "status": "Unassigned"},
-        {"name": "Item C", "status": "Assigned", "role": "Expert"},
-        {"name": "Item D", "status": "Unassigned"}
-    ]
-    return render_template('manager_authentication.html', assignments=assignments)
 
-
-#Route: Manager's view to be able to identify experts availability
 @app.route('/manager/expert_availability')
+@manager_required
 def manager_expert_availability():
-    item = {
 
+    experts = User.query.filter_by(priority=2).all()
+
+    current_time = datetime.utcnow()
+    time_threshold = current_time + timedelta(hours=48)
+
+    # Store experts available in the next 48 hours
+    available_experts_48h = set(
+        slot.user_id
+        for slot in ExpertAvailabilities.query.filter(
+            ExpertAvailabilities.date >= current_time.date(),
+            ExpertAvailabilities.date <= time_threshold.date()
+        ).all()
+    )
+
+    expert_availability = {
+        expert.id: [
+            {
+                "id": slot.availability_id,
+                "date": slot.date.strftime("%Y-%m-%d"),
+                "start_time": slot.start_time.strftime("%I:%M %p"),
+                "duration": slot.duration
+            } for slot in ExpertAvailabilities.query.filter_by(user_id=expert.id).all()
+        ] for expert in experts
     }
 
-    experts = [
+    assigned_items = (
+        db.session.query(Item)
+        .join(WaitingList, Item.item_id == WaitingList.item_id)
+        .filter(Item.expert_id.isnot(None))
+        .all()
+    )
 
-    ]
 
-    return render_template('manager_expert_availability.html', item=item, experts=experts)
+    # Fetch only items that are in the WaitingList
+    unassigned_items = (
+        db.session.query(Item)
+        .join(WaitingList, Item.item_id == WaitingList.item_id)
+        .filter(Item.expert_id.is_(None))
+        .all()
+    )
+
+    # Fetch approved and rejected items that are assigned to an expert AND NOT in the Waiting List
+    approved_items = (
+        db.session.query(Item)
+        .filter(
+            Item.expert_id.isnot(None),
+            Item.approved.is_(True),
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id))  # Exclude items in WaitingList
+        )
+        .all()
+    )
+
+    rejected_items = (
+        db.session.query(Item)
+        .filter(
+            Item.expert_id.isnot(None),
+            Item.approved.is_(False),
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id))  # Exclude items in WaitingList
+        )
+        .all()
+    )
+
+    return render_template(
+        'manager_expert_availability.html',
+        experts=experts,
+        available_experts_48h=available_experts_48h,
+        expert_availability=expert_availability,
+        assigned_items=assigned_items,
+        unassigned_items=unassigned_items,
+        approved_items=approved_items,
+        rejected_items=rejected_items
+)
+
+# ASSIGNING/ UNASSIGN EXPERTS
+
+@app.route('/assign_expert', methods=['POST'])
+@manager_required
+def assign_expert():
+    expert_id = request.form.get('selected_expert')
+    item_id = request.form.get('item_id')
+    selected_time_id = request.form.get('selected_time')
+    expert_payment_percentage = request.form.get('expert_payment_percentage', type=float)
+
+    item = Item.query.get(item_id)
+    selected_time = ExpertAvailabilities.query.filter_by(availability_id=selected_time_id, user_id=expert_id).first()
+
+    if item and selected_time:
+        item.expert_id = expert_id
+        item.date_time = datetime.combine(selected_time.date, selected_time.start_time)  # FIXED: Set date_time
+        item.expert_payment_percentage = expert_payment_percentage  # Save the percentage
+        
+        db.session.delete(selected_time)  # Remove from availability
+        db.session.commit()
+
+        flash(f'Expert assigned successfully for {item.date_time.strftime("%Y-%m-%d %I:%M %p")}', 'success')
+
+    else:
+        flash("Failed to assign expert. Please select an available time slot.", "danger")
+
+    return redirect(url_for('manager_expert_availability'))
+
+@app.route('/unassign_expert', methods=['POST'])
+@manager_required
+def unassign_expert():
+    item_id = request.form.get('item_id')
+    item = Item.query.get(item_id)
+
+    if item and item.expert_id:
+        # Restore the expert's availability
+        restored_availability = ExpertAvailabilities(
+            user_id=item.expert_id,
+            date=item.date_time.date(),
+            start_time=item.date_time.time(),
+            duration=1
+        )
+        db.session.add(restored_availability)
+
+        # Remove expert assignment
+        item.expert_id = None
+        item.date_time = None
+
+        db.session.commit()
+        
+        flash('Expert unassigned successfully! Item has been added back to the waiting list.', 'warning')
+
+    return redirect(url_for('manager_expert_availability'))
 
 
 #Route: Manager view of Items that are approved, recycled, and pending items
@@ -1241,7 +1395,26 @@ def manager_overview():
                            rejected_items=[],
                            pending_items=[])
 
-# Route for Manager to Update Fees
+
+@app.route('/update_expert_payment', methods=['POST'])
+@login_required
+def update_expert_payment():
+    if current_user.priority < 2:
+        flash("Unauthorized Action", "danger")
+        return redirect(url_for('index'))
+
+    item_id = request.form.get('item_id')
+    expert_payment_percentage = request.form.get('expert_payment_percentage', type=float)
+
+    item = Item.query.get(item_id)
+
+    if item and item.expert_id:  # Ensure the item is assigned to an expert
+        item.expert_payment_percentage = expert_payment_percentage
+        db.session.commit()
+        flash(f'Expert payment percentage updated to {expert_payment_percentage}%', 'success')
+
+    return redirect(url_for('manager_expert_availability'))
+
 @app.route('/manager/fees', methods=['GET', 'POST'])
 def manager_fees():
     fee_config = FeeConfig.get_current_fees()
@@ -1260,6 +1433,10 @@ def manager_fees():
     return render_template("manager_fees.html", fee_config=fee_config)
 
 
+
+
+
+# STRIPE
 
 # Payment for item using stripe route
 @app.route('/pay/<int:item_id>', methods=['POST'])

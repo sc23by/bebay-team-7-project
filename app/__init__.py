@@ -96,12 +96,12 @@ def run_scheduler():
         return  # Avoid starting multiple threads
 
     scheduler_running = True
-    print("Scheduler thread started.")
+    #print("Scheduler thread started.")
 
     while True:
         with app.app_context():
             check_expired_auctions()
-        print(f"Active threads:{threading.enumerate()}\n")
+        #print(f"Active threads:{threading.enumerate()}\n")
         time.sleep(1)
 
 

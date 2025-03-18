@@ -1,3 +1,4 @@
+
 from app import db
 from flask import url_for
 from flask_login import UserMixin
@@ -71,7 +72,7 @@ class Item(db.Model):
     expiration_time = db.Column(db.DateTime, nullable=True)  
     approved = db.Column(db.Boolean, default=None, nullable=True)
     shipping_cost = db.Column(db.Numeric(10,2), nullable=False)
-    expert_payment_percentage = db.Column(db.Float, nullable=False, default=0.00) # Default can be changed by managers
+    expert_payment_percentage = db.Column(db.Float, nullable=False, default=10.0) # Default can be changed by managers
     expert_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = True)
     # Store the fixed fees at the time of listing
     site_fee_percentage = db.Column(db.Float, nullable=False,default=1.00)
@@ -98,9 +99,24 @@ class Item(db.Model):
         if expert_approved:
             return final_price * ((self.site_fee_percentage + self.expert_fee_percentage) / 100)
         return final_price * (self.site_fee_percentage / 100)
+# Establish a relationship with User model (expert)
+    expert = db.relationship('User', foreign_keys=[expert_id], backref='assigned_items')
+
 
     expert = db.relationship('User',foreign_keys=[expert_id],backref='assigned_items')
 
+    def highest_bid(self):
+        """Returns the highest bid amount."""
+        highest_bid = Bid.query.filter_by(item_id=self.item_id).order_by(Bid.bid_amount.desc()).first()
+        return highest_bid.bid_amount if highest_bid else None
+
+    def highest_bidder(self):
+        """Returns the user who placed the highest bid."""
+        highest_bid = self.highest_bid()  # Use the existing method
+        if highest_bid:
+            return Bid.query.filter_by(item_id=self.item_id, bid_amount=highest_bid).first().user
+        return None
+    
     def highest_bid(self):
         """Returns the highest bid amount."""
         highest_bid = Bid.query.filter_by(item_id=self.item_id).order_by(Bid.bid_amount.desc()).first()
