@@ -1205,16 +1205,6 @@ def manager_listings_update_number(username,update_number):
     else:
         return "User not found", 404
 
-#Route: Manager view sorting all the authentication assignments
-@app.route('/manager/authentication')
-def manager_auth_assignments():
-    assignments = [
-        {"name": "Item A", "status": "Assigned", "role": "Expert"},
-        {"name": "Item B", "status": "Unassigned"},
-        {"name": "Item C", "status": "Assigned", "role": "Expert"},
-        {"name": "Item D", "status": "Unassigned"}
-    ]
-    return render_template('manager_authentication.html', assignments=assignments)
 
 @app.route('/manager/expert_availability')
 @login_required
