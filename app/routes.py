@@ -1307,7 +1307,6 @@ def assign_expert():
 
     if item and selected_time:
         item.expert_id = expert_id
-        item.date_time = datetime.combine(selected_time.date, selected_time.start_time)
         item.expert_payment_percentage = expert_payment_percentage  # Save the percentage
         
         db.session.delete(selected_time)  # Remove from availability

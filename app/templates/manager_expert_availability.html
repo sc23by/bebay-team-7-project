@@ -109,4 +109,15 @@
 
         if (expertAvailability[expertId] && expertAvailability[expertId].length > 0) {
             expertAvailability[expertId].forEach(slot => {
-                let option =
+                let option = document.createElement("option");
+                option.value = slot.id;
+                option.textContent = `${slot.date} - ${slot.start_time} (${slot.duration}h)`;
+                availabilityDropdown.appendChild(option);
+            });
+            availabilityContainer.classList.remove("d-none");
+        } else {
+            availabilityContainer.classList.add("d-none");
+        }
+    }
+</script>
+{% endblock %}
