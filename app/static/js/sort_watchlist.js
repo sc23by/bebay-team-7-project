@@ -9,8 +9,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 .then(data => {
                     let container = document.getElementById("watchlist_sort");
                     // Clear previous items
-                    container.innerHTML = ""; 
-                    
+                    container.innerHTML = "";  
+
                     //data to sort by
                     data.forEach(item => {
                         let item_Element = document.createElement("div");
@@ -20,7 +20,9 @@ document.addEventListener("DOMContentLoaded", function() {
                         item_Element.dataset.name = item.item_name;
                         item_Element.dataset.shipping_cost = item.shipping_cost;
                         item_Element.dataset.current_highest_bid = item.current_highest_bid;
-                        item_Element.dataset.expiration_time = item.expiration_time;
+                        item_Element.dataset.expiration = item.expiration_time;
+                        
+                        updateCountdown();
 
                         let highest_bid = item.current_highest_bid !== null 
                             ? `${item.current_highest_bid}` 
@@ -37,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function() {
                                         <p class="card-text">Shipping Price: £${ item.shipping_cost }</p>                       
                                         <p>Time Left: 
                                             <span class="time_left"
-                                                data-item-id=${ item.item_id }"
+                                                data-item-id="${ item.item_id }"
                                                 data-expiration="${ item.expiration_time }">
                                             </span>
                                         </p>    
@@ -57,8 +59,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         `;
                         container.appendChild(item_Element);
                     });
-                    updateCountdown();
-                    sendExpirationNotification(itemId);
+                                   
                 });
         });
     }   

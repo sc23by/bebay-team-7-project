@@ -569,9 +569,8 @@ def sort_watchlist():
         "shipping_cost": str(item.shipping_cost),
         "item_image": item.item_image,
         "current_highest_bid": str(item_bids[item.item_id]) if item_bids[item.item_id] else "No bids yet",
-        # iso format
-        "expiration_time": item.expiration_time.isoformat(), 
         "approved": item.approved,
+        "expiration_time": str(item.expiration_time) ,
         "is_watched": True
     } for item in sorted_items]
 
