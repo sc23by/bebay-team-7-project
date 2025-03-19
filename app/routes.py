@@ -402,7 +402,8 @@ def sort_items():
         "item_image": item.item_image,
         "current_highest_bid": str(item_bids[item.item_id]) if item_bids[item.item_id] else "No bids yet",
         "approved": item.approved,
-        "expiration_time": str(item.expiration_time) ,
+        "expiration_time": str(item.expiration_time),
+        "time_left" : item.time_left.total_seconds(),
         "is_watched": True
     } for item in sorted_items]
 
@@ -654,6 +655,7 @@ def sort_watchlist():
         "current_highest_bid": str(item_bids[item.item_id]) if item_bids[item.item_id] else "No bids yet",
         "approved": item.approved,
         "expiration_time": str(item.expiration_time) ,
+        "time_left" : item.time_left.total_seconds(),
         "is_watched": True
     } for item in sorted_items]
 

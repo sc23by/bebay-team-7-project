@@ -28,33 +28,35 @@ document.addEventListener("DOMContentLoaded", function() {
                             ? `${item.current_highest_bid}` 
                             : "No bids yet";
 
+                        let expired_item = item.time_left <= 0 ? "expired-item" : "";
+
                         // what to print when sorted
                         item_Element.innerHTML = `
-                            <div class="card h-100">
-                                    <img src="/static/images/items/${item.item_image}" class="card-img-top" alt="${item.item_name}">
-                                    <div class="card-body">
-                                        <h5 class="card-title">${item.item_name}</h5>
-                                        <p class="card-text">Starting Price: £${item.minimum_price}</p>
-                                        <p class="card-text">Current Highest Bid: £${highest_bid}</p>
-                                        <p class="card-text">Shipping Price: £${ item.shipping_cost }</p>                       
-                                        <p>Time Left: 
-                                            <span class="time_left"
-                                                data-item-id="${ item.item_id }"
-                                                data-expiration="${ item.expiration_time }">
-                                            </span>
-                                        </p>    
-                                        ${item.approved ? `<span class="badge bg-success">Approved</span>` : ""}
-                                        <a href="/user/item_details/${item.item_id}" class="btn btn-primary">
-                                            View Details
-                                        </a>
-                                        ${item.is_watched ? 
-                                            `<span class="fa fa-heart selected" data-item-id="${item.item_id}"></span>
-                                            <input type="hidden" name="watch" value="1">`
-                                            : 
-                                            `<span class="fa fa-heart" data-item-id="${item.item_id}"></span>
-                                            <input type="hidden" name="watch" value="0">
-                                        `}
-                                    </div>
+                            <div class="card h-100 ${expired_item}">
+                                <img src="/static/images/items/${item.item_image}" class="card-img-top" alt="${item.item_name}">
+                                <div class="card-body">
+                                    <h5 class="card-title">${item.item_name}</h5>
+                                    <p class="card-text">Starting Price: £${item.minimum_price}</p>
+                                    <p class="card-text">Current Highest Bid: £${highest_bid}</p>
+                                    <p class="card-text">Shipping Price: £${ item.shipping_cost }</p>                       
+                                    <p>Time Left: 
+                                        <span class="time_left"
+                                            data-item-id="${ item.item_id }"
+                                            data-expiration="${ item.expiration_time }">
+                                        </span>
+                                    </p>    
+                                    ${item.approved ? `<span class="badge bg-success">Approved</span>` : ""}
+                                    <a href="/user/item_details/${item.item_id}" class="btn btn-primary">
+                                        View Details
+                                    </a>
+                                    ${item.is_watched ? 
+                                        `<span class="fa fa-heart selected" data-item-id="${item.item_id}"></span>
+                                        <input type="hidden" name="watch" value="1">`
+                                        : 
+                                        `<span class="fa fa-heart" data-item-id="${item.item_id}"></span>
+                                        <input type="hidden" name="watch" value="0">
+                                    `}
+                                </div>
                             </div>
                         `;
                         container.appendChild(item_Element);

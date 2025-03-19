@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         item_Element.dataset.shipping_cost = item.shipping_cost;
                         item_Element.dataset.current_highest_bid = item.current_highest_bid;
                         item_Element.dataset.expiration = item.expiration_time;
+                        item_Element.dataset.time_left = item.time_left;
 
                         updateCountdown();
 
@@ -28,9 +29,11 @@ document.addEventListener("DOMContentLoaded", function() {
                             ? `${item.current_highest_bid}` 
                             : "No bids yet";
 
+                        let expired_item = item.time_left <= 0 ? "expired-item" : "";
+
                         // what to print when sorted
                         item_Element.innerHTML = `
-                            <div class="card h-100">
+                            <div class="card h-100 ${expired_item}">
                                     <img src="/static/images/items/${item.item_image}" class="card-img-top" alt="${item.item_name}">
                                     <div class="card-body">
                                         <h5 class="card-title">${item.item_name}</h5>
