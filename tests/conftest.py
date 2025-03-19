@@ -4,7 +4,7 @@ import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import app, db, bcrypt, stripe
+from app import app, db, bcrypt
 from app.models import User
 import pytest
 

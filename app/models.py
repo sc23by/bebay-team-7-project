@@ -102,9 +102,6 @@ class Item(db.Model):
 # Establish a relationship with User model (expert)
     expert = db.relationship('User', foreign_keys=[expert_id], backref='assigned_items')
 
-
-    expert = db.relationship('User',foreign_keys=[expert_id],backref='assigned_items')
-
     def highest_bid(self):
         """Returns the highest bid amount."""
         highest_bid = Bid.query.filter_by(item_id=self.item_id).order_by(Bid.bid_amount.desc()).first()
