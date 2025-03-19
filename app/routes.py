@@ -1342,7 +1342,7 @@ def assign_expert():
     expert_id = request.form.get('selected_expert')
     item_id = request.form.get('item_id')
     selected_time_id = request.form.get('selected_time')
-    expert_payment_percentage = request.form.get('expert_payment_percentage', type=float)
+    expert_fee_percentage = request.form.get('expert_fee_percentage', type=float)
 
     item = Item.query.get(item_id)
     selected_time = ExpertAvailabilities.query.filter_by(availability_id=selected_time_id, user_id=expert_id).first()
@@ -1350,7 +1350,7 @@ def assign_expert():
     if item and selected_time:
         item.expert_id = expert_id
         item.date_time = datetime.combine(selected_time.date, selected_time.start_time)  # FIXED: Set date_time
-        item.expert_payment_percentage = expert_payment_percentage  # Save the percentage
+        item.expert_fee_percentage = expert_fee_percentage  # Save the percentage
         
         db.session.delete(selected_time)  # Remove from availability
         db.session.commit()
@@ -1410,14 +1410,14 @@ def update_expert_payment():
         return redirect(url_for('index'))
 
     item_id = request.form.get('item_id')
-    expert_payment_percentage = request.form.get('expert_payment_percentage', type=float)
+    expert_fee_percentage = request.form.get('expert_fee_percentage', type=float)
 
     item = Item.query.get(item_id)
 
     if item and item.expert_id:  # Ensure the item is assigned to an expert
-        item.expert_payment_percentage = expert_payment_percentage
+        item.expert_fee_percentage = expert_fee_percentage
         db.session.commit()
-        flash(f'Expert payment percentage updated to {expert_payment_percentage}%', 'success')
+        flash(f'Expert payment percentage updated to {expert_fee_percentage}%', 'success')
 
     return redirect(url_for('manager_expert_availability'))
 
