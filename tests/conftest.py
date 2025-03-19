@@ -59,7 +59,7 @@ def loggedInClientP2(client):
         test_user = User(username='testuser2',
                          email='test2@example.com',
                          password=bcrypt.generate_password_hash('password'),
-                         first_name='Test', 
+                         first_name='Test2', 
                          last_name='User', 
                          priority=2)
         db.session.add(test_user)
@@ -77,10 +77,10 @@ def loggedInClientP2(client):
 @pytest.fixture
 def loggedInClientP3(client):
     with app.app_context():
-        test_user = User(username='testuser2',
-                         email='test2@example.com',
+        test_user = User(username='testuser3',
+                         email='test3@example.com',
                          password=bcrypt.generate_password_hash('password'),
-                         first_name='Test', 
+                         first_name='Test3', 
                          last_name='User', 
                          priority=3)
         db.session.add(test_user)
@@ -88,7 +88,7 @@ def loggedInClientP3(client):
 
     # log in the user
     response = client.post('/login', data={
-        'username': 'testuser2',
+        'username': 'testuser3',
         'password': 'password'
     }, follow_redirects=True)
 
