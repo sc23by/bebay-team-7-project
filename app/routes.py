@@ -2,8 +2,10 @@ from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, request, flash, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
-from app.models import FeeConfig, User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo, Notification, SoldItem
+from app.models import User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo, Notification, SoldItem, UserMessage, FeeConfig
 from functools import wraps
+import matplotlib
+matplotlib.use("Agg")  # Use a non-GUI backend
 import matplotlib.pyplot as plt
 import io
 import base64
@@ -12,6 +14,8 @@ import os
 import uuid
 from datetime import datetime, timedelta
 from sqlalchemy import desc
+import numpy as np
+import stripe
 # Parses data sent by JS
 import json
 # Websockets
@@ -273,6 +277,34 @@ def logout():
     """
     logout_user()
     return redirect(url_for('guest_home'))
+
+@app.route('/messages')
+@login_required
+def messages():
+    # Fetch conversation history using the renamed model
+    messages = UserMessage.query.filter(
+        ((UserMessage.sender_id == current_user.id) | (UserMessage.recipient_id == current_user.id))
+    ).order_by(UserMessage.timestamp).all()
+    return render_template('messages.html', messages=messages)
+
+@socketio.on('send_message')
+def handle_send_message(data):
+    # Create a new message using the UserMessage model
+    print("Received send_message with data:", data)  # Debug print
+    message = UserMessage(
+        sender_id=data['sender_id'],
+        recipient_id=data['recipient_id'],
+        content=data['content']
+    )
+    db.session.add(message)
+    db.session.commit()
+    # Broadcast the message back to clients
+    socketio.emit('receive_message', {
+        'sender_id': data['sender_id'],
+        'recipient_id': data['recipient_id'],
+        'content': data['content'],
+        'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+    })
 
 # User Pages
 
@@ -596,6 +628,22 @@ def notifications():
  
     return render_template('user_notifications.html', pagetitle='Notifications', form=form, notifications=notifications)
 
+# Route: Delete Notification
+@app.route('/notification/delete/<int:notification_id>', methods=['GET', 'POST'])
+@login_required
+def delete_notification(notification_id):
+    notification = Notification.query.get_or_404(notification_id)
+    
+    # Ensure the current user owns this notification
+    if notification.user_id != current_user.id:
+        flash("You are not authorized to delete this notification.", "danger")
+        return redirect(url_for('notifications'))
+    
+    db.session.delete(notification)
+    db.session.commit()
+    flash("Notification deleted.", "success")
+    return redirect(url_for('notifications'))
+
 # Route: List Item Page
 @app.route('/user/list_item', methods=['GET', 'POST'])
 @user_required
@@ -660,12 +708,24 @@ def user_list_item():
 # Route: For clicking on an item to see more detail
 @app.route('/item/<int:item_id>')
 def user_item_details(item_id):
-    item = Item.query.get_or_404(item_id)  # Fetch the item or return 404
-    form=BidForm()
+    item = Item.query.get_or_404(item_id)
+    form = BidForm()
 
-    highest_bid = item.highest_bid() or "No bids yet"
+    # Ensure expiration_time and date_time are not None
+    if item.date_time is None:
+        item.date_time = datetime.utcnow()  # Provide a default timestamp
 
-    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid)
+    if item.expiration_time is None:
+        item.expiration_time = datetime.utcnow() + timedelta(days=7)  # Example: 7 days from now
+
+    # Get the current highest bid
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar() or "No bids yet"
+
+    # Get highest bidder ID
+    highest_bidder = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
+    highest_bidder_id = highest_bidder.user_id if highest_bidder else None
+
+    return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid, highest_bidder_id=highest_bidder_id)
 
 # Route: Placing a bid
 @socketio.on('new_bid')
@@ -731,10 +791,13 @@ def handle_new_bid(data):
 @app.route('/expert/assignments')
 @expert_required
 def expert_assignments():
+    # Fetch items assigned to the current expert AND in the waiting list
+    assigned_items = Item.query.filter(
+        Item.expert_id == current_user.id,
+        Item.item_id.in_(db.session.query(WaitingList.item_id))
+    ).all()
 
-    assigned_items = Item.query.filter_by(expert_id=current_user.id, approved=None).all()
-
-    return render_template('expert_assignments.html',items=assigned_items)
+    return render_template('expert_assignments.html', items=assigned_items)
 
 
 #Route: Expert Authentication Page
@@ -751,9 +814,23 @@ def expert_item_authentication(item_id):
 def approve_item(item_id):
 
     item_to_approve = Item.query.get(item_id)
+    # Approve item
     item_to_approve.approved = True
+    # Set start and expiration time
+    date_time = datetime.utcnow()
+    item_to_approve.expiration_time = datetime.utcnow() + timedelta(
+        item_to_approve.days,
+        item_to_approve.hours,
+        item_to_approve.minutes
+    )
+    
+    
+    # Remove from waiting list
+    WaitingList.query.filter_by(item_id=item_id).delete()
+
     db.session.commit()
 
+    flash("Item approved successfully.", "success")
     return redirect(url_for('expert_assignments'))
 
 @app.route('/expert/decline_item/<int:item_id>', methods=['POST'])
@@ -761,22 +838,36 @@ def approve_item(item_id):
 def decline_item(item_id):
 
     item_to_approve = Item.query.get(item_id)
+    # Reject item
     item_to_approve.approved = False
-    db.session.commit()
+    # Set expiration time
+    item_to_approve.expiration_time = datetime.utcnow() + timedelta(
+        item_to_approve.days,
+        item_to_approve.hours,
+        item_to_approve.minutes
+    )
+    # Remove from waiting list
+    WaitingList.query.filter_by(item_id=item_id).delete()
 
+    db.session.commit()
+    flash("Item rejected successfully.", "success")
     return redirect(url_for('expert_assignments'))
 
+# Route: Reassign item button
 @app.route('/expert/reassign_item/<int:item_id>', methods=['POST'])
 @expert_required
 def reassign_item(item_id):
-
-    new_expert_id = request.form.get('reassign_expert')
-    
+    """
+    Removes the assigned expert from an item, making it available for reassignment.
+    """
     item_to_be_reassigned = Item.query.get(item_id)
-    
-    item_to_be_reassigned.expert_id = new_expert_id
-    
+
+    # Remove the expert assignment
+    item_to_be_reassigned.expert_id = None
+
     db.session.commit()
+    flash("Expert unassigned successfully.", "warning")
+
     return redirect(url_for('expert_assignments'))
 
 #Route: Expert Messaging Page
@@ -834,11 +925,25 @@ def expert_availability():
 
         return render_template('expert_availability.html',filled_timeslots=filled_timeslots)
 
-#Route: Expert Account Page
 @app.route('/expert/account')
 @expert_required
 def expert_account():
-    return render_template('expert_account.html')
+    # Fetch items assigned to the current expert that are NOT in the waiting list
+    assigned_items = Item.query.filter(
+        Item.expert_id == current_user.id,
+        ~Item.item_id.in_(db.session.query(WaitingList.item_id))
+    ).all()
+
+    # Categorise items into approved and rejected
+    approved_items = [item for item in assigned_items if item.approved is True]
+    rejected_items = [item for item in assigned_items if item.approved is False]
+
+    return render_template(
+        'expert_account.html',
+        approved_items=approved_items,
+        rejected_items=rejected_items
+    )
+
 
 # Manager Pages
 
@@ -856,24 +961,224 @@ def manager_home():
 #Route: Manager Stats Page
 @app.route('/manager/statistics', methods=['GET','POST'])
 @manager_required
-def manager_stats():
-    ratio = [34,32,16,20]
-    labels = ['Generated income','Customer cost','Postal cost','Experts cost']
-    colors=['red','green','blue','orange']
+def manager_statistics():
 
-    plt.pie(ratio, labels=labels,colors=colors,autopct=lambda p: f'{p:.1f}%\n £ {p * sum(ratio) / 100:.0f}')
+    bids = Bid.query.all()
+
+    total_revenue = 0
+    total_profit = 0
+
+    sold_items = SoldItem.query.all()
+
+    for sold_item in sold_items:
+        total_revenue += sold_item.price 
+
+    items = Item.query.all()
+    
+    if items:
+        generated_percentage = items[0].site_fee_percentage
+    else:
+        generated_percentage = 1
+
+    for item in items:
+        if item.sold_item:
+            final_price = item.sold_item[0].price
+            site_fee = item.calculate_fee(final_price, expert_approved=False)
+            total_profit += site_fee
+
+
+    current_date = datetime.now()
+    three_weeks_ago = current_date - timedelta(weeks=3)
+
+    weeks = []
+    values = []
+
+    for i in range(4):
+        week_start = three_weeks_ago + timedelta(weeks=i)
+        week_end = week_start + timedelta(days = 6,hours=23,minutes=59,seconds=59)
+
+        expired_items = Item.query.filter(
+            Item.expiration_time >= week_start,
+            Item.expiration_time <= week_end            
+        ).all()
+
+        weekly_revenue = 0
+
+        for item in expired_items:
+            if item.sold_item:
+                for sold_item in item.sold_item:
+                    final_price = sold_item.price
+                    site_fee = item.calculate_fee(final_price, expert_approved=False)
+                    weekly_revenue += site_fee
+
+        values.append(weekly_revenue)
+
+        weeks.append({
+            'week_start': week_start.strftime('%m-%d'),
+            'week_end': week_end.strftime('%m-%d')
+        })
+
+
+    week_labels = []
+
+    for week in weeks:
+        week_labels.append(f"{week['week_start']} - {week['week_end']}")    
+
+
+    plt.figure(figsize=(10,6))
+
+    plt.bar(week_labels, values,label='Weekly Revenue')
+    plt.autoscale(axis='y')
+
+    plt.legend()
+
+    plt.xlabel('Week')
+    plt.ylabel('GBP')
+    plt.title('Weekly Revenue')
+
+
     img = io.BytesIO()
-    plt.savefig(img, format='png')
+    plt.savefig(img,format='png')
     img.seek(0)
-    img_base64 = base64.b64encode(img.getvalue()).decode()
 
-    return render_template('manager_statistics.html',img_data=img_base64,ratio=ratio,labels=labels)
+    ratio = [0.75]
 
+    img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
+
+    return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, week_labels=week_labels,values=values,total_revenue=total_revenue,total_profit=total_profit,generated_percentage=generated_percentage)
+
+
+# FIXME - choose a maethod of selecting expert fee
+@app.route('/manager/statistics/edit',methods=['GET','POST'])
+def manager_statistics_edit():
+
+    if request.method == 'POST':
+        cost_site = request.form.get('site')
+        cost_expert = request.form.get('expert')
+
+        items = Item.query.all()
+
+        if items:
+            for item in items:
+                if cost_site:
+                    item.site_fee_percentage = float(cost_site)
+                if cost_expert:
+                    item.expert_fee_percentage = float(cost_expert)
+
+            db.session.commit()
+        return redirect(url_for('manager_statistics'))
+
+    return render_template('manager_statistics.html')
+
+# FIXME - choose a maethod of selecting expert fee
+
+@app.route('/manager/statistics/cost',methods=['GET','POST'])
+def manager_statistics_cost():
+
+    total_revenue = 0
+    total_profit = 0
+
+    sold_items = SoldItem.query.all()
+
+    for sold_item in sold_items:
+        total_revenue += sold_item.price 
+
+    items = Item.query.all()
+
+    for item in items:
+        if item.sold_item:
+            final_price = item.sold_item[0].price
+            site_fee = item.calculate_fee(final_price, expert_approved=False)
+            total_profit += site_fee
+    
+    if items:
+        generated_percentage = items[0].site_fee_percentage
+    else:
+        generated_percentage = 1
+
+
+    sold_items = SoldItem.query.all()
+
+    current_date = datetime.now()
+    three_weeks_ago = current_date - timedelta(weeks=3)
+
+    weeks = []
+    expert_fee_value = []
+    cost_value = []
+
+    for i in range(4):
+        week_start = three_weeks_ago + timedelta(weeks=i)
+        week_end = week_start + timedelta(days = 6,hours=23,minutes=59,seconds=59)
+
+
+        expired_items = Item.query.filter(
+            Item.expiration_time >= week_start,
+            Item.expiration_time <= week_end            
+        ).all()
+
+
+        weekly_expert_fee = 0
+        item_cost = 0
+
+        for item in expired_items:
+            if item.sold_item:
+                for sold_item in item.sold_item:
+                        final_price = sold_item.price
+                        site_fee = item.calculate_fee(final_price,expert_approved=False)
+
+                        if item.approved:                        
+                    
+                            expert_fee = item.calculate_fee(final_price,expert_approved=True) - site_fee
+                            weekly_expert_fee += expert_fee
+
+                            item_cost = final_price - (expert_fee + site_fee)
+                        else:
+                            item_cost += final_price - site_fee
+                            weekly_expert_fee = 0
+
+        expert_fee_value.append(weekly_expert_fee)
+        cost_value.append(item_cost)
+                        
+        weeks.append({
+            'week_start': week_start.strftime('%m-%d'),
+            'week_end': week_end.strftime('%m-%d')
+        })
+
+    week_labels = []
+
+    for week in weeks:
+        week_labels.append(f"{week['week_start']} - {week['week_end']}")    
+
+    plt.figure(figsize=(10,6))
+
+    x=np.arange(len(expert_fee_value))
+
+    plt.bar(week_labels, expert_fee_value, label='Expert Fee')
+    plt.bar(week_labels, cost_value, bottom = expert_fee_value, label='Item Cost')
+    plt.autoscale(axis='y')
+    plt.legend()
+
+    plt.xlabel('Week')
+    plt.ylabel('GBP')
+    plt.title('Weekly Cost')
+
+    img = io.BytesIO()
+    plt.savefig(img,format='png')
+    img.seek(0)
+
+    ratio = [0.75]
+
+    img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
+
+
+    return render_template('manager_statistics_cost.html',img_data = img_base64, total_profit = total_profit, total_revenue = total_revenue, generated_percentage=generated_percentage)
 
 #Route: Manager Account Page
 @app.route('/manager/accounts',methods=['GET','POST'])
 def manager_accounts():
-    accounts = User.query.all()
+    page = request.args.get('page',1,type=int)
+    
+    accounts = User.query.paginate(page=page,per_page=1,error_out=False)
 
     return render_template("manager_accounts.html",accounts=accounts)
 
@@ -951,30 +1256,137 @@ def manager_listings_update_number(username,update_number):
     else:
         return "User not found", 404
 
-#Route: Manager view sorting all the authentication assignments
-@app.route('/manager/authentication')
-def manager_auth_assignments():
-    assignments = [
-        {"name": "Item A", "status": "Assigned", "role": "Expert"},
-        {"name": "Item B", "status": "Unassigned"},
-        {"name": "Item C", "status": "Assigned", "role": "Expert"},
-        {"name": "Item D", "status": "Unassigned"}
-    ]
-    return render_template('manager_authentication.html', assignments=assignments)
 
-
-#Route: Manager's view to be able to identify experts availability
 @app.route('/manager/expert_availability')
+@manager_required
 def manager_expert_availability():
-    item = {
 
+    experts = User.query.filter_by(priority=2).all()
+
+    current_time = datetime.utcnow()
+    time_threshold = current_time + timedelta(hours=48)
+
+    # Store experts available in the next 48 hours
+    available_experts_48h = set(
+        slot.user_id
+        for slot in ExpertAvailabilities.query.filter(
+            ExpertAvailabilities.date >= current_time.date(),
+            ExpertAvailabilities.date <= time_threshold.date()
+        ).all()
+    )
+
+    expert_availability = {
+        expert.id: [
+            {
+                "id": slot.availability_id,
+                "date": slot.date.strftime("%Y-%m-%d"),
+                "start_time": slot.start_time.strftime("%I:%M %p"),
+                "duration": slot.duration
+            } for slot in ExpertAvailabilities.query.filter_by(user_id=expert.id).all()
+        ] for expert in experts
     }
 
-    experts = [
+    assigned_items = (
+        db.session.query(Item)
+        .join(WaitingList, Item.item_id == WaitingList.item_id)
+        .filter(Item.expert_id.isnot(None))
+        .all()
+    )
 
-    ]
 
-    return render_template('manager_expert_availability.html', item=item, experts=experts)
+    # Fetch only items that are in the WaitingList
+    unassigned_items = (
+        db.session.query(Item)
+        .join(WaitingList, Item.item_id == WaitingList.item_id)
+        .filter(Item.expert_id.is_(None))
+        .all()
+    )
+
+    # Fetch approved and rejected items that are assigned to an expert AND NOT in the Waiting List
+    approved_items = (
+        db.session.query(Item)
+        .filter(
+            Item.expert_id.isnot(None),
+            Item.approved.is_(True),
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id))  # Exclude items in WaitingList
+        )
+        .all()
+    )
+
+    rejected_items = (
+        db.session.query(Item)
+        .filter(
+            Item.expert_id.isnot(None),
+            Item.approved.is_(False),
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id))  # Exclude items in WaitingList
+        )
+        .all()
+    )
+
+    return render_template(
+        'manager_expert_availability.html',
+        experts=experts,
+        available_experts_48h=available_experts_48h,
+        expert_availability=expert_availability,
+        assigned_items=assigned_items,
+        unassigned_items=unassigned_items,
+        approved_items=approved_items,
+        rejected_items=rejected_items
+)
+
+# ASSIGNING/ UNASSIGN EXPERTS
+
+@app.route('/assign_expert', methods=['POST'])
+@manager_required
+def assign_expert():
+    expert_id = request.form.get('selected_expert')
+    item_id = request.form.get('item_id')
+    selected_time_id = request.form.get('selected_time')
+    expert_payment_percentage = request.form.get('expert_payment_percentage', type=float)
+
+    item = Item.query.get(item_id)
+    selected_time = ExpertAvailabilities.query.filter_by(availability_id=selected_time_id, user_id=expert_id).first()
+
+    if item and selected_time:
+        item.expert_id = expert_id
+        item.date_time = datetime.combine(selected_time.date, selected_time.start_time)  # FIXED: Set date_time
+        item.expert_payment_percentage = expert_payment_percentage  # Save the percentage
+        
+        db.session.delete(selected_time)  # Remove from availability
+        db.session.commit()
+
+        flash(f'Expert assigned successfully for {item.date_time.strftime("%Y-%m-%d %I:%M %p")}', 'success')
+
+    else:
+        flash("Failed to assign expert. Please select an available time slot.", "danger")
+
+    return redirect(url_for('manager_expert_availability'))
+
+@app.route('/unassign_expert', methods=['POST'])
+@manager_required
+def unassign_expert():
+    item_id = request.form.get('item_id')
+    item = Item.query.get(item_id)
+
+    if item and item.expert_id:
+        # Restore the expert's availability
+        restored_availability = ExpertAvailabilities(
+            user_id=item.expert_id,
+            date=item.date_time.date(),
+            start_time=item.date_time.time(),
+            duration=1
+        )
+        db.session.add(restored_availability)
+
+        # Remove expert assignment
+        item.expert_id = None
+        item.date_time = None
+
+        db.session.commit()
+        
+        flash('Expert unassigned successfully! Item has been added back to the waiting list.', 'warning')
+
+    return redirect(url_for('manager_expert_availability'))
 
 
 #Route: Manager view of Items that are approved, recycled, and pending items
@@ -989,7 +1401,26 @@ def manager_overview():
                            rejected_items=[],
                            pending_items=[])
 
-# Route for Manager to Update Fees
+
+@app.route('/update_expert_payment', methods=['POST'])
+@login_required
+def update_expert_payment():
+    if current_user.priority < 2:
+        flash("Unauthorized Action", "danger")
+        return redirect(url_for('index'))
+
+    item_id = request.form.get('item_id')
+    expert_payment_percentage = request.form.get('expert_payment_percentage', type=float)
+
+    item = Item.query.get(item_id)
+
+    if item and item.expert_id:  # Ensure the item is assigned to an expert
+        item.expert_payment_percentage = expert_payment_percentage
+        db.session.commit()
+        flash(f'Expert payment percentage updated to {expert_payment_percentage}%', 'success')
+
+    return redirect(url_for('manager_expert_availability'))
+
 @app.route('/manager/fees', methods=['GET', 'POST'])
 def manager_fees():
     fee_config = FeeConfig.get_current_fees()
@@ -1006,5 +1437,115 @@ def manager_fees():
             flash("Fees updated successfully!", "success")
             
     return render_template("manager_fees.html", fee_config=fee_config)
+
+
+
+
+
+# STRIPE
+
+# Payment for item using stripe route
+@app.route('/pay/<int:item_id>', methods=['POST'])
+@login_required
+def pay_for_item(item_id):
+    """
+    Creates a Stripe Checkout Session for the highest bidder,
+    including the shipping cost in the total payment amount.
+    """
+    item = Item.query.get_or_404(item_id)
+
+    # Get highest bid
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
+    winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
+
+    # Ensure the current user is the highest bidder
+    if not winning_bid or winning_bid.user_id != current_user.id:
+        flash("You are not the winning bidder!", "danger")
+        return redirect(url_for('user_item_details', item_id=item_id))
+
+    # Convert to float to ensure proper calculations
+    bid_price = float(highest_bid)
+    shipping_price = float(item.shipping_cost)
+
+    # Calculate total checkout cost (Winning Bid + Shipping Cost)
+    total_price = bid_price + shipping_price
+
+    # Create Stripe Checkout Session
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price_data': {
+                        'currency': 'gbp',
+                        'product_data': {'name': item.item_name},
+                        'unit_amount': int(bid_price * 100),  # Convert bid price to pence
+                    },
+                    'quantity': 1,
+                },
+                {
+                    'price_data': {
+                        'currency': 'gbp',
+                        'product_data': {'name': 'Shipping Cost'},
+                        'unit_amount': int(shipping_price * 100),  # Convert shipping price to pence
+                    },
+                    'quantity': 1,
+                }
+            ],
+            mode='payment',
+            success_url=url_for('payment_success', item_id=item_id, _external=True),
+            cancel_url=url_for('user_item_details', item_id=item_id, _external=True),
+        )
+        return jsonify({'checkout_url': session.url})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Success route
+@app.route('/payment_success/<int:item_id>')
+@login_required
+def payment_success(item_id):
+    item = Item.query.get_or_404(item_id)
+
+    # Mark item as sold
+    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
+    winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
+
+    if winning_bid and winning_bid.user_id == current_user.id:
+        sold_item = Solditem(
+            item_id=item_id,
+            seller_id=item.seller_id,
+            buyer_id=current_user.id,
+            price=highest_bid
+        )
+        db.session.add(sold_item)
+        db.session.commit()
+        flash("Payment successful! The item has been marked as sold.", "success")
+    else:
+        flash("Payment failed or unauthorized access.", "danger")
+
+    return redirect(url_for('user_home'))
+
+
+
+# API to fetch get remaining time on auction for an item in real time
+@app.route('/get_time_left/<int:item_id>')
+def get_time_left(item_id):
+    """
+    API to fetch remaining time for an item.
+    """
+    item = Item.query.get_or_404(item_id)
+    
+    # Calculate remaining time
+    if item.time_left.total_seconds() > 0:
+        time_left = f"{item.time_left.days} days, {item.time_left.seconds // 3600} hours, {(item.time_left.seconds // 60) % 60} minutes, {item.time_left.seconds % 60} seconds"
+    else:
+        time_left = "Expired"
+
+    return jsonify({"time_left": time_left})
+
+
+
+
 
 

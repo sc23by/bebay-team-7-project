@@ -1,6 +1,48 @@
 {% extends "base_expert.html" %}
 {% block content %}
 
-    <p> Expert Account Page </p>
+<h2>Expert Account Page</h2>
+
+<!-- Approved Items Section -->
+<h3>Approved Items</h3>
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    {% if approved_items %}
+        {% for item in approved_items %}
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
+                        class="card-img-top" alt="{{ item.item_name }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ item.item_name }}</h5>
+                        <p class="card-text">{{ item.description[:100] }}...</p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-muted">No approved items yet.</p>
+    {% endif %}
+</div>
+
+<!-- Rejected Items Section -->
+<h3>Rejected Items</h3>
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    {% if rejected_items %}
+        {% for item in rejected_items %}
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
+                        class="card-img-top" alt="{{ item.item_name }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ item.item_name }}</h5>
+                        <p class="card-text">{{ item.description[:100] }}...</p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-muted">No rejected items yet.</p>
+    {% endif %}
+</div>
 
 {% endblock %}

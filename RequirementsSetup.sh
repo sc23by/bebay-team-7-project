@@ -10,6 +10,7 @@ python3 -m venv flask
 source flask/bin/activate
 
 # Install dependencies
+<<<<<<< HEAD
 pip install flask 
 pip install flask-login 
 pip install flask-mail 
@@ -24,6 +25,23 @@ pip install coverage
 pip install pytest
 pip install matplotlib
 pip install flask-socketio
+=======
+flask/bin/pip install flask 
+flask/bin/pip install flask-login 
+flask/bin/pip install flask-mail 
+flask/bin/pip install flask-sqlalchemy 
+flask/bin/pip install flask-migrate 
+flask/bin/pip install flask-whooshalchemy 
+flask/bin/pip install flask-wtf 
+flask/bin/pip install flask-bcrypt
+flask/bin/pip install flask-babel 
+flask/bin/pip install email_validator 
+flask/bin/pip install coverage 
+flask/bin/pip install pytest
+flask/bin/pip install matplotlib
+flask/bin/pip install flask-socketio
+flask/bin/pip install stripe
+>>>>>>> 6de516a024334d77eee9d410aa49e65c30c0be21
 
 
 flask db init
