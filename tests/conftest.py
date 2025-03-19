@@ -35,8 +35,8 @@ def client():
 @pytest.fixture
 def loggedInClientP1(client):
     with app.app_context():
-        test_user = User(username='testuser',
-                         email='test@example.com',
+        test_user = User(username='testuser1',
+                         email='test1@example.com',
                          password=bcrypt.generate_password_hash('password'),
                          first_name='Test', 
                          last_name='User', 
@@ -46,20 +46,20 @@ def loggedInClientP1(client):
 
     # log in the user
     response = client.post('/login', data={
-        'username': 'testuser',
+        'username': 'testuser1',
         'password': 'password'
     }, follow_redirects=True)
 
     assert response.status_code == 200
-    return client
+    yield client
 
 @pytest.fixture
 def loggedInClientP2(client):
     with app.app_context():
-        test_user = User(username='testuser',
-                         email='test@example.com',
+        test_user = User(username='testuser2',
+                         email='test2@example.com',
                          password=bcrypt.generate_password_hash('password'),
-                         first_name='Test', 
+                         first_name='Test2', 
                          last_name='User', 
                          priority=2)
         db.session.add(test_user)
@@ -67,20 +67,20 @@ def loggedInClientP2(client):
 
     # log in the user
     response = client.post('/login', data={
-        'username': 'testuser',
+        'username': 'testuser2',
         'password': 'password'
     }, follow_redirects=True)
 
     assert response.status_code == 200
-    return client
+    yield client
 
 @pytest.fixture
 def loggedInClientP3(client):
     with app.app_context():
-        test_user = User(username='testuser',
-                         email='test@example.com',
+        test_user = User(username='testuser3',
+                         email='test3@example.com',
                          password=bcrypt.generate_password_hash('password'),
-                         first_name='Test', 
+                         first_name='Test3', 
                          last_name='User', 
                          priority=3)
         db.session.add(test_user)
@@ -88,9 +88,9 @@ def loggedInClientP3(client):
 
     # log in the user
     response = client.post('/login', data={
-        'username': 'testuser',
+        'username': 'testuser3',
         'password': 'password'
     }, follow_redirects=True)
 
     assert response.status_code == 200
-    return client
+    yield client

@@ -61,10 +61,18 @@
 
 <!--Page buttons-->
 <div>
-    <button>&laquo;</button>
-    page
-    <button>&raquo;</button>
+  {% if accounts.has_prev %}
+    <a href="{{ url_for('manager_accounts', page=accounts.prev_num) }}">&laquo; </a>
+  {% endif %}
+
+   Page : {{ accounts.page }} / {{ accounts.pages }}
+
+  {% if accounts.has_next %}
+
+    <a href="{{ url_for('manager_accounts', page=accounts.next_num) }}"> &raquo;</a>
+  {% endif %}
 </div>
+
 
 {% endblock %}
 
