@@ -18,6 +18,13 @@ document.addEventListener("DOMContentLoaded", function() {
                         item_Element.dataset.itemId = item.item_id;
                         item_Element.dataset.price = item.minimum_price;
                         item_Element.dataset.name = item.item_name;
+                        item_Element.dataset.shipping_cost = item.shipping_cost;
+                        item_Element.dataset.current_highest_bid = item.current_highest_bid;
+                        item_Element.dataset.expiration_time = item.expiration_time;
+
+                        let highest_bid = item.current_highest_bid !== null 
+                            ? `${item.current_highest_bid}` 
+                            : "No bids yet";
 
                         // what to print when sorted
                         item_Element.innerHTML = `
@@ -25,8 +32,16 @@ document.addEventListener("DOMContentLoaded", function() {
                                     <img src="/static/images/items/${item.item_image}" class="card-img-top" alt="${item.item_name}">
                                     <div class="card-body">
                                         <h5 class="card-title">${item.item_name}</h5>
-                                        <p class="card-text">Start Time: ${item.date_time}</p>
-                                        <p class="card-text">Price: £${item.minimum_price}</p>
+                                        <p class="card-text">Starting Price: £${item.minimum_price}</p>
+                                        <p class="card-text">Current Highest Bid: £${highest_bid}</p>
+                                        <p class="card-text">Shipping Price: £${ item.shipping_cost }</p>                       
+                                        <p>Time Left: 
+                                            <span class="time_left"
+                                                data-item-id=${ item.item_id }"
+                                                data-expiration="${ item.expiration_time }">
+                                            </span>
+                                        </p>    
+                                        ${item.approved ? `<span class="badge bg-success">Approved</span>` : ""}
                                         <a href="/user/item_details/${item.item_id}" class="btn btn-primary">
                                             View Details
                                         </a>
@@ -42,6 +57,8 @@ document.addEventListener("DOMContentLoaded", function() {
                         `;
                         container.appendChild(item_Element);
                     });
+                    updateCountdown();
+                    sendExpirationNotification(itemId);
                 });
         });
     }   

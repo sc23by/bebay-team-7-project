@@ -535,7 +535,9 @@ def watchlist():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    return render_template('user_watchlist.html', pagetitle='Watchlist', form=form, watched_items = watched_items)
+    item_bids = {item.item_id: item.highest_bid() for item in watched_items}
+
+    return render_template('user_watchlist.html', pagetitle='Watchlist', form=form, watched_items=watched_items, item_bids=item_bids)
 
 # Route: Sort watchlist items
 @app.route('/user/sort_watchlist', methods=['GET'])
@@ -550,6 +552,8 @@ def sort_watchlist():
     # query the items in the user's watchlist
     items = db.session.query(Item).join(Watched_item).filter(Watched_item.c.user_id == current_user.id)
 
+    item_bids = {item.item_id: item.highest_bid() for item in items}
+
     if sort_by == "min_price":
         sorted_items = items.order_by(Item.minimum_price.asc()).all()
     elif sort_by == "name_asc":
@@ -558,16 +562,20 @@ def sort_watchlist():
         sorted_items = items.all()
 
     # Convert to JSON format
-    Watched_items = [{
+    watched_items = [{
         "item_id": item.item_id,
         "item_name": item.item_name,
-        "minimum_price": str(item.minimum_price),  # Convert Decimal to string
-        "date_time": item.date_time.strftime('%H:%M'),
+        "minimum_price": str(item.minimum_price),
+        "shipping_cost": str(item.shipping_cost),
         "item_image": item.item_image,
+        "current_highest_bid": str(item_bids[item.item_id]) if item_bids[item.item_id] else "No bids yet",
+        # iso format
+        "expiration_time": item.expiration_time.isoformat(), 
+        "approved": item.approved,
         "is_watched": True
     } for item in sorted_items]
 
-    return jsonify(Watched_items)
+    return jsonify(watched_items)
 
 # Route: Notifications
 @app.route('/user/notifications', methods=['GET', 'POST'])

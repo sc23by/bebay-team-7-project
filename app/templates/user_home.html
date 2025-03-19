@@ -19,12 +19,6 @@
                         class="card-img-top" alt="{{ item.item_name }}">
                     <div class="card-body">
                         <h5 class="card-title">{{ item.item_name }}</h5>
-                        <!--
-                            <p class="card-text">Description: {{ item.description }}</p>
-                        -->
-                        {% if item.approved %}
-                            <span class="badge bg-success">Approved</span>
-                        {% endif %}
                         <p class="card-text">Starting Price: £{{ item.minimum_price }}</p>
                         <p class="card-text">Current Highest Bid: 
                             {% if item_bids[item.item_id] is none %}
@@ -33,15 +27,16 @@
                                 £{{ item_bids[item.item_id] }}
                             {% endif %}
                         </p>
-                        <p class="card-text">Shipping Price: £{{ item.shipping_cost }}</p>
-                        
+                        <p class="card-text">Shipping Price: £{{ item.shipping_cost }}</p>                       
                         <p>Time Left: 
                             <span class="time_left"
                                   data-item-id="{{ item.item_id }}"
                                   data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
                             </span>
                         </p>    
-                        
+                        {% if item.approved %}
+                            <span class="badge bg-success">Approved</span>
+                        {% endif %}
                         <a href="{{ url_for('user_item_details', item_id=item.item_id) }}" class="btn btn-primary">
                             View Details
                         </a>
@@ -62,7 +57,7 @@
             </div>
             {% endfor %}
         {% else %}
-            <p class="text-center text-muted">No items listed</p>
+            <p class="text-center text-muted">List an item today!</p>
         {% endif %}
     </div>
 
