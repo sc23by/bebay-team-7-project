@@ -1,4 +1,4 @@
-<!-- User Listings Page, see listed items -->
+<!-- User Bids Page, see items bidded on by user -->
 {% extends 'base_user.html' %}
 {% block content %}
 <body class="container-fluid bg-light">
@@ -7,7 +7,7 @@
         <!-- Sidebar -->
         <div class="col-md-3 col-lg-2 bg-white shadow-sm p-4">
             <div class="d-grid gap-2">
-                <form action="{{ url_for('my_listings') }}" method="post">
+                <form action="{{ url_for('my_bids') }}" method="post">
                     {{ form.hidden_tag() }}
 
                     <div>{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
@@ -22,11 +22,11 @@
 
         <!-- Content Area -->
         <div class="col-md-9 col-lg-10 p-5">
-            <h2 class="mb-4">My Listings</h2>
+            <h2 class="mb-4">My Bids</h2>
 
-            {% if items %}
+            {% if bidded_items %}
                 <div class="row row-cols-3 row-cols-md-5 g-4">
-                    {% for item in items %}
+                    {% for item in bidded_items %}
                     <div class="col">
                         <div class="card h-100">
                             <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 

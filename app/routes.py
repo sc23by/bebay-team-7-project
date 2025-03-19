@@ -420,6 +420,8 @@ def account():
     if sidebar_form.validate_on_submit() :
         if sidebar_form.info.data:
             return redirect(url_for("account"))
+        elif sidebar_form.my_bids.data:
+            return redirect(url_for("my_bids"))
         elif sidebar_form.my_listings.data:
             return redirect(url_for("my_listings"))
         elif sidebar_form.watchlist.data:
@@ -523,6 +525,40 @@ def account():
     return render_template('user_account.html', pagetitle='Account', sidebar_form=sidebar_form, info_form=info_form, 
         username_form=username_form, email_form=email_form, password_form=password_form, card_form=card_form)
 
+# Route: My Bids
+@app.route('/user/my_bids', methods=['GET', 'POST'])
+@user_required
+def my_bids():
+    """
+    Redirects to my listings page, has buttons to other pages.
+    """
+    form = SideBarForm()
+
+    if form.validate_on_submit():
+        if form.info.data:
+            return redirect(url_for("account"))
+        elif form.my_bids.data:
+            return redirect(url_for("my_bids"))
+        elif form.my_listings.data:
+            return redirect(url_for("my_listings"))
+        elif form.watchlist.data:
+            return redirect(url_for("watchlist"))
+        elif form.notifications.data:
+            return redirect(url_for("notifications"))
+        elif form.logout.data:
+            return redirect(url_for("logout"))
+
+
+    user = User.query.get(current_user.id)
+    bidded_items = Item.query.join(Bid).filter(Bid.user_id == user.id).all()
+
+    print(bidded_items)
+
+    item_bids = {item.item_id: item.highest_bid() for item in bidded_items}
+
+    return render_template('user_my_bids.html', pagetitle='Bidded Items', form=form, bidded_items=bidded_items, item_bids=item_bids)
+
+
 # Route: My Listings
 @app.route('/user/my_listings', methods=['GET', 'POST'])
 @user_required
@@ -535,6 +571,8 @@ def my_listings():
     if form.validate_on_submit():
         if form.info.data:
             return redirect(url_for("account"))
+        elif form.my_bids.data:
+            return redirect(url_for("my_bids"))
         elif form.my_listings.data:
             return redirect(url_for("my_listings"))
         elif form.watchlist.data:
@@ -569,6 +607,8 @@ def watchlist():
     if form.validate_on_submit():
         if form.info.data:
             return redirect(url_for("account"))
+        elif form.my_bids.data:
+            return redirect(url_for("my_bids"))
         elif form.my_listings.data:
             return redirect(url_for("my_listings"))
         elif form.watchlist.data:
@@ -631,6 +671,8 @@ def notifications():
     if form.validate_on_submit():
         if form.info.data:
             return redirect(url_for("account"))
+        elif form.my_bids.data:
+            return redirect(url_for("my_bids"))
         elif form.my_listings.data:
             return redirect(url_for("my_listings"))
         elif form.watchlist.data:

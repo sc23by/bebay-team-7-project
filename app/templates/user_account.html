@@ -10,6 +10,7 @@
                 <form action="{{ url_for('account') }}" method="post">
                     {{ sidebar_form.hidden_tag() }}
                     <div>{{ sidebar_form.info(class="btn btn-outline-secondary custom-button") }}</div>
+                    <div>{{ sidebar_form.my_bids(class="btn btn-outline-secondary custom-button") }}</div>
                     <div>{{ sidebar_form.my_listings(class="btn btn-outline-secondary custom-button") }}</div>
                     <div>{{ sidebar_form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
                     <div>{{ sidebar_form.notifications(class="btn btn-outline-secondary custom-button") }}</div>

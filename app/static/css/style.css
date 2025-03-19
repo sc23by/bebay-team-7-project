@@ -15,7 +15,7 @@
 
 .expired-item {
     opacity: 0.5;
-    /* Prevents interaction */
+    /* can no longer interact with item */
     pointer-events: none;
     filter: grayscale(100%);
 }

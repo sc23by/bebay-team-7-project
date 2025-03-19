@@ -40,16 +40,19 @@
                         <a href="{{ url_for('user_item_details', item_id=item.item_id) }}" class="btn btn-primary">
                             View Details
                         </a>
-                        {% if item in current_user.watchlist %}
-                            <span class="fa fa-heart selected" data-value="{{ current_user.watchlist | default(0) }}"
-                                data-item-id="{{ item.item_id }}"></span>
-                            <input type="hidden" id="heart_Value" name="watch" value="1">
-                            <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
-                        {% else %}
-                            <span class="fa fa-heart " data-value="{{ current_user.watchlist | default(0) }}"
-                                data-item-id="{{ item.item_id }}"></span>
-                            <input type="hidden" id="heart_Value" name="watch" value="0">
-                            <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
+
+                        {% if item.seller_id != current_user.id %}
+                            {% if item in current_user.watchlist %}
+                                <span class="fa fa-heart selected" data-value="{{ current_user.watchlist | default(0) }}"
+                                    data-item-id="{{ item.item_id }}"></span>
+                                <input type="hidden" id="heart_Value" name="watch" value="1">
+                                <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
+                            {% else %}
+                                <span class="fa fa-heart " data-value="{{ current_user.watchlist | default(0) }}"
+                                    data-item-id="{{ item.item_id }}"></span>
+                                <input type="hidden" id="heart_Value" name="watch" value="0">
+                                <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
+                            {% endif %}
                         {% endif %}
 
                     </div>
