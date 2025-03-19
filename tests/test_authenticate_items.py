@@ -188,3 +188,42 @@ def test_expert_vue_assignment(loggedInClientP2):
     response = loggedInClientP2.get("/expert/assignments")
     assert response.status_code == 200
     assert b"apel" in response.data
+
+
+def test_expert_aprove(loggedInClientP2):
+    print(f"{Colours.YELLOW}Testing authenticate items - expert can aprove items:{Colours.RESET}")
+
+    with app.app_context():
+        item = Item(
+            item_id = 1,
+            seller_id=1,
+            item_name="apel",
+            description="Wow what an item",
+            minimum_price=10.99,
+            shipping_cost=5.50,
+            days=3,
+            hours=2,
+            minutes=30,
+            item_image="test_image.jpg",
+            date_time=None, # not authenticated yet
+            expiration_time=None, # not authenticated yet
+            approved=False,
+            expert_payment_percentage=10.0,
+            site_fee_percentage=1.0,
+            expert_fee_percentage=4.0,
+            sold=False,
+            expert = current_user)
+        
+        db.session.add(item)
+        db.session.commit()
+
+        waiting_list_entry = WaitingList(item_id=item.item_id)
+        db.session.add(waiting_list_entry)
+        db.session.commit()
+            
+    response = loggedInClientP2.post("/expert/approve_item/1")
+    assert response.status_code == 302
+
+    with app.app_context():
+        waiting_list_item = WaitingList.query.filter_by(item_id=1).first()
+        assert waiting_list_item is None
