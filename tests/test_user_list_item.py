@@ -1,7 +1,7 @@
 # test list item route
 
 from app import app, db
-from app.models import Item, Watched_item
+from app.models import Item
 import io
 # import for direct file upload in testing
 from werkzeug.datastructures import FileStorage
