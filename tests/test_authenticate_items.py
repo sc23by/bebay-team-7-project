@@ -227,3 +227,5 @@ def test_expert_aprove(loggedInClientP2):
     with app.app_context():
         waiting_list_item = WaitingList.query.filter_by(item_id=1).first()
         assert waiting_list_item is None
+        item = Item.query.filter_by(item_id=1).first()
+        assert item.approved == True
