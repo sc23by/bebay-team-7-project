@@ -289,7 +289,7 @@ def user_home():
     
     item_bids = {item.item_id: item.highest_bid() for item in items}
     
-    return render_template('user_home.html', pagetitle='User Home', items = items, item_bids = item_bids)
+    return render_template('user_home.html', pagetitle='User Home', items=items, item_bids = item_bids)
 
 # Route: Search in navbar
 @app.route('/user/search', methods = ['GET'])
@@ -346,20 +346,31 @@ def sort_items():
 
     # query the items on the main page
     if sort_by == "min_price":
-        sorted_items = Item.query.order_by(Item.minimum_price.asc()).all()
+        sorted_items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+        ).order_by(Item.minimum_price.asc()).all()
     elif sort_by == "name_asc":
-        sorted_items = Item.query.order_by(Item.item_name.asc()).all()
+        sorted_items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+        ).order_by(Item.item_name.asc()).all()
     else:
-        sorted_items = Item.query.all()
+        sorted_items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+        ).all()
 
+    item_bids = {item.item_id: item.highest_bid() for item in sorted_items}
+    
+    # Convert to JSON format
     # Convert to JSON format
     items = [{
         "item_id": item.item_id,
         "item_name": item.item_name,
-        "description": item.description,
-        "minimum_price": str(item.minimum_price),  # Convert Decimal to string
-        "shipping_cost": str(item.shipping_cost), 
+        "minimum_price": str(item.minimum_price),
+        "shipping_cost": str(item.shipping_cost),
         "item_image": item.item_image,
+        "current_highest_bid": str(item_bids[item.item_id]) if item_bids[item.item_id] else "No bids yet",
+        "approved": item.approved,
+        "expiration_time": str(item.expiration_time) ,
         "is_watched": True
     } for item in sorted_items]
 

@@ -7,7 +7,6 @@ document.addEventListener("DOMContentLoaded", function() {
             fetch(`/user/sort_items?sort=${selected}`)
                 .then(response => response.json() )
                 .then(data => {
-                    console.log("Fetch response received", data); // ✅ Check if response is correct
                     let container = document.getElementById("items_sort");
                     // Clear previous items
                     container.innerHTML = ""; 
@@ -19,8 +18,11 @@ document.addEventListener("DOMContentLoaded", function() {
                         item_Element.dataset.itemId = item.item_id;
                         item_Element.dataset.price = item.minimum_price;
                         item_Element.dataset.name = item.item_name;
-                        item_Element.dataset.description = item.description;
                         item_Element.dataset.shipping_cost = item.shipping_cost;
+                        item_Element.dataset.current_highest_bid = item.current_highest_bid;
+                        item_Element.dataset.expiration = item.expiration_time;
+
+                        updateCountdown();
 
                         let highest_bid = item.current_highest_bid !== null 
                             ? `${item.current_highest_bid}` 
@@ -34,11 +36,11 @@ document.addEventListener("DOMContentLoaded", function() {
                                         <h5 class="card-title">${item.item_name}</h5>
                                         <p class="card-text">Starting Price: £${item.minimum_price}</p>
                                         <p class="card-text">Current Highest Bid: £${highest_bid}</p>
-                                        <p class="card-text">Shipping Price: £{ item.shipping_cost }}</p>                       
+                                        <p class="card-text">Shipping Price: £${ item.shipping_cost }}</p>                       
                                         <p>Time Left: 
                                             <span class="time_left"
                                                 data-item-id=${ item.item_id }"
-                                                data-expiration="${ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }">
+                                                data-expiration="${ item.expiration_time }">
                                             </span>
                                         </p>    
                                         ${item.approved ? `<span class="badge bg-success">Approved</span>` : ""}
@@ -59,9 +61,6 @@ document.addEventListener("DOMContentLoaded", function() {
                         container.appendChild(item_Element);
                     });  
                 })
-                .catch(error => {
-                    console.error('Error during fetch operation:', error);
-                });
         });
     }   
 });

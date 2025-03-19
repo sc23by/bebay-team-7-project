@@ -16,8 +16,6 @@ function updateCountdown() {
         var seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
 
         element.innerText = `${days}d ${hours}h ${minutes}m ${seconds}s`;
-        console.log(`Updating: ${days}d ${hours}h ${minutes}m ${seconds}s`); // Debugging
-
     });
 }
 
