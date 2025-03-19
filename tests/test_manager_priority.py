@@ -52,7 +52,7 @@ def test_manager_account_change_priority_invalid(loggedInClientP3):
         username = user.username
 
     response = loggedInClientP3.get(f'/manager/accounts/{username}/5')
-    assert response.status_code == 302
+    assert response.status_code == 404
 
     with app.app_context():
         updated_user = User.query.filter_by(username=username).first()

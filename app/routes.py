@@ -1187,7 +1187,7 @@ def manager_accounts_update_number(username,update_number):
 
     account = User.query.filter_by(username=username).first()
     
-    if account:
+    if account and (1<= update_number <=3) :
         account.priority = update_number
         db.session.commit()
 
