@@ -1034,7 +1034,6 @@ def manager_statistics():
 
     plt.xlabel('Week')
     plt.ylabel('GBP')
-    plt.title('Weekly Revenue')
 
 
     img = io.BytesIO()
@@ -1160,7 +1159,6 @@ def manager_statistics_cost():
 
     plt.xlabel('Week')
     plt.ylabel('GBP')
-    plt.title('Weekly Cost')
 
     img = io.BytesIO()
     plt.savefig(img,format='png')
