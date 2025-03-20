@@ -21,7 +21,11 @@
     </p>
     <p>Shipping Price: £{{ item.shipping_cost }}</p>
     <p>Listing Time: {{ item.date_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+    {% if expiration_time %}
     <p>Expires On: {{ item.expiration_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+    {% else %}
+    <p>No expiration time set.</p>
+    {% endif %}
 
     <p>Time Left: 
         <span class="time_left"
