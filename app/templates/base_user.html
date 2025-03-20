@@ -24,19 +24,20 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 
     <nav class="navbar navbar-expand-sm navbar-tertiary bg-body-tertiary">
-        <a class="navbar-brand" href="{{ url_for('user_home')}}">Bebay</a>
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('user_home')}}">Bebay</a>
 
-        <!--Hides nav bar on smaller screens and creates a sidebar -->
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+            <!--Hides nav bar on smaller screens and creates a sidebar -->
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
 
             <!-- Search Bar -->
             <div class="collapse navbar-collapse d-flex justify-content-center mx-auto">
-                <form class="d-flex mx-auto" role="search">
+                <form class="d-flex mx-auto" action="{{url_for('search')}}" role="search">
                     <input class="form-control me-2 search" type="search" placeholder="Search" aria-label="Search">
                     <button class="search-button" type="submit">🔍</button>
                 </form>
