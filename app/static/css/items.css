@@ -1,0 +1,66 @@
+.gallery {
+    padding: 10px ;
+}
+
+.col {
+    padding-left: 15px;
+}
+
+.card-img-top {
+    max-height: 250px;
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    background-color: rgb(243, 242, 242);
+}
+
+.card-body {
+    text-align: center;
+    text-wrap: wrap;
+}
+
+.countdown {
+    font-weight: bold;
+    color: #e90e0e;
+}
+
+.shipping {
+    color: rgb(110, 110, 110);
+    font-style: italic;
+}
+
+.fa-heart {
+    font-size: 2em;
+    direction: rtl;
+    cursor: pointer;
+    /* allows for heart to overlay image */
+    position: absolute;
+    top: 10px; 
+    right: 10px;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.686);
+    border-radius: 20px;
+    padding: 5px 8px;
+    transition: all 0.3s ;
+}
+
+.fa-heart.selected {
+    color: rgb(206, 15, 15);
+}
+
+.fa-heart.hover {
+    color: rgb(206, 15, 15);
+}
+
+.expired-item {
+    opacity: 0.8;
+    pointer-events: none; /* can no longer interact with item */
+    filter: grayscale(100%);
+}
+
+.expired-text {
+    font-weight: bold;
+    color: gray;
+}
+

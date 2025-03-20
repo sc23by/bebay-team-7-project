@@ -1,21 +1,9 @@
 {% extends "base_user.html" %}
 {% block content %}
 <div class="container">
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        <div>
-        {% for category, message in messages %}
-            <div>{{ message }}</div>
-        {% endfor %}
-        </div>
+    {% if item.approved %}
+        <span class="badge bg-success">Approved</span>
     {% endif %}
-    {% endwith %}
-    <h2>{{ item.item_name }}
-
-        {% if item.approved %}
-            <span class="badge bg-success">Approved</span>
-        {% endif %}
     </h2>
     <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
          class="img-fluid" alt="{{ item.item_name }}">

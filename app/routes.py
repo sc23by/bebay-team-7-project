@@ -288,24 +288,6 @@ def messages():
     ).order_by(UserMessage.timestamp).all()
     return render_template('messages.html', messages=messages)
 
-@socketio.on('send_message')
-def handle_send_message(data):
-    # Create a new message using the UserMessage model
-    print("Received send_message with data:", data)  # Debug print
-    message = UserMessage(
-        sender_id=data['sender_id'],
-        recipient_id=data['recipient_id'],
-        content=data['content']
-    )
-    db.session.add(message)
-    db.session.commit()
-    # Broadcast the message back to clients
-    socketio.emit('receive_message', {
-        'sender_id': data['sender_id'],
-        'recipient_id': data['recipient_id'],
-        'content': data['content'],
-        'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
-    })
 
 # User Pages
 
@@ -319,10 +301,11 @@ def user_home():
     # Get highest bid for each item
     item_bids = {item.item_id: item.highest_bid() for item in items}
 
-    return render_template('user_home.html', pagetitle='User Home', items=items, item_bids=item_bids, now=datetime.utcnow())
+    return render_template('user_home.html', pagetitle='User Home', items=items, item_bids=item_bids)
 
 # Route: Search in navbar
 @app.route('/user/search', methods = ['GET'])
+@user_required
 def search():
     search_query = request.args.get('query', '').strip()
 
@@ -376,20 +359,37 @@ def sort_items():
 
     # query the items on the main page
     if sort_by == "min_price":
-        sorted_items = Item.query.order_by(Item.minimum_price.asc()).all()
+        sorted_items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+        ).order_by(Item.minimum_price.asc()).all()
     elif sort_by == "name_asc":
-        sorted_items = Item.query.order_by(Item.item_name.asc()).all()
+        sorted_items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+        ).order_by(Item.item_name.asc()).all()
+    elif sort_by == "unexpired":
+        items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)), Item.sold == False).all()
+        sorted_items = [item for item in items if item.time_left != 0]
     else:
-        sorted_items = Item.query.all()
+        sorted_items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+        ).all()
 
+    item_bids = {item.item_id: item.highest_bid() for item in sorted_items}
+    
+    # Convert to JSON format
     # Convert to JSON format
     items = [{
         "item_id": item.item_id,
         "item_name": item.item_name,
-        "description": item.description,
-        "minimum_price": str(item.minimum_price),  # Convert Decimal to string
-        "shipping_cost": str(item.shipping_cost), 
+        "minimum_price": str(item.minimum_price),
+        "shipping_cost": str(item.shipping_cost),
         "item_image": item.item_image,
+         "current_highest_bid": str(item_bids.get(item.item_id, "No bids yet")),
+        "approved": item.approved,
+        "expiration_time": str(item.expiration_time),
+        "time_left" : item.time_left.total_seconds(),
+        "seller_id" : item.seller_id,
         "is_watched": True
     } for item in sorted_items]
 
@@ -397,7 +397,7 @@ def sort_items():
 
 # Route: Account
 @app.route('/user/account', methods=['GET', 'POST'])
-@login_required
+@user_required
 def account():
     """
     Redirects to account page, has buttons to other pages and user information.
@@ -407,6 +407,8 @@ def account():
     if sidebar_form.validate_on_submit() :
         if sidebar_form.info.data:
             return redirect(url_for("account"))
+        elif sidebar_form.my_bids.data:
+            return redirect(url_for("my_bids"))
         elif sidebar_form.my_listings.data:
             return redirect(url_for("my_listings"))
         elif sidebar_form.watchlist.data:
@@ -510,6 +512,40 @@ def account():
     return render_template('user_account.html', pagetitle='Account', sidebar_form=sidebar_form, info_form=info_form, 
         username_form=username_form, email_form=email_form, password_form=password_form, card_form=card_form)
 
+# Route: My Bids
+@app.route('/user/my_bids', methods=['GET', 'POST'])
+@user_required
+def my_bids():
+    """
+    Redirects to my listings page, has buttons to other pages.
+    """
+    form = SideBarForm()
+
+    if form.validate_on_submit():
+        if form.info.data:
+            return redirect(url_for("account"))
+        elif form.my_bids.data:
+            return redirect(url_for("my_bids"))
+        elif form.my_listings.data:
+            return redirect(url_for("my_listings"))
+        elif form.watchlist.data:
+            return redirect(url_for("watchlist"))
+        elif form.notifications.data:
+            return redirect(url_for("notifications"))
+        elif form.logout.data:
+            return redirect(url_for("logout"))
+
+
+    user = User.query.get(current_user.id)
+    bidded_items = Item.query.join(Bid).filter(Bid.user_id == user.id).all()
+
+    print(bidded_items)
+
+    item_bids = {item.item_id: item.highest_bid() for item in bidded_items}
+
+    return render_template('user_my_bids.html', pagetitle='Bidded Items', form=form, bidded_items=bidded_items, item_bids=item_bids)
+
+
 # Route: My Listings
 @app.route('/user/my_listings', methods=['GET', 'POST'])
 @user_required
@@ -522,6 +558,8 @@ def my_listings():
     if form.validate_on_submit():
         if form.info.data:
             return redirect(url_for("account"))
+        elif form.my_bids.data:
+            return redirect(url_for("my_bids"))
         elif form.my_listings.data:
             return redirect(url_for("my_listings"))
         elif form.watchlist.data:
@@ -556,6 +594,8 @@ def watchlist():
     if form.validate_on_submit():
         if form.info.data:
             return redirect(url_for("account"))
+        elif form.my_bids.data:
+            return redirect(url_for("my_bids"))
         elif form.my_listings.data:
             return redirect(url_for("my_listings"))
         elif form.watchlist.data:
@@ -565,7 +605,9 @@ def watchlist():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    return render_template('user_watchlist.html', pagetitle='Watchlist', form=form, watched_items = watched_items)
+    item_bids = {item.item_id: item.highest_bid() for item in watched_items}
+
+    return render_template('user_watchlist.html', pagetitle='Watchlist', form=form, watched_items=watched_items, item_bids=item_bids)
 
 # Route: Sort watchlist items
 @app.route('/user/sort_watchlist', methods=['GET'])
@@ -580,28 +622,38 @@ def sort_watchlist():
     # query the items in the user's watchlist
     items = db.session.query(Item).join(Watched_item).filter(Watched_item.c.user_id == current_user.id)
 
+    item_bids = {item.item_id: item.highest_bid() for item in items}
+
     if sort_by == "min_price":
         sorted_items = items.order_by(Item.minimum_price.asc()).all()
     elif sort_by == "name_asc":
         sorted_items = items.order_by(Item.item_name.asc()).all()
-    else:
+    elif sort_by == "unexpired":
+        items = db.session.query(Item).filter(Item.sold == False).all()
+        sorted_items = [item for item in items if item.time_left != 0]
+    else :
         sorted_items = items.all()
 
     # Convert to JSON format
-    Watched_items = [{
+    watched_items = [{
         "item_id": item.item_id,
         "item_name": item.item_name,
-        "minimum_price": str(item.minimum_price),  # Convert Decimal to string
-        "date_time": item.date_time.strftime('%H:%M'),
+        "minimum_price": str(item.minimum_price),
+        "shipping_cost": str(item.shipping_cost),
         "item_image": item.item_image,
+        "current_highest_bid": str(item_bids.get(item.item_id, "No bids yet")),
+        "approved": item.approved,
+        "expiration_time": str(item.expiration_time) ,
+        "time_left" : item.time_left.total_seconds(),
+        "seller_id" : item.seller_id,
         "is_watched": True
     } for item in sorted_items]
 
-    return jsonify(Watched_items)
+    return jsonify(watched_items)
 
 # Route: Notifications
 @app.route('/user/notifications', methods=['GET', 'POST'])
-@user_required
+@login_required
 def notifications():
     """
     Redirects to my notifications page, has buttons to other pages.
@@ -611,6 +663,8 @@ def notifications():
     if form.validate_on_submit():
         if form.info.data:
             return redirect(url_for("account"))
+        elif form.my_bids.data:
+            return redirect(url_for("my_bids"))
         elif form.my_listings.data:
             return redirect(url_for("my_listings"))
         elif form.watchlist.data:
@@ -621,14 +675,32 @@ def notifications():
             return redirect(url_for("logout"))
 
     notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.timestamp.desc()).all()
-    Notification.query.filter_by(user_id=current_user.id, read=False).update({"read": True})
     db.session.commit()
  
     return render_template('user_notifications.html', pagetitle='Notifications', form=form, notifications=notifications)
 
+# Route: Mark read notifications as read
+@app.route('/mark_notifications_as_read')
+@login_required
+def mark_notifications_as_read():
+    """
+    Marks all unread notifications for the user as read.
+    This is triggered AFTER the page has loaded.
+    """
+    unread_notifications = Notification.query.filter_by(user_id=current_user.id, read=False).all()
+
+    for notification in unread_notifications:
+        notification.read = True
+
+    db.session.commit()
+
+    # Return a blank response (so the browser doesn't show anything)
+    return '', 204
+
+
 # Route: Delete Notification
 @app.route('/notification/delete/<int:notification_id>', methods=['GET', 'POST'])
-@login_required
+@user_required
 def delete_notification(notification_id):
     notification = Notification.query.get_or_404(notification_id)
     
@@ -727,6 +799,7 @@ def user_item_details(item_id):
 
 # Route: Placing a bid
 @socketio.on('new_bid')
+@user_required
 def handle_new_bid(data):
     """Handle new bid via WebSocket."""
     item_id = data.get('item_id')
@@ -867,6 +940,116 @@ def reassign_item(item_id):
     flash("Expert unassigned successfully.", "warning")
 
     return redirect(url_for('expert_assignments'))
+
+@app.route('/expert/message_seller/<int:item_id>', methods=['GET', 'POST'])
+@expert_required
+def expert_message_seller(item_id):
+    """
+    Allows an expert to send a private message to the seller of an item.
+    """
+    item = Item.query.get_or_404(item_id)
+    seller = item.seller  # Retrieve the seller's user object
+
+    if request.method == 'POST':
+        message_content = request.form.get('message')
+
+        if message_content:
+            new_message = UserMessage(
+                sender_id=current_user.id,
+                recipient_id=seller.id,
+                content=message_content
+            )
+            db.session.add(new_message)
+            db.session.commit()
+            flash("Message sent successfully!", "success")
+            return redirect(url_for('expert_assignments'))
+
+    return render_template('expert_messaging.html', item=item, seller=seller)
+
+# Route: Inbox for all users
+@app.route('/inbox')
+@login_required
+def inbox():
+    """
+    Display unique conversations where the logged-in user is involved.
+    Show the most recent message for each sender-item combination,
+    even if the user was the sender and has not received a reply yet.
+    """
+    # Get the latest message from each user-item combination
+    latest_messages = db.session.query(
+        UserMessage.sender_id,
+        UserMessage.recipient_id,
+        UserMessage.item_id,
+        db.func.max(UserMessage.timestamp).label('latest_time')
+    ).filter(
+        (UserMessage.recipient_id == current_user.id) | (UserMessage.sender_id == current_user.id)  # Include both sent and received messages
+    ).group_by(UserMessage.sender_id, UserMessage.recipient_id, UserMessage.item_id) \
+     .subquery()
+
+    # Fetch actual messages using the latest timestamp
+    messages = db.session.query(UserMessage).join(
+        latest_messages,
+        (UserMessage.sender_id == latest_messages.c.sender_id) &
+        (UserMessage.recipient_id == latest_messages.c.recipient_id) &
+        (UserMessage.item_id == latest_messages.c.item_id) &
+        (UserMessage.timestamp == latest_messages.c.latest_time)
+    ).order_by(UserMessage.timestamp.desc()).all()
+
+    return render_template('inbox.html', messages=messages)
+
+# Route: Chat
+@app.route('/chat/<int:user_id>/<int:item_id>', methods=['GET', 'POST'])
+@login_required
+def chat(user_id, item_id):
+    """
+    Show conversation history with a specific user for a specific item.
+    Allow sending replies.
+    """
+    recipient = User.query.get_or_404(user_id)
+    item = Item.query.get_or_404(item_id)
+
+    # Fetch messages **only** for this user & item
+    messages = UserMessage.query.filter(
+        ((UserMessage.sender_id == current_user.id) & (UserMessage.recipient_id == user_id) & (UserMessage.item_id == item_id)) |
+        ((UserMessage.sender_id == user_id) & (UserMessage.recipient_id == current_user.id) & (UserMessage.item_id == item_id))
+    ).order_by(UserMessage.timestamp).all()
+
+    # Mark received messages as read
+    unread_messages = UserMessage.query.filter(
+        UserMessage.sender_id == user_id,
+        UserMessage.recipient_id == current_user.id,
+        UserMessage.item_id == item_id,
+        UserMessage.read == False
+    ).all()
+    for msg in unread_messages:
+        msg.read = True
+    db.session.commit()
+
+    # Handle reply submission
+    if request.method == "POST":
+        message_content = request.form.get("message")
+        if message_content:
+            new_message = UserMessage(
+                sender_id=current_user.id,
+                recipient_id=user_id,
+                item_id=item_id,
+                subject=f"{item.item_name}",
+                content=message_content,
+                read=False
+            )
+            db.session.add(new_message)
+
+            # Create a notification for the recipient
+            notification = Notification(
+                user_id=user_id,
+                message=f"You have a new message from {current_user.username} about '{item.item_name}'."
+            )
+            db.session.add(notification)
+
+            db.session.commit()
+            return redirect(url_for('chat', user_id=user_id, item_id=item_id))  # Refresh chat page
+
+    return render_template('chat.html', messages=messages, recipient=recipient, item=item)
 
 #Route: Expert Messaging Page
 @app.route('/expert/messaging')
@@ -1048,6 +1231,7 @@ def manager_statistics():
 
 # FIXME - choose a maethod of selecting expert fee
 @app.route('/manager/statistics/edit',methods=['GET','POST'])
+@manager_required
 def manager_statistics_edit():
 
     if request.method == 'POST':
@@ -1071,6 +1255,7 @@ def manager_statistics_edit():
 # FIXME - choose a maethod of selecting expert fee
 
 @app.route('/manager/statistics/cost',methods=['GET','POST'])
+@manager_required
 def manager_statistics_cost():
 
     total_revenue = 0
@@ -1173,6 +1358,7 @@ def manager_statistics_cost():
 
 #Route: Manager Account Page
 @app.route('/manager/accounts',methods=['GET','POST'])
+@manager_required
 def manager_accounts():
     page = request.args.get('page',1,type=int)
     
@@ -1180,7 +1366,9 @@ def manager_accounts():
 
     return render_template("manager_accounts.html",accounts=accounts)
 
+#Route: Updates priority
 @app.route('/manager/accounts/<username>/<int:update_number>',methods=['GET','POST'])
+@manager_required
 def manager_accounts_update_number(username,update_number):
 
     account = User.query.filter_by(username=username).first()
@@ -1193,17 +1381,23 @@ def manager_accounts_update_number(username,update_number):
     else:
         return "Error", 404
 
+#Route: Sorts Accounts
 @app.route('/manager/accounts/sort/low_high',methods=['GET','POST'])
+@manager_required
 def manager_accounts_sort_low_high():
     accounts = User.query.order_by(User.username).all()
     return render_template('manager_accounts.html',accounts = accounts)
 
+#Route: Sorts Accounts
 @app.route('/manager/accounts/sort/high_low',methods=['GET','POST'])
+@manager_required
 def manager_accounts_sort_high_low():
     accounts = User.query.order_by(desc(User.username)).all()
     return render_template('manager_accounts.html',accounts = accounts)
 
+#Route: Filters Accounts by Priority
 @app.route('/manager/accounts/filter/<int:filter_number>',methods=['GET','POST'])
+@manager_required
 def manager_accounts_filter(filter_number):
     filtered_accounts = User.query.filter(User.priority == filter_number).all()
 
@@ -1212,8 +1406,9 @@ def manager_accounts_filter(filter_number):
 
     return render_template("manager_accounts.html",accounts = filtered_accounts) 
    
-
+#Route: Sorts Accounts
 @app.route('/manager/accounts/search',methods = ['GET'])
+@manager_required
 def manager_accounts_search():
     search_query = request.args.get('query', '')
     filtered_accounts = []
@@ -1232,17 +1427,22 @@ def manager_accounts_search():
 
 #Route: Manager Listing Page
 @app.route('/manager/listings',methods=['GET','POST'])
+@manager_required
 def manager_listings():
     items = Item.query.all()
     return render_template("manager_listings.html",items = items)
 
+#Route: Manager User Details Page
 @app.route('/manager/listings/<int:id>',methods=['GET'])
+@manager_required
 def manager_lisgings_user(id):
     user = User.query.get(id)
     user_listings = user.items
     return render_template("manager_listings_user.html", account = user, items=user_listings)   
 
+#Route: Update priority through user details page
 @app.route('/manager/listings/<int:id>/<int:update_number>',methods=['GET','POST'])
+@manager_required
 def manager_listings_update_number(username,update_number):
     user_account = User.query.filter_by(id=id).first()
 
@@ -1254,7 +1454,7 @@ def manager_listings_update_number(username,update_number):
     else:
         return "User not found", 404
 
-
+#Route: Manager look for avalibale experts Page
 @app.route('/manager/expert_availability')
 @manager_required
 def manager_expert_availability():
@@ -1332,8 +1532,7 @@ def manager_expert_availability():
         rejected_items=rejected_items
 )
 
-# ASSIGNING/ UNASSIGN EXPERTS
-
+#Route: Assign an expert
 @app.route('/assign_expert', methods=['POST'])
 @manager_required
 def assign_expert():
@@ -1351,6 +1550,12 @@ def assign_expert():
         item.expert_fee_percentage = expert_fee_percentage  # Save the percentage
         
         db.session.delete(selected_time)  # Remove from availability
+
+        notification = Notification(
+            user_id=expert_id,
+            message=f"You have been assigned to authenticate the item '{item.item_name}'."
+        )
+        db.session.add(notification)
         db.session.commit()
 
         flash(f'Expert assigned successfully for {item.date_time.strftime("%Y-%m-%d %I:%M %p")}', 'success')
@@ -1360,6 +1565,7 @@ def assign_expert():
 
     return redirect(url_for('manager_expert_availability'))
 
+#Route: Unassign an expert
 @app.route('/unassign_expert', methods=['POST'])
 @manager_required
 def unassign_expert():
@@ -1380,6 +1586,13 @@ def unassign_expert():
         item.expert_id = None
         item.date_time = None
 
+        notification = Notification(
+            user_id=expert_id,  
+            message=f"You have been assigned to authenticate the item '{item.item_name}'."
+        )
+
+        db.session.add(notification)
+
         db.session.commit()
         
         flash('Expert unassigned successfully! Item has been added back to the waiting list.', 'warning')
@@ -1389,6 +1602,7 @@ def unassign_expert():
 
 #Route: Manager view of Items that are approved, recycled, and pending items
 @app.route('/manager/overview')
+@manager_required
 def manager_overview():
     return render_template('manager_overview.html',
                            userName="",
@@ -1399,9 +1613,9 @@ def manager_overview():
                            rejected_items=[],
                            pending_items=[])
 
-
+#Route: Update expert payment
 @app.route('/update_expert_payment', methods=['POST'])
-@login_required
+@manager_required
 def update_expert_payment():
     if current_user.priority < 2:
         flash("Unauthorized Action", "danger")
@@ -1419,7 +1633,9 @@ def update_expert_payment():
 
     return redirect(url_for('manager_expert_availability'))
 
+#FIXME what is this for
 @app.route('/manager/fees', methods=['GET', 'POST'])
+@manager_required
 def manager_fees():
     fee_config = FeeConfig.get_current_fees()
     
@@ -1436,15 +1652,10 @@ def manager_fees():
             
     return render_template("manager_fees.html", fee_config=fee_config)
 
-
-
-
-
 # STRIPE
-
-# Payment for item using stripe route
+# Route: Payment for item using stripe route
 @app.route('/pay/<int:item_id>', methods=['POST'])
-@login_required
+@user_required
 def pay_for_item(item_id):
     """
     Creates a Stripe Checkout Session for the highest bidder,
@@ -1520,7 +1731,7 @@ def pay_for_item(item_id):
 
 # Success route
 @app.route('/payment_success/<int:item_id>')
-@login_required
+@user_required
 def payment_success(item_id):
     item = Item.query.get_or_404(item_id)
 
