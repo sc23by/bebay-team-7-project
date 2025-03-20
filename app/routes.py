@@ -1448,7 +1448,7 @@ def manager_fees():
 def pay_for_item(item_id):
     """
     Creates a Stripe Checkout Session for the highest bidder,
-    including the shipping cost in the total payment amount.
+    including shipping cost and expert fee (if applicable) in the total payment amount.
     """
     item = Item.query.get_or_404(item_id)
 
@@ -1461,35 +1461,54 @@ def pay_for_item(item_id):
         flash("You are not the winning bidder!", "danger")
         return redirect(url_for('user_item_details', item_id=item_id))
 
-    # Convert to float to ensure proper calculations
+    # Convert values to float for proper calculations
     bid_price = float(highest_bid)
     shipping_price = float(item.shipping_cost)
 
-    # Calculate total checkout cost (Winning Bid + Shipping Cost)
-    total_price = bid_price + shipping_price
+    # Check if expert authentication is required
+    if item.expert_id:
+        expert_fee = bid_price * (item.expert_fee_percentage / 100)
+    else:
+        expert_fee = 0.0  # No expert fee if authentication isn't required
+
+    # Calculate total checkout cost (Winning Bid + Shipping Cost + Expert Fee)
+    total_price = bid_price + shipping_price + expert_fee
 
     # Create Stripe Checkout Session
     try:
+        line_items = [
+            {
+                'price_data': {
+                    'currency': 'gbp',
+                    'product_data': {'name': item.item_name},
+                    'unit_amount': int(bid_price * 100),  # Convert bid price to pence
+                },
+                'quantity': 1,
+            },
+            {
+                'price_data': {
+                    'currency': 'gbp',
+                    'product_data': {'name': 'Shipping Cost'},
+                    'unit_amount': int(shipping_price * 100),  # Convert shipping price to pence
+                },
+                'quantity': 1,
+            }
+        ]
+
+        # Add expert fee only if applicable
+        if expert_fee > 0:
+            line_items.append({
+                'price_data': {
+                    'currency': 'gbp',
+                    'product_data': {'name': 'Expert Fee'},
+                    'unit_amount': int(expert_fee * 100),  # Convert expert fee to pence
+                },
+                'quantity': 1,
+            })
+
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
-            line_items=[
-                {
-                    'price_data': {
-                        'currency': 'gbp',
-                        'product_data': {'name': item.item_name},
-                        'unit_amount': int(bid_price * 100),  # Convert bid price to pence
-                    },
-                    'quantity': 1,
-                },
-                {
-                    'price_data': {
-                        'currency': 'gbp',
-                        'product_data': {'name': 'Shipping Cost'},
-                        'unit_amount': int(shipping_price * 100),  # Convert shipping price to pence
-                    },
-                    'quantity': 1,
-                }
-            ],
+            line_items=line_items,
             mode='payment',
             success_url=url_for('payment_success', item_id=item_id, _external=True),
             cancel_url=url_for('user_item_details', item_id=item_id, _external=True),
