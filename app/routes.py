@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import desc
 import numpy as np
 import stripe
+from datetime import datetime
 # Parses data sent by JS
 import json
 # Websockets
@@ -312,16 +313,13 @@ def handle_send_message(data):
 @app.route('/user')
 @user_required
 def user_home():
-    """
-    Redirects to main page when website first opened. Displays only items not in waiting list.
-    """
-    items = Item.query.filter(
-        ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
-    ).all()
-    
+    # Fetch only items that are NOT sold (expired items are still included)
+    items = Item.query.filter(Item.sold == False).all()
+
+    # Get highest bid for each item
     item_bids = {item.item_id: item.highest_bid() for item in items}
-    
-    return render_template('user_home.html', pagetitle='User Home', items = items, item_bids = item_bids)
+
+    return render_template('user_home.html', pagetitle='User Home', items=items, item_bids=item_bids, now=datetime.utcnow())
 
 # Route: Search in navbar
 @app.route('/user/search', methods = ['GET'])
@@ -1507,12 +1505,18 @@ def pay_for_item(item_id):
 def payment_success(item_id):
     item = Item.query.get_or_404(item_id)
 
-    # Mark item as sold
+    # Find the highest bid for the item
     highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
     winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
 
+    # Ensure only the winning bidder can mark the item as sold
     if winning_bid and winning_bid.user_id == current_user.id:
-        sold_item = Solditem(
+        # Mark item as sold
+        item.sold = True
+        db.session.commit()
+
+        # Add the item to SoldItem table
+        sold_item = SoldItem(
             item_id=item_id,
             seller_id=item.seller_id,
             buyer_id=current_user.id,
@@ -1520,12 +1524,12 @@ def payment_success(item_id):
         )
         db.session.add(sold_item)
         db.session.commit()
-        flash("Payment successful! The item has been marked as sold.", "success")
+
+        return render_template("payment_success.html", item=item, price=highest_bid)
+    
     else:
         flash("Payment failed or unauthorized access.", "danger")
-
-    return redirect(url_for('user_home'))
-
+        return redirect(url_for('user_home'))
 
 
 # API to fetch get remaining time on auction for an item in real time
