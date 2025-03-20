@@ -72,7 +72,6 @@ class Item(db.Model):
     expiration_time = db.Column(db.DateTime, nullable=True)  
     approved = db.Column(db.Boolean, default=None, nullable=True)
     shipping_cost = db.Column(db.Numeric(10,2), nullable=False)
-    expert_payment_percentage = db.Column(db.Float, nullable=False, default=10.0) # Default can be changed by managers
     expert_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = True)
     # Store the fixed fees at the time of listing
     site_fee_percentage = db.Column(db.Float, nullable=False,default=1.00)

@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import desc
 import numpy as np
 import stripe
+from datetime import datetime
 # Parses data sent by JS
 import json
 # Websockets
@@ -294,16 +295,13 @@ def messages():
 @app.route('/user')
 @user_required
 def user_home():
-    """
-    Redirects to main page when website first opened. Displays only items not in waiting list.
-    """
-    items = Item.query.filter(
-        ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
-    ).all()
-    
+    # Fetch only items that are NOT sold (expired items are still included)
+    items = Item.query.filter(Item.sold == False).all()
+
+    # Get highest bid for each item
     item_bids = {item.item_id: item.highest_bid() for item in items}
-    
-    return render_template('user_home.html', pagetitle='User Home', items=items, item_bids = item_bids)
+
+    return render_template('user_home.html', pagetitle='User Home', items=items, item_bids=item_bids)
 
 # Route: Search in navbar
 @app.route('/user/search', methods = ['GET'])
@@ -892,9 +890,9 @@ def approve_item(item_id):
     # Set start and expiration time
     date_time = datetime.utcnow()
     item_to_approve.expiration_time = datetime.utcnow() + timedelta(
-        item_to_approve.days,
-        item_to_approve.hours,
-        item_to_approve.minutes
+        days=item_to_approve.days,
+        hours=item_to_approve.hours,
+        minutes=item_to_approve.minutes
     )
     
     
@@ -915,9 +913,9 @@ def decline_item(item_id):
     item_to_approve.approved = False
     # Set expiration time
     item_to_approve.expiration_time = datetime.utcnow() + timedelta(
-        item_to_approve.days,
-        item_to_approve.hours,
-        item_to_approve.minutes
+        days=item_to_approve.days,
+        hours=item_to_approve.hours,
+        minutes=item_to_approve.minutes
     )
     # Remove from waiting list
     WaitingList.query.filter_by(item_id=item_id).delete()
@@ -1541,7 +1539,7 @@ def assign_expert():
     expert_id = request.form.get('selected_expert')
     item_id = request.form.get('item_id')
     selected_time_id = request.form.get('selected_time')
-    expert_payment_percentage = request.form.get('expert_payment_percentage', type=float)
+    expert_fee_percentage = request.form.get('expert_fee_percentage', type=float)
 
     item = Item.query.get(item_id)
     selected_time = ExpertAvailabilities.query.filter_by(availability_id=selected_time_id, user_id=expert_id).first()
@@ -1549,7 +1547,7 @@ def assign_expert():
     if item and selected_time:
         item.expert_id = expert_id
         item.date_time = datetime.combine(selected_time.date, selected_time.start_time)  # FIXED: Set date_time
-        item.expert_payment_percentage = expert_payment_percentage  # Save the percentage
+        item.expert_fee_percentage = expert_fee_percentage  # Save the percentage
         
         db.session.delete(selected_time)  # Remove from availability
 
@@ -1624,14 +1622,14 @@ def update_expert_payment():
         return redirect(url_for('index'))
 
     item_id = request.form.get('item_id')
-    expert_payment_percentage = request.form.get('expert_payment_percentage', type=float)
+    expert_fee_percentage = request.form.get('expert_fee_percentage', type=float)
 
     item = Item.query.get(item_id)
 
     if item and item.expert_id:  # Ensure the item is assigned to an expert
-        item.expert_payment_percentage = expert_payment_percentage
+        item.expert_fee_percentage = expert_fee_percentage
         db.session.commit()
-        flash(f'Expert payment percentage updated to {expert_payment_percentage}%', 'success')
+        flash(f'Expert payment percentage updated to {expert_fee_percentage}%', 'success')
 
     return redirect(url_for('manager_expert_availability'))
 
@@ -1661,7 +1659,7 @@ def manager_fees():
 def pay_for_item(item_id):
     """
     Creates a Stripe Checkout Session for the highest bidder,
-    including the shipping cost in the total payment amount.
+    including shipping cost and expert fee (if applicable) in the total payment amount.
     """
     item = Item.query.get_or_404(item_id)
 
@@ -1674,35 +1672,54 @@ def pay_for_item(item_id):
         flash("You are not the winning bidder!", "danger")
         return redirect(url_for('user_item_details', item_id=item_id))
 
-    # Convert to float to ensure proper calculations
+    # Convert values to float for proper calculations
     bid_price = float(highest_bid)
     shipping_price = float(item.shipping_cost)
 
-    # Calculate total checkout cost (Winning Bid + Shipping Cost)
-    total_price = bid_price + shipping_price
+    # Check if expert authentication is required
+    if item.expert_id:
+        expert_fee = bid_price * (item.expert_fee_percentage / 100)
+    else:
+        expert_fee = 0.0  # No expert fee if authentication isn't required
+
+    # Calculate total checkout cost (Winning Bid + Shipping Cost + Expert Fee)
+    total_price = bid_price + shipping_price + expert_fee
 
     # Create Stripe Checkout Session
     try:
+        line_items = [
+            {
+                'price_data': {
+                    'currency': 'gbp',
+                    'product_data': {'name': item.item_name},
+                    'unit_amount': int(bid_price * 100),  # Convert bid price to pence
+                },
+                'quantity': 1,
+            },
+            {
+                'price_data': {
+                    'currency': 'gbp',
+                    'product_data': {'name': 'Shipping Cost'},
+                    'unit_amount': int(shipping_price * 100),  # Convert shipping price to pence
+                },
+                'quantity': 1,
+            }
+        ]
+
+        # Add expert fee only if applicable
+        if expert_fee > 0:
+            line_items.append({
+                'price_data': {
+                    'currency': 'gbp',
+                    'product_data': {'name': 'Expert Fee'},
+                    'unit_amount': int(expert_fee * 100),  # Convert expert fee to pence
+                },
+                'quantity': 1,
+            })
+
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
-            line_items=[
-                {
-                    'price_data': {
-                        'currency': 'gbp',
-                        'product_data': {'name': item.item_name},
-                        'unit_amount': int(bid_price * 100),  # Convert bid price to pence
-                    },
-                    'quantity': 1,
-                },
-                {
-                    'price_data': {
-                        'currency': 'gbp',
-                        'product_data': {'name': 'Shipping Cost'},
-                        'unit_amount': int(shipping_price * 100),  # Convert shipping price to pence
-                    },
-                    'quantity': 1,
-                }
-            ],
+            line_items=line_items,
             mode='payment',
             success_url=url_for('payment_success', item_id=item_id, _external=True),
             cancel_url=url_for('user_item_details', item_id=item_id, _external=True),
@@ -1718,12 +1735,18 @@ def pay_for_item(item_id):
 def payment_success(item_id):
     item = Item.query.get_or_404(item_id)
 
-    # Mark item as sold
+    # Find the highest bid for the item
     highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
     winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
 
+    # Ensure only the winning bidder can mark the item as sold
     if winning_bid and winning_bid.user_id == current_user.id:
-        sold_item = Solditem(
+        # Mark item as sold
+        item.sold = True
+        db.session.commit()
+
+        # Add the item to SoldItem table
+        sold_item = SoldItem(
             item_id=item_id,
             seller_id=item.seller_id,
             buyer_id=current_user.id,
@@ -1731,11 +1754,12 @@ def payment_success(item_id):
         )
         db.session.add(sold_item)
         db.session.commit()
-        flash("Payment successful! The item has been marked as sold.", "success")
+
+        return render_template("payment_success.html", item=item, price=highest_bid)
+    
     else:
         flash("Payment failed or unauthorized access.", "danger")
-
-    return redirect(url_for('user_home'))
+        return redirect(url_for('user_home'))
 
 
 # API to fetch get remaining time on auction for an item in real time

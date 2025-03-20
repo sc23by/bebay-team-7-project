@@ -300,7 +300,7 @@ def test_view_items(loggedInClientP1):
             expiration_time=expiration_time,
             approved=True,
             shipping_cost=10.50,
-            expert_payment_percentage=0.15 )
+            expert_fee_percentage=0.15 )
 
         db.session.add(new_item)
         db.session.commit()
@@ -334,7 +334,7 @@ def test_watchlist_items(loggedInClientP1):
             expiration_time=expiration_time,
             approved=True,
             shipping_cost=10.50,
-            expert_payment_percentage=0.15 )
+            expert_fee_percentage=0.15 )
 
         db.session.add(new_item)
         db.session.commit()
