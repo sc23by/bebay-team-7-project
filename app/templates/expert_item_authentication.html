@@ -28,6 +28,11 @@
                 <button type="submit" class="button">Reassign</button>
             </form>
 
+            <a href="{{ url_for('chat', user_id=item_to_authenticate.seller.id, item_id=item_to_authenticate.item_id) }}" class="btn btn-info">
+                Request More Details
+            </a>
+                                
+            
         </div>
 
     </div>
