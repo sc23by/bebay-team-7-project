@@ -404,6 +404,7 @@ def sort_items():
         "approved": item.approved,
         "expiration_time": str(item.expiration_time),
         "time_left" : item.time_left.total_seconds(),
+        "seller_id" : item.seller_id,
         "is_watched": True
     } for item in sorted_items]
 
@@ -656,6 +657,7 @@ def sort_watchlist():
         "approved": item.approved,
         "expiration_time": str(item.expiration_time) ,
         "time_left" : item.time_left.total_seconds(),
+        "seller_id" : item.seller_id,
         "is_watched": True
     } for item in sorted_items]
 

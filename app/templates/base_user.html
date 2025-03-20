@@ -87,5 +87,9 @@
     <script src="{{ url_for('static', filename='js/user_bidding.js') }}"></script>
     <script src="{{ url_for('static', filename='js/user_bid_countdown.js') }}"></script>
 
+    <script>
+        const current_user_id = {{ current_user.id | tojson }};
+    </script>
+
 </body>
 </html>
