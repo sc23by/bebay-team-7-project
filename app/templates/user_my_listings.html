@@ -25,9 +25,9 @@
             <h2 class="mb-4">My Listings</h2>
 
             {% if items %}
-                <div class="row row-cols-3 row-cols-md-5 g-4">
+                <div class="row row-cols-3 row-cols-md-4 g-4">
                     {% for item in items %}
-                    <div class="col">
+                    <div class="col gallery">
                         <div class="card h-100 {{ 'expired-item' if item.time_left.total_seconds() <= 0 else '' }}">
                             <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
                                 class="card-img-top" alt="{{ item.item_name }}">
@@ -41,13 +41,13 @@
                                         £{{ item_bids[item.item_id] }}
                                     {% endif %}
                                 </p>
-                                <p class="card-text">Shipping Price: £{{ item.shipping_cost }}</p>                                
-                                <p>Time Left: 
+                                <p class="countdown">Time Left: 
                                     <span class="time_left"
-                                          data-item-id="{{ item.item_id }}"
-                                          data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
+                                        data-item-id="{{ item.item_id }}"
+                                        data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
                                     </span>
-                                </p>                                    
+                                </p>
+                                <p class="card-text shipping">Shipping Price: £{{ item.shipping_cost }}</p>                       
                                 {% if item.item_id in waiting_list %}
                                     <p class="card-text text-warning">Waiting for authentication.</p>
                                 {% endif %}
@@ -55,7 +55,7 @@
                                     View Details
                                 </a>
                             </div>
-                        </div>
+                        </div>   
                     </div>
                     {% endfor %}
                 </div>
