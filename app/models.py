@@ -24,7 +24,7 @@ class User(UserMixin, db.Model):
     profile_picture = db.Column(db.String(255), nullable=False, default="default_profile.jpg")
 
     watchlist = db.relationship('Item', secondary=Watched_item, backref='watched_by') # allows user to watch multiple items
-    items = db.relationship('Item',foreign_keys='Item.seller_id',backref='seller',lazy=True)
+    items = db.relationship('Item',foreign_keys='Item.seller_id',backref='seller', lazy=True)
 
 # Expert model
 class ExpertAvailabilities(db.Model):

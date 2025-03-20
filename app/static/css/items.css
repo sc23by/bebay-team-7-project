@@ -15,6 +15,10 @@
     background-color: rgb(243, 242, 242);
 }
 
+.bold {
+    font-weight: bold;
+}
+
 .card-body {
     text-align: center;
     text-wrap: wrap;
@@ -28,6 +32,8 @@
 .shipping {
     color: rgb(110, 110, 110);
     font-style: italic;
+    font-weight: 400;
+    font-family: 15px;
 }
 
 .fa-heart {
@@ -55,12 +61,59 @@
 
 .expired-item {
     opacity: 0.8;
-    pointer-events: none; /* can no longer interact with item */
+    
     filter: grayscale(100%);
 }
 
 .expired-text {
     font-weight: bold;
     color: gray;
+}
+
+.item-container {
+    margin: 20px;
+}
+
+.image {
+    max-height: 700px;
+    border-radius: 20px;
+}
+
+.item-details {
+    padding: 15px 0 15px 0;
+}
+
+.divider {
+    border: none;
+    height: 2px;
+    background-color: #ccc; 
+    margin: 10px 0;
+    width: 100%; 
+}
+
+.username {
+    font-size: 17px;
+    font-style: italic;
+}
+
+.description {
+    color: rgb(110, 110, 110);
+    font-size: 17px;
+}
+
+.starting-price {
+    font-size: 17px;
+}
+
+.current-price {
+    font-size: 20px;
+}
+
+.details {
+    font-weight: 400;
+}
+
+.buttons {
+    padding-top: 20px;
 }
 

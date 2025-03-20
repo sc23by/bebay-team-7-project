@@ -1,58 +1,67 @@
 {% extends "base_user.html" %}
 {% block content %}
-<div class="container">
-    {% if item.approved %}
-        <span class="badge bg-success">Approved</span>
-    {% endif %}
-    </h2>
-    <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
-         class="img-fluid" alt="{{ item.item_name }}">
-    
-    <p>Description: {{ item.description }}</p>
-    <p>Starting Price: £{{ item.minimum_price }}</p>
-    <p>Current Highest Bid: 
-        <span id="highest_bid" data-item-id="{{ item.item_id }}">
-            {% if highest_bid == "No bids yet" %}
-                No bids yet
-            {% else %}
-                £{{ highest_bid }}
-            {% endif %}
-        </span>
-    </p>
-    <p>Shipping Price: £{{ item.shipping_cost }}</p>
-    <p>Listing Time: {{ item.date_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-    <p>Expires On: {{ item.expiration_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+<div class="row align-items-start item-container">
+    <div class="col-md-4 image">
+        <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
+         class="img-fluid image" alt="{{ item.item_name }}">
+    </div>
+    <div class="col-md-8">
+        <h3 class="bold">{{ item.item_name }}</h3>
+        <hr class="divider">
+        <p class="username">Listed by @{{ item.seller.username }}</p>
+        <p class="description">Description: {{ item.description }}</p>
+        <hr class="divider">
+        <p class="bold starting-price">Starting Price: £{{ item.minimum_price }}
+            <span class="shipping"> + £{{ item.shipping_cost }} shipping fees</span>
+        </p>
+        <p class="bold current-price"> Current Highest Bid: 
+            <span id="highest_bid" data-item-id="{{ item.item_id }}">
+                {% if highest_bid == "No bids yet" %}
+                    No bids yet
+                {% else %}
+                    £{{ highest_bid }}
+                {% endif %}
+            </span>
+        </p>
+        <p class="countdown">Time Left: 
+            <span class="time_left"
+                  data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
+            </span>
+        </p>
+        <hr class="divider">
+        <p class="details">Listing Time: {{ item.date_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+        <p class="details">Expires On: {{ item.expiration_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+        {% if item.approved %}
+            <span class="badge bg-success">Approved</span>
+        {% endif %}
+        <div class="item-buttons">
+            <!-- Bidding Form (Initially Hidden If Auction is Still Active) -->
+            <form onsubmit="event.preventDefault(); placeBid({{ item.item_id }});">
+                {{ form.hidden_tag() }}
+                <div class="form-group">
+                    <label class="bold" for="bid_amount">Enter Bid</label>
+                    <div class="input-group">
+                        <span class="input-group-text">£</span>
+                        <input type="number" id="bid_amount" class="form-control" placeholder="0.00" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-2">Place Bid</button>
+            </form>
 
-    <p>Time Left: 
-        <span class="time_left"
-              data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
-        </span>
-    </p>
-    
-    
-    <!-- Bidding Form (Initially Hidden If Auction is Still Active) -->
-    <form onsubmit="event.preventDefault(); placeBid({{ item.item_id }});">
-        {{ form.hidden_tag() }}
-        <div class="form-group">
-            <label for="bid_amount">Enter Bid</label>
-            <div class="input-group">
-                <span class="input-group-text">£</span>
-                <input type="number" id="bid_amount" class="form-control" placeholder="0.00" required>
+            <div class="buttons">
+                <!-- Pay Now Button (Initially Hidden If Auction is Still Active) -->
+                {% if highest_bid != "No bids yet" and current_user.id == highest_bidder_id %}
+                    <button id="pay-now" class="btn btn-success"
+                        {% if item.time_left.total_seconds() > 0 %} style="display: none;" {% endif %}>
+                        Pay Now
+                    </button>
+                {% endif %}
+                <a href="{{ url_for('user_home') }}" class="btn btn-secondary">Back to Listings</a>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary mt-2">Place Bid</button>
-    </form>
+    </div>
+    </div>
 
-    <!-- Pay Now Button (Initially Hidden If Auction is Still Active) -->
-    {% if highest_bid != "No bids yet" and current_user.id == highest_bidder_id %}
-        <button id="pay-now" class="btn btn-success"
-            {% if item.time_left.total_seconds() > 0 %} style="display: none;" {% endif %}>
-            Pay Now
-        </button>
-    {% endif %}
-
-    <a href="{{ url_for('user_home') }}" class="btn btn-secondary">Back to Listings</a>
-</div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
