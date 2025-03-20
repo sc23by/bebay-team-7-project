@@ -817,9 +817,9 @@ def approve_item(item_id):
     # Set start and expiration time
     date_time = datetime.utcnow()
     item_to_approve.expiration_time = datetime.utcnow() + timedelta(
-        item_to_approve.days,
-        item_to_approve.hours,
-        item_to_approve.minutes
+        days=item_to_approve.days,
+        hours=item_to_approve.hours,
+        minutes=item_to_approve.minutes
     )
     
     
@@ -840,9 +840,9 @@ def decline_item(item_id):
     item_to_approve.approved = False
     # Set expiration time
     item_to_approve.expiration_time = datetime.utcnow() + timedelta(
-        item_to_approve.days,
-        item_to_approve.hours,
-        item_to_approve.minutes
+        days=item_to_approve.days,
+        hours=item_to_approve.hours,
+        minutes=item_to_approve.minutes
     )
     # Remove from waiting list
     WaitingList.query.filter_by(item_id=item_id).delete()
