@@ -296,7 +296,9 @@ def messages():
 @user_required
 def user_home():
     # Fetch only items that are NOT sold (expired items are still included)
-    items = Item.query.filter(Item.sold == False).all()
+    items = Item.query.filter(
+        ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+    ).all()
 
     # Get highest bid for each item
     item_bids = {item.item_id: item.highest_bid() for item in items}

@@ -48,11 +48,15 @@
                                         {% endif %}
                                     </p>
                                     <p class="countdown">Time Left: 
-                                        <span class="time_left"
-                                            data-item-id="{{ item.item_id }}"
-                                            data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
-                                        </span>
-                                    </p>
+                                        {% if item.expiration_time %}
+                                            <span class="time_left"
+                                                data-item-id="{{ item.item_id }}"
+                                                data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
+                                            </span>
+                                        {% else %}
+                                            <span>No expiration time set.</span>
+                                        {% endif %}
+                                    </p>                                    
                                     <p class="card-text shipping">Shipping Price: £{{ item.shipping_cost }}</p>                       
                                     {% if item.item_id in waiting_list %}
                                         <p class="card-text text-warning">Waiting for authentication.</p>
