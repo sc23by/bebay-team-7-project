@@ -3,14 +3,45 @@
 {% block content %}
 <!--Filter Dropdown button-->
 <style>
-  .container{
+  .contents{
+    margin-left: 10%;
     display: flex;
-    justify-content: center;
-    align-items: center
-    gap 15px;
+    flex-direction: column;
+    border: 1px solid gainsboro;
+    width: 80%;
+    border-radius: 8px;
+    margin-top: 20px;
+    height: 800px;
+    padding: 20px;
   }
+
+  .top-bar{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 20px;
+  }
+
+  .top-buttons{
+    display: flex;
+    gap: 10px;
+  }
+
   .search-container{
-    margin-left: 900px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .search-input{
+    padding: 5px 10px;
+    height: 40px;
+  }
+
+  .search-button{
+    height: 40px;
+    padding: 5px 10px;
   }
 
   .card{
@@ -18,17 +49,17 @@
     margin-top: 10px;
   }
 
-  .card-container{
-    margin-left: 33%;
-    align-items: center;
-    
+  .page-button{
+    margin-left: 20%;
   }
+
+
   
-  .card-contes
+
 </style>
 
-<div class = "container">
-<div>
+<div class = "contents">
+  <div class = "top-bar">
     <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
         <div class="btn-group" role="group">
           <button type="button" class="btn btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -40,7 +71,6 @@
             <li><a class="dropdown-item" href="{{url_for('manager_accounts_filter',filter_number = 3)}}">Priority 3</a></li>
           </ul>
         </div>
-</div>
 
 <!--Sort Dropdown button-->
     <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
@@ -53,14 +83,14 @@
             <li><a class="dropdown-item" href="{{url_for('manager_accounts_sort_high_low')}}">Alphabet High-Low</a></li>
           </ul>
         </div>
-</div>
+    </div>
 
 <!--Search Box-->
 <form action="{{url_for('manager_accounts_search')}}" method = "GET">
-    <div class="search-container" >
         <input type="text" class="search-input" name="query" placeholder="Search...">
         <button class="search-button" type="submit" >🔍</button>
-    </div>
+  </form>
+</div>
 
 <!--Account cards-->
 <div class="card-container">
@@ -92,7 +122,7 @@
 {% endif %}
 </div>  
 <!--Page buttons-->
-<div>
+<div class="page-button">
   {% if accounts.has_prev %}
     <a href="{{ url_for('manager_accounts', page=accounts.prev_num) }}">&laquo; </a>
   {% endif %}
@@ -104,7 +134,7 @@
     <a href="{{ url_for('manager_accounts', page=accounts.next_num) }}"> &raquo;</a>
   {% endif %}
 </div>
-</div>
+
 
 {% endblock %}
 
