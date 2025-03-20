@@ -5,32 +5,26 @@
 
     <div class="row vh-100">
         <!-- Sidebar -->
-        <div class="col-md-3 col-lg-2 bg-white shadow-sm p-4">
-            <div class="d-grid gap-2 ">
-                <form action="{{ url_for('watchlist') }}" method="POST">
-                    {{ form.hidden_tag() }}
-
-                    <div>{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.my_bids(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.my_listings(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.logout(class="btn btn-outline-secondary custom-button") }}</div>
-                </form>
-            </div>
-        </div>
+        <form class="col-md-3 col-lg-2 bg-white shadow-sm p-4"  action="{{ url_for('account') }}" method="post">
+            {{ form.hidden_tag() }}
+            <div class="sidebar">{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.my_bids(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.my_listings(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.logout(class="btn btn-outline-secondary custom-button") }}</div>
+        </form>
 
         <!-- Content Area -->
         <div class="col-md-9 col-lg-10 p-5">
             <h2 class="mb-4">My Watchlist</h2>
             <!-- Sort watchlist items dynamically using js -->
-            <select id="watchlist_dropdown" class="form-select">
-                <option value="all">Show All</option>
+            <select id="items_dropdown" class="form-select">
+                <option value="all">Sort by:</option>
                 <option value="min_price">Price: Low to High</option>
                 <option value="name_asc">Name: A-Z</option>
                 <option value="unexpired">Available Items</option>
             </select>
-
             <div id="watchlist_sort" class="row row-cols-3 row-cols-md-4 g-4">
                 {% for item in watched_items %}
                 <div class="col gallery">

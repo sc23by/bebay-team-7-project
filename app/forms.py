@@ -94,7 +94,7 @@ class UserInfoForm(FlaskForm):
         Regexp('^[A-Za-z]+$', message="Last name should only contain letters.")
     ]) 
 
-    update_info = SubmitField('Edit')
+    update_info = SubmitField('Edit Name')
 
 # Form for changing password
 class ChangeUsernameForm(FlaskForm):

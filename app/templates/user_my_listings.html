@@ -5,20 +5,15 @@
 
     <div class="row vh-100">
         <!-- Sidebar -->
-        <div class="col-md-3 col-lg-2 bg-white shadow-sm p-4">
-            <div class="d-grid gap-2">
-                <form action="{{ url_for('my_listings') }}" method="post">
-                    {{ form.hidden_tag() }}
-
-                    <div>{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.my_bids(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.my_listings(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.logout(class="btn btn-outline-secondary custom-button") }}</div>
-                </form>
-            </div>
-        </div>
+        <form class="col-md-3 col-lg-2 bg-white shadow-sm p-4"  action="{{ url_for('account') }}" method="post">
+            {{ form.hidden_tag() }}
+            <div class="sidebar">{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.my_bids(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.my_listings(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.logout(class="btn btn-outline-secondary custom-button") }}</div>
+        </form>
 
         <!-- Content Area -->
         <div class="col-md-9 col-lg-10 p-5">

@@ -26,6 +26,16 @@
 }
 
 .form-select {
-    width: 100px;
+    width: 150px;
     height: 40px;
+}
+
+.sidebar {
+    padding: 15px 0 0 0;
+}
+
+.custom-button {
+    width: 100%;
+    height: auto;
+    border-radius: 5px;
 }
