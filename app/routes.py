@@ -1463,6 +1463,13 @@ def assign_expert():
         item.expert_payment_percentage = expert_payment_percentage  # Save the percentage
         
         db.session.delete(selected_time)  # Remove from availability
+
+        notification = Notification(
+            recipient_id=expert_id,
+            recipient_type='expert',
+            message=f"You have been assigned to authenticate the item '{item.item_name}'."
+        )
+        db.session.add(notification)
         db.session.commit()
 
         flash(f'Expert assigned successfully for {item.date_time.strftime("%Y-%m-%d %I:%M %p")}', 'success')
@@ -1491,6 +1498,13 @@ def unassign_expert():
         # Remove expert assignment
         item.expert_id = None
         item.date_time = None
+
+        notification = Notification(
+            recipient_id=expert_id,
+            recipient_type='expert',
+            message=f"You have been unassigned to authenticate the item '{item.item_name}'."
+        )
+        db.session.add(notification)
 
         db.session.commit()
         
