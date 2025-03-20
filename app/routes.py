@@ -385,6 +385,10 @@ def sort_items():
         sorted_items = Item.query.filter(
             ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
         ).order_by(Item.item_name.asc()).all()
+    elif sort_by == "unexpired":
+        items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)), Item.sold == False).all()
+        sorted_items = [item for item in items if item.time_left != 0]
     else:
         sorted_items = Item.query.filter(
             ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
@@ -400,7 +404,7 @@ def sort_items():
         "minimum_price": str(item.minimum_price),
         "shipping_cost": str(item.shipping_cost),
         "item_image": item.item_image,
-        "current_highest_bid": str(item_bids[item.item_id]) if item_bids[item.item_id] else "No bids yet",
+         "current_highest_bid": str(item_bids.get(item.item_id, "No bids yet")),
         "approved": item.approved,
         "expiration_time": str(item.expiration_time),
         "time_left" : item.time_left.total_seconds(),
@@ -643,7 +647,10 @@ def sort_watchlist():
         sorted_items = items.order_by(Item.minimum_price.asc()).all()
     elif sort_by == "name_asc":
         sorted_items = items.order_by(Item.item_name.asc()).all()
-    else:
+    elif sort_by == "unexpired":
+        items = db.session.query(Item).filter(Item.sold == False).all()
+        sorted_items = [item for item in items if item.time_left != 0]
+    else :
         sorted_items = items.all()
 
     # Convert to JSON format
@@ -653,7 +660,7 @@ def sort_watchlist():
         "minimum_price": str(item.minimum_price),
         "shipping_cost": str(item.shipping_cost),
         "item_image": item.item_image,
-        "current_highest_bid": str(item_bids[item.item_id]) if item_bids[item.item_id] else "No bids yet",
+        "current_highest_bid": str(item_bids.get(item.item_id, "No bids yet")),
         "approved": item.approved,
         "expiration_time": str(item.expiration_time) ,
         "time_left" : item.time_left.total_seconds(),
