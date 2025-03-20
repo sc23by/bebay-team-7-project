@@ -45,15 +45,29 @@
   }
 
   .card{
-    width: 50%;
+    width: 65%;
     margin-top: 10px;
-
   }
 
   .card-container{
-    margin-left: 33%;
-    
+    margin-left: 30%;
   }
+
+  .card-contents{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+
+  .card-body{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+
 
   .title{
     font-weight: bold;
@@ -76,6 +90,7 @@
   }
 
 
+
   
 
 </style>
@@ -87,7 +102,7 @@
   <div class = "top-bar">
     <div class = "top-buttons">
         <div class="btn-group" role="group">
-          <button type="button" class="btn btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+          <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
             Filter
           </button>
           <ul class="dropdown-menu">
@@ -99,7 +114,7 @@
 
 <!--Sort Dropdown button-->
         <div class="btn-group" role="group">
-          <button type="button" class="btn btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+          <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
             Sort
           </button>
           <ul class="dropdown-menu">
@@ -122,13 +137,10 @@
     {% for account in accounts %}
         <div class="card">
             <div class="card-body">
-                <div>
-                  <span class="card-contents">
+                <div class = "card-contents">
                     <a href="{{ url_for('manager_lisgings_user', id=account.id) }}" class = "account-name">{{ account.username }}</a>
-                    Priority: {{ account.priority }}
-                  </span>
+                    <span class = "priority">Priority: {{ account.priority }}</span>
                 </div>
-                <!-- Dropdown for Priority Update -->
                 <div class="dropdown">
                     <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Set Priority
