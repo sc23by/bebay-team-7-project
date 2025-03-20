@@ -585,7 +585,7 @@ def sort_watchlist():
 
 # Route: Notifications
 @app.route('/user/notifications', methods=['GET', 'POST'])
-@user_required
+@login_required
 def notifications():
     """
     Redirects to my notifications page, has buttons to other pages.

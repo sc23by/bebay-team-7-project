@@ -1,4 +1,13 @@
-{% extends 'base_user.html' %}
+{% if current_user.priority == 1 %}
+    {% extends "base_user.html" %}
+{% elif current_user.priority == 2 %}
+    {% extends "base_expert.html" %}
+{% elif current_user.priority == 3 %}
+    {% extends "base_manager.html" %}
+{% else %}
+    {% extends "base_guest.html" %}
+{% endif %}
+
 {% block content %}
 <body class="container-fluid bg-light">
 
