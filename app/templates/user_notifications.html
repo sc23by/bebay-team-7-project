@@ -1,4 +1,3 @@
-<!-- User notifications page, see users notifications -->
 {% extends 'base_user.html' %}
 {% block content %}
 <body class="container-fluid bg-light">
@@ -9,7 +8,6 @@
             <div class="d-grid gap-2">
                 <form action="{{ url_for('notifications') }}" method="post">
                     {{ form.hidden_tag() }}
-
                     <div>{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
                     <div>{{ form.my_listings(class="btn btn-outline-secondary custom-button") }}</div>
                     <div>{{ form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
@@ -28,11 +26,18 @@
                         <li class="list-group-item {% if not notification.read %}list-group-item-warning{% endif %}">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <p class="mb-1">{{ notification.message }}</p>
+                                    <p class="mb-1">
+                                        {% if not notification.read %}
+                                            🔵
+                                        {% else %}
+                                            ✅
+                                        {% endif %}
+                                        {{ notification.message }}
+                                    </p>
                                     <small class="text-muted">{{ notification.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</small>
                                 </div>
                                 <div>
-                                    <!-- Delete button: It calls the delete route for the notification -->
+                                    <!-- Delete button -->
                                     <a href="{{ url_for('delete_notification', notification_id=notification.id) }}" 
                                        class="btn btn-danger btn-sm" 
                                        onclick="return confirm('Are you sure you want to delete this notification?');">
@@ -43,11 +48,14 @@
                         </li>
                     {% endfor %}
                 </ul>
+
+                <!-- Hidden request to mark notifications as read -->
+                <img src="{{ url_for('mark_notifications_as_read') }}" hidden>
+            
             {% else %}
                 <p class="text-muted">No new notifications.</p>
             {% endif %}
         </div>
-
     </div>
 
 </body>

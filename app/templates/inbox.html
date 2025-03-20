@@ -6,8 +6,7 @@
     {% extends "base_manager.html" %}
 {% else %}
     {% extends "base_guest.html" %}
-{% endif %}  <!-- This works for all users (experts, managers, users) -->
-
+{% endif %}
 
 {% block content %}
 <h2>Inbox</h2>
@@ -15,21 +14,35 @@
 <table class="table">
     <thead>
         <tr>
-            <th>From</th>
+            <th>Chat With</th>
+            <th>Item</th>
             <th>Last Message</th>
             <th>Date</th>
+            <th>Status</th>
         </tr>
     </thead>
     <tbody>
         {% for message in messages %}
         <tr>
             <td>
-                <a href="{{ url_for('chat', user_id=message.sender_id) }}">
-                    {{ message.sender.username }}
+                <a href="{{ url_for('chat', user_id=(message.sender_id if message.sender_id != current_user.id else message.recipient_id), item_id=message.item_id) }}">
+                    {% if message.sender_id == current_user.id %}
+                        {{ message.recipient.username }}
+                    {% else %}
+                        {{ message.sender.username }}
+                    {% endif %}
                 </a>
             </td>
+            <td>{{ message.item.item_name }}</td>
             <td>{{ message.content[:50] }}...</td>
             <td>{{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>
+                {% if message.read == False %}
+                    🔵 Unread
+                {% else %}
+                    ✅ Read
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </tbody>

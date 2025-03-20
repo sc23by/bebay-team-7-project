@@ -605,10 +605,28 @@ def notifications():
             return redirect(url_for("logout"))
 
     notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.timestamp.desc()).all()
-    Notification.query.filter_by(user_id=current_user.id, read=False).update({"read": True})
     db.session.commit()
  
     return render_template('user_notifications.html', pagetitle='Notifications', form=form, notifications=notifications)
+
+# Route: Mark read notifications as read
+@app.route('/mark_notifications_as_read')
+@login_required
+def mark_notifications_as_read():
+    """
+    Marks all unread notifications for the user as read.
+    This is triggered AFTER the page has loaded.
+    """
+    unread_notifications = Notification.query.filter_by(user_id=current_user.id, read=False).all()
+
+    for notification in unread_notifications:
+        notification.read = True
+
+    db.session.commit()
+
+    # Return a blank response (so the browser doesn't show anything)
+    return '', 204
+
 
 # Route: Delete Notification
 @app.route('/notification/delete/<int:notification_id>', methods=['GET', 'POST'])
@@ -883,54 +901,84 @@ def expert_message_seller(item_id):
 def inbox():
     """
     Display unique conversations where the logged-in user is involved.
-    Show the most recent message from each sender.
+    Show the most recent message for each sender-item combination,
+    even if the user was the sender and has not received a reply yet.
     """
-    # Get the latest message from each unique sender
+    # Get the latest message from each user-item combination
     latest_messages = db.session.query(
         UserMessage.sender_id,
+        UserMessage.recipient_id,
+        UserMessage.item_id,
         db.func.max(UserMessage.timestamp).label('latest_time')
-    ).filter(UserMessage.recipient_id == current_user.id).group_by(UserMessage.sender_id).subquery()
+    ).filter(
+        (UserMessage.recipient_id == current_user.id) | (UserMessage.sender_id == current_user.id)  # Include both sent and received messages
+    ).group_by(UserMessage.sender_id, UserMessage.recipient_id, UserMessage.item_id) \
+     .subquery()
 
     # Fetch actual messages using the latest timestamp
     messages = db.session.query(UserMessage).join(
         latest_messages,
         (UserMessage.sender_id == latest_messages.c.sender_id) &
+        (UserMessage.recipient_id == latest_messages.c.recipient_id) &
+        (UserMessage.item_id == latest_messages.c.item_id) &
         (UserMessage.timestamp == latest_messages.c.latest_time)
     ).order_by(UserMessage.timestamp.desc()).all()
 
     return render_template('inbox.html', messages=messages)
 
 # Route: Chat
-@app.route('/chat/<int:user_id>', methods=['GET', 'POST'])
+@app.route('/chat/<int:user_id>/<int:item_id>', methods=['GET', 'POST'])
 @login_required
-def chat(user_id):
+def chat(user_id, item_id):
     """
-    Show full conversation history with a specific user.
+    Show conversation history with a specific user for a specific item.
     Allow sending replies.
     """
     recipient = User.query.get_or_404(user_id)
+    item = Item.query.get_or_404(item_id)
 
-    # Fetch all messages between current user and the selected user
+    # Fetch messages **only** for this user & item
     messages = UserMessage.query.filter(
-        ((UserMessage.sender_id == current_user.id) & (UserMessage.recipient_id == user_id)) |
-        ((UserMessage.sender_id == user_id) & (UserMessage.recipient_id == current_user.id))
+        ((UserMessage.sender_id == current_user.id) & (UserMessage.recipient_id == user_id) & (UserMessage.item_id == item_id)) |
+        ((UserMessage.sender_id == user_id) & (UserMessage.recipient_id == current_user.id) & (UserMessage.item_id == item_id))
     ).order_by(UserMessage.timestamp).all()
+
+    # Mark received messages as read
+    unread_messages = UserMessage.query.filter(
+        UserMessage.sender_id == user_id,
+        UserMessage.recipient_id == current_user.id,
+        UserMessage.item_id == item_id,
+        UserMessage.read == False
+    ).all()
+    for msg in unread_messages:
+        msg.read = True
+    db.session.commit()
 
     # Handle reply submission
     if request.method == "POST":
         message_content = request.form.get("message")
-
         if message_content:
             new_message = UserMessage(
                 sender_id=current_user.id,
                 recipient_id=user_id,
-                content=message_content
+                item_id=item_id,
+                subject=f"{item.item_name}",
+                content=message_content,
+                read=False
             )
             db.session.add(new_message)
-            db.session.commit()
-            return redirect(url_for('chat', user_id=user_id))  # Refresh chat page
 
-    return render_template('chat.html', messages=messages, recipient=recipient)
+            # Create a notification for the recipient
+            notification = Notification(
+                user_id=user_id,
+                message=f"You have a new message from {current_user.username} about '{item.item_name}'."
+            )
+            db.session.add(notification)
+
+            db.session.commit()
+            return redirect(url_for('chat', user_id=user_id, item_id=item_id))  # Refresh chat page
+
+    return render_template('chat.html', messages=messages, recipient=recipient, item=item)
 
 #Route: Expert Messaging Page
 @app.route('/expert/messaging')
