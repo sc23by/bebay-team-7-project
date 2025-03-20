@@ -1465,8 +1465,7 @@ def assign_expert():
         db.session.delete(selected_time)  # Remove from availability
 
         notification = Notification(
-            recipient_id=expert_id,
-            recipient_type='expert',
+            user_id=expert_id,
             message=f"You have been assigned to authenticate the item '{item.item_name}'."
         )
         db.session.add(notification)
@@ -1500,10 +1499,10 @@ def unassign_expert():
         item.date_time = None
 
         notification = Notification(
-            recipient_id=expert_id,
-            recipient_type='expert',
-            message=f"You have been unassigned to authenticate the item '{item.item_name}'."
+            user_id=expert_id,  
+            message=f"You have been assigned to authenticate the item '{item.item_name}'."
         )
+
         db.session.add(notification)
 
         db.session.commit()
