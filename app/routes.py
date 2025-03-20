@@ -303,10 +303,11 @@ def user_home():
     
     item_bids = {item.item_id: item.highest_bid() for item in items}
     
-    return render_template('user_home.html', pagetitle='User Home', items = items, item_bids = item_bids)
+    return render_template('user_home.html', pagetitle='User Home', items=items, item_bids = item_bids)
 
 # Route: Search in navbar
 @app.route('/user/search', methods = ['GET'])
+@user_required
 def search():
     search_query = request.args.get('query', '').strip()
 
@@ -360,20 +361,37 @@ def sort_items():
 
     # query the items on the main page
     if sort_by == "min_price":
-        sorted_items = Item.query.order_by(Item.minimum_price.asc()).all()
+        sorted_items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+        ).order_by(Item.minimum_price.asc()).all()
     elif sort_by == "name_asc":
-        sorted_items = Item.query.order_by(Item.item_name.asc()).all()
+        sorted_items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+        ).order_by(Item.item_name.asc()).all()
+    elif sort_by == "unexpired":
+        items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)), Item.sold == False).all()
+        sorted_items = [item for item in items if item.time_left != 0]
     else:
-        sorted_items = Item.query.all()
+        sorted_items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+        ).all()
 
+    item_bids = {item.item_id: item.highest_bid() for item in sorted_items}
+    
+    # Convert to JSON format
     # Convert to JSON format
     items = [{
         "item_id": item.item_id,
         "item_name": item.item_name,
-        "description": item.description,
-        "minimum_price": str(item.minimum_price),  # Convert Decimal to string
-        "shipping_cost": str(item.shipping_cost), 
+        "minimum_price": str(item.minimum_price),
+        "shipping_cost": str(item.shipping_cost),
         "item_image": item.item_image,
+         "current_highest_bid": str(item_bids.get(item.item_id, "No bids yet")),
+        "approved": item.approved,
+        "expiration_time": str(item.expiration_time),
+        "time_left" : item.time_left.total_seconds(),
+        "seller_id" : item.seller_id,
         "is_watched": True
     } for item in sorted_items]
 
@@ -381,7 +399,7 @@ def sort_items():
 
 # Route: Account
 @app.route('/user/account', methods=['GET', 'POST'])
-@login_required
+@user_required
 def account():
     """
     Redirects to account page, has buttons to other pages and user information.
@@ -391,6 +409,8 @@ def account():
     if sidebar_form.validate_on_submit() :
         if sidebar_form.info.data:
             return redirect(url_for("account"))
+        elif sidebar_form.my_bids.data:
+            return redirect(url_for("my_bids"))
         elif sidebar_form.my_listings.data:
             return redirect(url_for("my_listings"))
         elif sidebar_form.watchlist.data:
@@ -494,6 +514,40 @@ def account():
     return render_template('user_account.html', pagetitle='Account', sidebar_form=sidebar_form, info_form=info_form, 
         username_form=username_form, email_form=email_form, password_form=password_form, card_form=card_form)
 
+# Route: My Bids
+@app.route('/user/my_bids', methods=['GET', 'POST'])
+@user_required
+def my_bids():
+    """
+    Redirects to my listings page, has buttons to other pages.
+    """
+    form = SideBarForm()
+
+    if form.validate_on_submit():
+        if form.info.data:
+            return redirect(url_for("account"))
+        elif form.my_bids.data:
+            return redirect(url_for("my_bids"))
+        elif form.my_listings.data:
+            return redirect(url_for("my_listings"))
+        elif form.watchlist.data:
+            return redirect(url_for("watchlist"))
+        elif form.notifications.data:
+            return redirect(url_for("notifications"))
+        elif form.logout.data:
+            return redirect(url_for("logout"))
+
+
+    user = User.query.get(current_user.id)
+    bidded_items = Item.query.join(Bid).filter(Bid.user_id == user.id).all()
+
+    print(bidded_items)
+
+    item_bids = {item.item_id: item.highest_bid() for item in bidded_items}
+
+    return render_template('user_my_bids.html', pagetitle='Bidded Items', form=form, bidded_items=bidded_items, item_bids=item_bids)
+
+
 # Route: My Listings
 @app.route('/user/my_listings', methods=['GET', 'POST'])
 @user_required
@@ -506,6 +560,8 @@ def my_listings():
     if form.validate_on_submit():
         if form.info.data:
             return redirect(url_for("account"))
+        elif form.my_bids.data:
+            return redirect(url_for("my_bids"))
         elif form.my_listings.data:
             return redirect(url_for("my_listings"))
         elif form.watchlist.data:
@@ -540,6 +596,8 @@ def watchlist():
     if form.validate_on_submit():
         if form.info.data:
             return redirect(url_for("account"))
+        elif form.my_bids.data:
+            return redirect(url_for("my_bids"))
         elif form.my_listings.data:
             return redirect(url_for("my_listings"))
         elif form.watchlist.data:
@@ -549,7 +607,9 @@ def watchlist():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
-    return render_template('user_watchlist.html', pagetitle='Watchlist', form=form, watched_items = watched_items)
+    item_bids = {item.item_id: item.highest_bid() for item in watched_items}
+
+    return render_template('user_watchlist.html', pagetitle='Watchlist', form=form, watched_items=watched_items, item_bids=item_bids)
 
 # Route: Sort watchlist items
 @app.route('/user/sort_watchlist', methods=['GET'])
@@ -564,24 +624,34 @@ def sort_watchlist():
     # query the items in the user's watchlist
     items = db.session.query(Item).join(Watched_item).filter(Watched_item.c.user_id == current_user.id)
 
+    item_bids = {item.item_id: item.highest_bid() for item in items}
+
     if sort_by == "min_price":
         sorted_items = items.order_by(Item.minimum_price.asc()).all()
     elif sort_by == "name_asc":
         sorted_items = items.order_by(Item.item_name.asc()).all()
-    else:
+    elif sort_by == "unexpired":
+        items = db.session.query(Item).filter(Item.sold == False).all()
+        sorted_items = [item for item in items if item.time_left != 0]
+    else :
         sorted_items = items.all()
 
     # Convert to JSON format
-    Watched_items = [{
+    watched_items = [{
         "item_id": item.item_id,
         "item_name": item.item_name,
-        "minimum_price": str(item.minimum_price),  # Convert Decimal to string
-        "date_time": item.date_time.strftime('%H:%M'),
+        "minimum_price": str(item.minimum_price),
+        "shipping_cost": str(item.shipping_cost),
         "item_image": item.item_image,
+        "current_highest_bid": str(item_bids.get(item.item_id, "No bids yet")),
+        "approved": item.approved,
+        "expiration_time": str(item.expiration_time) ,
+        "time_left" : item.time_left.total_seconds(),
+        "seller_id" : item.seller_id,
         "is_watched": True
     } for item in sorted_items]
 
-    return jsonify(Watched_items)
+    return jsonify(watched_items)
 
 # Route: Notifications
 @app.route('/user/notifications', methods=['GET', 'POST'])
@@ -595,6 +665,8 @@ def notifications():
     if form.validate_on_submit():
         if form.info.data:
             return redirect(url_for("account"))
+        elif form.my_bids.data:
+            return redirect(url_for("my_bids"))
         elif form.my_listings.data:
             return redirect(url_for("my_listings"))
         elif form.watchlist.data:
@@ -630,7 +702,7 @@ def mark_notifications_as_read():
 
 # Route: Delete Notification
 @app.route('/notification/delete/<int:notification_id>', methods=['GET', 'POST'])
-@login_required
+@user_required
 def delete_notification(notification_id):
     notification = Notification.query.get_or_404(notification_id)
     
@@ -729,6 +801,7 @@ def user_item_details(item_id):
 
 # Route: Placing a bid
 @socketio.on('new_bid')
+@user_required
 def handle_new_bid(data):
     """Handle new bid via WebSocket."""
     item_id = data.get('item_id')
@@ -1160,6 +1233,7 @@ def manager_statistics():
 
 # FIXME - choose a maethod of selecting expert fee
 @app.route('/manager/statistics/edit',methods=['GET','POST'])
+@manager_required
 def manager_statistics_edit():
 
     if request.method == 'POST':
@@ -1183,6 +1257,7 @@ def manager_statistics_edit():
 # FIXME - choose a maethod of selecting expert fee
 
 @app.route('/manager/statistics/cost',methods=['GET','POST'])
+@manager_required
 def manager_statistics_cost():
 
     total_revenue = 0
@@ -1285,6 +1360,7 @@ def manager_statistics_cost():
 
 #Route: Manager Account Page
 @app.route('/manager/accounts',methods=['GET','POST'])
+@manager_required
 def manager_accounts():
     page = request.args.get('page',1,type=int)
     
@@ -1292,7 +1368,9 @@ def manager_accounts():
 
     return render_template("manager_accounts.html",accounts=accounts)
 
+#Route: Updates priority
 @app.route('/manager/accounts/<username>/<int:update_number>',methods=['GET','POST'])
+@manager_required
 def manager_accounts_update_number(username,update_number):
 
     account = User.query.filter_by(username=username).first()
@@ -1305,17 +1383,23 @@ def manager_accounts_update_number(username,update_number):
     else:
         return "Error", 404
 
+#Route: Sorts Accounts
 @app.route('/manager/accounts/sort/low_high',methods=['GET','POST'])
+@manager_required
 def manager_accounts_sort_low_high():
     accounts = User.query.order_by(User.username).all()
     return render_template('manager_accounts.html',accounts = accounts)
 
+#Route: Sorts Accounts
 @app.route('/manager/accounts/sort/high_low',methods=['GET','POST'])
+@manager_required
 def manager_accounts_sort_high_low():
     accounts = User.query.order_by(desc(User.username)).all()
     return render_template('manager_accounts.html',accounts = accounts)
 
+#Route: Filters Accounts by Priority
 @app.route('/manager/accounts/filter/<int:filter_number>',methods=['GET','POST'])
+@manager_required
 def manager_accounts_filter(filter_number):
     filtered_accounts = User.query.filter(User.priority == filter_number).all()
 
@@ -1324,8 +1408,9 @@ def manager_accounts_filter(filter_number):
 
     return render_template("manager_accounts.html",accounts = filtered_accounts) 
    
-
+#Route: Sorts Accounts
 @app.route('/manager/accounts/search',methods = ['GET'])
+@manager_required
 def manager_accounts_search():
     search_query = request.args.get('query', '')
     filtered_accounts = []
@@ -1344,17 +1429,22 @@ def manager_accounts_search():
 
 #Route: Manager Listing Page
 @app.route('/manager/listings',methods=['GET','POST'])
+@manager_required
 def manager_listings():
     items = Item.query.all()
     return render_template("manager_listings.html",items = items)
 
+#Route: Manager User Details Page
 @app.route('/manager/listings/<int:id>',methods=['GET'])
+@manager_required
 def manager_lisgings_user(id):
     user = User.query.get(id)
     user_listings = user.items
     return render_template("manager_listings_user.html", account = user, items=user_listings)   
 
+#Route: Update priority through user details page
 @app.route('/manager/listings/<int:id>/<int:update_number>',methods=['GET','POST'])
+@manager_required
 def manager_listings_update_number(username,update_number):
     user_account = User.query.filter_by(id=id).first()
 
@@ -1366,7 +1456,7 @@ def manager_listings_update_number(username,update_number):
     else:
         return "User not found", 404
 
-
+#Route: Manager look for avalibale experts Page
 @app.route('/manager/expert_availability')
 @manager_required
 def manager_expert_availability():
@@ -1444,8 +1534,7 @@ def manager_expert_availability():
         rejected_items=rejected_items
 )
 
-# ASSIGNING/ UNASSIGN EXPERTS
-
+#Route: Assign an expert
 @app.route('/assign_expert', methods=['POST'])
 @manager_required
 def assign_expert():
@@ -1478,6 +1567,7 @@ def assign_expert():
 
     return redirect(url_for('manager_expert_availability'))
 
+#Route: Unassign an expert
 @app.route('/unassign_expert', methods=['POST'])
 @manager_required
 def unassign_expert():
@@ -1514,6 +1604,7 @@ def unassign_expert():
 
 #Route: Manager view of Items that are approved, recycled, and pending items
 @app.route('/manager/overview')
+@manager_required
 def manager_overview():
     return render_template('manager_overview.html',
                            userName="",
@@ -1524,9 +1615,9 @@ def manager_overview():
                            rejected_items=[],
                            pending_items=[])
 
-
+#Route: Update expert payment
 @app.route('/update_expert_payment', methods=['POST'])
-@login_required
+@manager_required
 def update_expert_payment():
     if current_user.priority < 2:
         flash("Unauthorized Action", "danger")
@@ -1544,7 +1635,9 @@ def update_expert_payment():
 
     return redirect(url_for('manager_expert_availability'))
 
+#FIXME what is this for
 @app.route('/manager/fees', methods=['GET', 'POST'])
+@manager_required
 def manager_fees():
     fee_config = FeeConfig.get_current_fees()
     
@@ -1561,15 +1654,10 @@ def manager_fees():
             
     return render_template("manager_fees.html", fee_config=fee_config)
 
-
-
-
-
 # STRIPE
-
-# Payment for item using stripe route
+# Route: Payment for item using stripe route
 @app.route('/pay/<int:item_id>', methods=['POST'])
-@login_required
+@user_required
 def pay_for_item(item_id):
     """
     Creates a Stripe Checkout Session for the highest bidder,
@@ -1626,7 +1714,7 @@ def pay_for_item(item_id):
 
 # Success route
 @app.route('/payment_success/<int:item_id>')
-@login_required
+@user_required
 def payment_success(item_id):
     item = Item.query.get_or_404(item_id)
 
@@ -1648,7 +1736,6 @@ def payment_success(item_id):
         flash("Payment failed or unauthorized access.", "danger")
 
     return redirect(url_for('user_home'))
-
 
 
 # API to fetch get remaining time on auction for an item in real time

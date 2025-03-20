@@ -5,43 +5,29 @@
 
     <div class="row vh-100">
         <!-- Sidebar -->
-        <div class="col-md-3 col-lg-2 bg-white shadow-sm p-4">
-            <div class="d-grid gap-2">
-                <form action="{{ url_for('my_listings') }}" method="post">
-                    {{ form.hidden_tag() }}
-
-                    <div>{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.my_listings(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.logout(class="btn btn-outline-secondary custom-button") }}</div>
-                </form>
-            </div>
-        </div>
+        <form class="col-md-3 col-lg-2 bg-white shadow-sm p-4"  action="{{ url_for('account') }}" method="post">
+            {{ form.hidden_tag() }}
+            <div class="sidebar">{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.my_bids(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.my_listings(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.logout(class="btn btn-outline-secondary custom-button") }}</div>
+        </form>
 
         <!-- Content Area -->
         <div class="col-md-9 col-lg-10 p-5">
             <h2 class="mb-4">My Listings</h2>
 
             {% if items %}
-                <div class="row row-cols-3 row-cols-md-5 g-4">
+                <div class="row row-cols-3 row-cols-md-4 g-4">
                     {% for item in items %}
-                    <div class="col">
-                        <div class="card h-100">
+                    <div class="col gallery">
+                        <div class="card h-100 {{ 'expired-item' if item.time_left.total_seconds() <= 0 else '' }}">
                             <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
                                 class="card-img-top" alt="{{ item.item_name }}">
                             <div class="card-body">
                                 <h5 class="card-title">{{ item.item_name }}</h5>
-                                <p>Time Left: 
-                                    {% if item.time_left.total_seconds() > 0 %}
-                                        {{ item.time_left.days }} days,
-                                        {{ item.time_left.seconds // 3600 }} hours,
-                                        {{ (item.time_left.seconds // 60) % 60 }} minutes,
-                                        {{ item.time_left.seconds % 60 }} seconds
-                                    {% else %}
-                                        Expired
-                                    {% endif %}
-                                </p>
                                 <p class="card-text">Starting Price: £{{ item.minimum_price }}</p>
                                 <p class="card-text">Current Highest Bid: 
                                     {% if item_bids[item.item_id] is none %}
@@ -50,6 +36,13 @@
                                         £{{ item_bids[item.item_id] }}
                                     {% endif %}
                                 </p>
+                                <p class="countdown">Time Left: 
+                                    <span class="time_left"
+                                        data-item-id="{{ item.item_id }}"
+                                        data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
+                                    </span>
+                                </p>
+                                <p class="card-text shipping">Shipping Price: £{{ item.shipping_cost }}</p>                       
                                 {% if item.item_id in waiting_list %}
                                     <p class="card-text text-warning">Waiting for authentication.</p>
                                 {% endif %}
@@ -57,7 +50,7 @@
                                     View Details
                                 </a>
                             </div>
-                        </div>
+                        </div>   
                     </div>
                     {% endfor %}
                 </div>

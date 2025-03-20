@@ -14,18 +14,15 @@
     <div class="row vh-100">
         <!-- Sidebar -->
         {% if current_user.priority == 1 %}
-        <div class="col-md-3 col-lg-2 bg-white shadow-sm p-4">
-            <div class="d-grid gap-2">
-                <form action="{{ url_for('account') }}" method="post">
-                    {{ sidebar_form.hidden_tag() }}
-                    <div>{{ sidebar_form.info(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ sidebar_form.my_listings(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ sidebar_form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ sidebar_form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ sidebar_form.logout(class="btn btn-outline-secondary custom-button") }}</div>
-                </form>
-            </div>
-        </div>
+        <form class="col-md-3 col-lg-2 bg-white shadow-sm p-4"  action="{{ url_for('account') }}" method="post">
+            {{ sidebar_form.hidden_tag() }}
+            <div class="sidebar">{{ sidebar_form.info(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ sidebar_form.my_bids(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ sidebar_form.my_listings(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ sidebar_form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ sidebar_form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ sidebar_form.logout(class="btn btn-outline-secondary custom-button") }}</div>
+        </form>
         {% endif %}
         <!-- Content Area -->
         <div class="col-md-9 col-lg-10 p-5">
@@ -82,7 +79,6 @@
                     </div>
                 </div>
             </form>
-            
 
             <h4>Change Password:</h4>
 

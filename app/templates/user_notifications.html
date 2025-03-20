@@ -13,21 +13,17 @@
 <body class="container-fluid bg-light">
 
     <div class="row vh-100">
-        <!-- Sidebar -->
         {% if current_user.priority == 1 %}
-
-        <div class="col-md-3 col-lg-2 bg-white shadow-sm p-4">
-            <div class="d-grid gap-2">
-                <form action="{{ url_for('notifications') }}" method="post">
-                    {{ form.hidden_tag() }}
-                    <div>{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.my_listings(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.logout(class="btn btn-outline-secondary custom-button") }}</div>
-                </form>
-            </div>
-        </div>
+        <!-- Sidebar -->
+        <form class="col-md-3 col-lg-2 bg-white shadow-sm p-4"  action="{{ url_for('account') }}" method="post">
+            {{ form.hidden_tag() }}
+            <div class="sidebar">{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.my_bids(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.my_listings(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.logout(class="btn btn-outline-secondary custom-button") }}</div>
+        </form>
         {% endif %}
 
         <!-- Content Area -->
