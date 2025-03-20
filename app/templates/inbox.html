@@ -1,0 +1,47 @@
+{% if current_user.priority == 1 %}
+    {% extends "base_user.html" %}
+{% elif current_user.priority == 2 %}
+    {% extends "base_expert.html" %}
+{% elif current_user.priority == 3 %}
+    {% extends "base_manager.html" %}
+{% else %}
+    {% extends "base_guest.html" %}
+{% endif %}  <!-- This works for all users (experts, managers, users) -->
+{% block content %}
+
+<h2>Inbox</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>From</th>
+            <th>To</th>
+            <th>Message</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for message in messages %}
+        <tr>
+            <td>
+                {% if message.sender_id == current_user.id %}
+                    <strong>You</strong>
+                {% else %}
+                    {{ message.sender.username }}
+                {% endif %}
+            </td>
+            <td>
+                {% if message.recipient_id == current_user.id %}
+                    <strong>You</strong>
+                {% else %}
+                    {{ message.recipient.username }}
+                {% endif %}
+            </td>
+            <td>{{ message.content }}</td>
+            <td>{{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

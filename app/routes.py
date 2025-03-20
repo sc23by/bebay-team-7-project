@@ -287,24 +287,6 @@ def messages():
     ).order_by(UserMessage.timestamp).all()
     return render_template('messages.html', messages=messages)
 
-@socketio.on('send_message')
-def handle_send_message(data):
-    # Create a new message using the UserMessage model
-    print("Received send_message with data:", data)  # Debug print
-    message = UserMessage(
-        sender_id=data['sender_id'],
-        recipient_id=data['recipient_id'],
-        content=data['content']
-    )
-    db.session.add(message)
-    db.session.commit()
-    # Broadcast the message back to clients
-    socketio.emit('receive_message', {
-        'sender_id': data['sender_id'],
-        'recipient_id': data['recipient_id'],
-        'content': data['content'],
-        'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
-    })
 
 # User Pages
 
@@ -869,6 +851,44 @@ def reassign_item(item_id):
     flash("Expert unassigned successfully.", "warning")
 
     return redirect(url_for('expert_assignments'))
+
+@app.route('/expert/message_seller/<int:item_id>', methods=['GET', 'POST'])
+@expert_required
+def expert_message_seller(item_id):
+    """
+    Allows an expert to send a private message to the seller of an item.
+    """
+    item = Item.query.get_or_404(item_id)
+    seller = item.seller  # Retrieve the seller's user object
+
+    if request.method == 'POST':
+        message_content = request.form.get('message')
+
+        if message_content:
+            new_message = UserMessage(
+                sender_id=current_user.id,
+                recipient_id=seller.id,
+                content=message_content
+            )
+            db.session.add(new_message)
+            db.session.commit()
+            flash("Message sent successfully!", "success")
+            return redirect(url_for('expert_assignments'))
+
+    return render_template('expert_messaging.html', item=item, seller=seller)
+
+@app.route('/inbox')
+@login_required
+def inbox():
+    """
+    Displays all messages for the logged-in user, whether they are an expert, manager, or normal user.
+    """
+    messages = UserMessage.query.filter(
+        (UserMessage.sender_id == current_user.id) | (UserMessage.recipient_id == current_user.id)
+    ).order_by(UserMessage.timestamp.desc()).all()
+
+    return render_template('inbox.html', messages=messages)
+
 
 #Route: Expert Messaging Page
 @app.route('/expert/messaging')
