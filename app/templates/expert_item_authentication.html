@@ -28,9 +28,9 @@
                 <button type="submit" class="button">Reassign</button>
             </form>
 
-            <a href="{{ url_for('expert_message_seller', item_id=item_to_authenticate.item_id) }}">
-                <button type="button" class="btn btn-info">Request More Details</button>
-            </a>
+            <a href="{{ url_for('chat', user_id=item_to_authenticate.seller.id) }}" class="btn btn-info">
+                Request More Details
+            </a>                       
             
         </div>
 
