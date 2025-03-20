@@ -36,13 +36,9 @@
 
             <!-- Search Bar -->
             <div class="collapse navbar-collapse d-flex justify-content-center mx-auto">
-                <form class="form-inline" action="{{url_for('search')}}" method = "GET">
-                    <div class="input-group">
-                        <input type="text" class="search-input" name="query" placeholder="Search...">
-                        <div class="input-group-append">
-                            <button class="search-input" type="submit">🔍</button>
-                        </div>
-                    </div>
+                <form class="d-flex mx-auto" role="search">
+                    <input class="form-control me-2 search" type="search" placeholder="Search" aria-label="Search">
+                    <button class="search-button" type="submit">🔍</button>
                 </form>
             </div>
 
@@ -56,7 +52,7 @@
                 </li>  
                 <li class="nav-item"><a class="nav-link" href="{{url_for('user_list_item')}}">List Item</a></li>                  
                 <li class="nav-item"><a class="nav-link" href="{{url_for('account')}}">My Account</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{url_for('logout')}}">Logout</a></li>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-primary">Logout</a></a>
             </ul>
         </div>
     </nav>
