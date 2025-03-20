@@ -8,11 +8,14 @@
     {% extends "base_guest.html" %}
 {% endif %}
 
+
 {% block content %}
 <body class="container-fluid bg-light">
 
     <div class="row vh-100">
         <!-- Sidebar -->
+        {% if current_user.priority == 1 %}
+
         <div class="col-md-3 col-lg-2 bg-white shadow-sm p-4">
             <div class="d-grid gap-2">
                 <form action="{{ url_for('notifications') }}" method="post">
@@ -25,6 +28,7 @@
                 </form>
             </div>
         </div>
+        {% endif %}
 
         <!-- Content Area -->
         <div class="col-md-9 col-lg-10 p-5">
