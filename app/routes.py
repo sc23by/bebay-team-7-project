@@ -877,18 +877,60 @@ def expert_message_seller(item_id):
 
     return render_template('expert_messaging.html', item=item, seller=seller)
 
+# Route: Inbox for all users
 @app.route('/inbox')
 @login_required
 def inbox():
     """
-    Displays all messages for the logged-in user, whether they are an expert, manager, or normal user.
+    Display unique conversations where the logged-in user is involved.
+    Show the most recent message from each sender.
     """
-    messages = UserMessage.query.filter(
-        (UserMessage.sender_id == current_user.id) | (UserMessage.recipient_id == current_user.id)
+    # Get the latest message from each unique sender
+    latest_messages = db.session.query(
+        UserMessage.sender_id,
+        db.func.max(UserMessage.timestamp).label('latest_time')
+    ).filter(UserMessage.recipient_id == current_user.id).group_by(UserMessage.sender_id).subquery()
+
+    # Fetch actual messages using the latest timestamp
+    messages = db.session.query(UserMessage).join(
+        latest_messages,
+        (UserMessage.sender_id == latest_messages.c.sender_id) &
+        (UserMessage.timestamp == latest_messages.c.latest_time)
     ).order_by(UserMessage.timestamp.desc()).all()
 
     return render_template('inbox.html', messages=messages)
 
+# Route: Chat
+@app.route('/chat/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def chat(user_id):
+    """
+    Show full conversation history with a specific user.
+    Allow sending replies.
+    """
+    recipient = User.query.get_or_404(user_id)
+
+    # Fetch all messages between current user and the selected user
+    messages = UserMessage.query.filter(
+        ((UserMessage.sender_id == current_user.id) & (UserMessage.recipient_id == user_id)) |
+        ((UserMessage.sender_id == user_id) & (UserMessage.recipient_id == current_user.id))
+    ).order_by(UserMessage.timestamp).all()
+
+    # Handle reply submission
+    if request.method == "POST":
+        message_content = request.form.get("message")
+
+        if message_content:
+            new_message = UserMessage(
+                sender_id=current_user.id,
+                recipient_id=user_id,
+                content=message_content
+            )
+            db.session.add(new_message)
+            db.session.commit()
+            return redirect(url_for('chat', user_id=user_id))  # Refresh chat page
+
+    return render_template('chat.html', messages=messages, recipient=recipient)
 
 #Route: Expert Messaging Page
 @app.route('/expert/messaging')
