@@ -399,7 +399,7 @@ def sort_items():
 
 # Route: Account
 @app.route('/user/account', methods=['GET', 'POST'])
-@user_required
+@login_required
 def account():
     """
     Redirects to account page, has buttons to other pages and user information.
