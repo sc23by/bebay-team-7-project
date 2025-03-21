@@ -81,6 +81,8 @@ class Item(db.Model):
     #relationship
     bids = db.relationship('Bid',backref='item',lazy=True)
     sold_item = db.relationship('SoldItem',backref='item',lazy=True)
+    # category
+    category = db.Column(db.String(50), nullable=False)  # Must be one of the pre-defined choices
 
     
     def get_image_url(self):

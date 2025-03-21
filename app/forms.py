@@ -159,6 +159,22 @@ class ListItemForm(FlaskForm):
         validators=[DataRequired(), Length(max=500)]
     )
     
+    category = SelectField(
+        'Category',
+        choices=[
+            ('electronics', 'Electronics'),
+            ('fashion', 'Fashion & Accessories'),
+            ('books_media', 'Books, Movies, & Music'),
+            ('home_garden', 'Home & Garden'),
+            ('toys_games', 'Toys & Games'),
+            ('sports_outdoors', 'Sports & Outdoors'),
+            ('automotive', 'Automotive'),
+            ('collectibles_art', 'Collectibles & Art'),
+            ('other', 'Other')
+        ],
+        validators=[DataRequired()]
+    )
+    
     minimum_price = DecimalField(
         'Starting Price (£)',
         places=2, 
