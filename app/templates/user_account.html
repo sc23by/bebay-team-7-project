@@ -124,6 +124,22 @@
                 </div>
             </form>
 
+            {% if current_user.priority == 2 %}
+                <h4>Expertise</h4>
+
+                <form action="{{ url_for('account') }}" method="post">
+                    {{ edit_expertise_form.hidden_tag() }}
+                    <div class="mb-3 row">
+                        {{ edit_expertise_form.expertise.label(class="col-sm-2 col-form-label") }}
+                        {{ edit_expertise_form.expertise(class="form-select col-sm-6") }}
+                        <div class="col-sm-2">
+                            {{ edit_expertise_form.update_expertise(class="btn btn-outline-primary") }}
+                        </div>
+                    </div>
+                </form>
+            {% endif %}
+
+
             <a href="{{ url_for('logout') }}" class="btn btn-outline-dark">Logout</a>
         </div>
     </div>
