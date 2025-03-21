@@ -38,8 +38,8 @@
 
                 <!-- Search Bar -->
                 <div class="collapse navbar-collapse d-flex justify-content-center mx-auto">
-                    <form class="d-flex mx-auto" role="search">
-                        <input class="form-control me-2 search" type="search" placeholder="Search" aria-label="Search">
+                    <form class="d-flex mx-auto" action="{{url_for('expert_search')}}" role="search">
+                        <input class="form-control me-2 search" type="search" placeholder="Search" name="query" aria-label="Search" value="{{ request.args.get('query') if request.args.get('query') else ''}}">
                         <button class="search-button" type="submit">🔍</button>
                     </form>
                 </div>

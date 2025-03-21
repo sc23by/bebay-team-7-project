@@ -321,7 +321,27 @@ def search():
         highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item.item_id).scalar()
         item_bids[item.item_id] = highest_bid if highest_bid is not None else None 
     
-    return render_template("user_home.html", items = items, item_bids = item_bids)
+    return render_template("user_home.html", items = items, item_bids = item_bids, query=search_query)
+
+# Route: Search in navbar for experts
+@app.route('/expert/search', methods = ['GET'])
+@expert_required
+def expert_search():
+
+    expert_id = current_user.id
+    search_query = request.args.get('query', '').strip()
+
+    if not search_query:
+        items = Item.query.filter(Item.expiration_time.is_(None), Item.expert_id == expert_id).all()
+    else:
+        items = Item.query.filter(
+            Item.item_name.ilike(f"%{search_query}%"),
+            Item.expiration_time.is_(None),
+            Item.expert_id == expert_id
+        ).all()
+
+
+    return render_template("expert_assignments.html", items = items, query=search_query)
 
 # Route: Watch
 @app.route('/user/watch', methods=['POST'])
