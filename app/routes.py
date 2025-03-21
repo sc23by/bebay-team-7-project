@@ -1376,6 +1376,10 @@ def manager_accounts_update_number(username,update_number):
     
     if account and (1<= update_number <=3) :
         account.priority = update_number
+        if update_number == 2:
+            account.expertise = "other"
+        else:
+            account.expertise = None
         db.session.commit()
 
         return redirect(url_for('manager_accounts'))
