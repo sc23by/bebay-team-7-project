@@ -1,7 +1,7 @@
 from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, request, flash, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
-from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
+from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm, EditExpertiseForm 
 from app.models import User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo, Notification, SoldItem, UserMessage, FeeConfig
 from functools import wraps
 import matplotlib
@@ -399,7 +399,7 @@ def sort_items():
 
 # Route: Account
 @app.route('/user/account', methods=['GET', 'POST'])
-@user_required
+@login_required
 def account():
     """
     Redirects to account page, has buttons to other pages and user information.
@@ -425,6 +425,7 @@ def account():
     email_form = ChangeEmailForm()
     password_form = ChangePasswordForm()
     card_form = CardInfoForm()
+    edit_expertise_form = EditExpertiseForm()
     
     user = User.query.get(current_user.id)
     # find users payment and shipping info from PaymentInfo table 
@@ -494,6 +495,12 @@ def account():
         db.session.commit()
         flash('Payment info updated successfully!', 'success')
 
+    if edit_expertise_form.update_expertise.data and edit_expertise_form.validate_on_submit():
+        current_user.expertise = edit_expertise_form.expertise.data
+        print(edit_expertise_form.expertise.data)
+        db.session.commit()
+        flash('Expertise updated.', 'success')
+        
     # populate forms with user information
     if request.method == 'GET' or not info_form.validate_on_submit() or not username_form.validate_on_submit() or not email_form.validate_on_submit() or not card_form.validate_on_submit() or not password_form.validate_on_submit():
         # user info
@@ -511,8 +518,11 @@ def account():
             card_form.card_number.data = None
             card_form.shipping_address.data = None
 
+        edit_expertise_form.expertise.data = user.expertise
+
+
     return render_template('user_account.html', pagetitle='Account', sidebar_form=sidebar_form, info_form=info_form, 
-        username_form=username_form, email_form=email_form, password_form=password_form, card_form=card_form)
+        username_form=username_form, email_form=email_form, password_form=password_form, card_form=card_form, edit_expertise_form=edit_expertise_form)
 
 # Route: My Bids
 @app.route('/user/my_bids', methods=['GET', 'POST'])

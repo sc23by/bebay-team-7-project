@@ -3,6 +3,27 @@ from wtforms import StringField, PasswordField, SubmitField, TextAreaField, Floa
 from wtforms.validators import DataRequired, Length, EqualTo, Regexp, ValidationError, Email, NumberRange
 from flask_wtf.file import FileField, FileAllowed
 
+CATEGORY_CHOICES = [
+    ('electronics', 'Electronics'),
+    ('fashion', 'Fashion & Accessories'),
+    ('books_media', 'Books, Movies, & Music'),
+    ('home_garden', 'Home & Garden'),
+    ('toys_games', 'Toys & Games'),
+    ('sports_outdoors', 'Sports & Outdoors'),
+    ('automotive', 'Automotive'),
+    ('collectibles_art', 'Collectibles & Art'),
+    ('other', 'Other')
+]
+
+class EditExpertiseForm(FlaskForm):
+    expertise = SelectField(
+        'Your Area of Expertise',
+        choices=CATEGORY_CHOICES,
+        validators=[DataRequired()]
+    )
+    update_expertise = SubmitField('Update Expertise')
+
+
 # Custom password validator
 def strong_password(form, field):
     """
@@ -161,17 +182,7 @@ class ListItemForm(FlaskForm):
     
     category = SelectField(
         'Category',
-        choices=[
-            ('electronics', 'Electronics'),
-            ('fashion', 'Fashion & Accessories'),
-            ('books_media', 'Books, Movies, & Music'),
-            ('home_garden', 'Home & Garden'),
-            ('toys_games', 'Toys & Games'),
-            ('sports_outdoors', 'Sports & Outdoors'),
-            ('automotive', 'Automotive'),
-            ('collectibles_art', 'Collectibles & Art'),
-            ('other', 'Other')
-        ],
+        choices=CATEGORY_CHOICES,
         validators=[DataRequired()]
     )
     
@@ -226,3 +237,11 @@ class BidForm(FlaskForm):
         render_kw={"step": "0.01", "min": "0", "class": "currency-input"})
 
     submit = SubmitField("Place Bid")
+
+class EditExpertiseForm(FlaskForm):
+    expertise = SelectField(
+        'Area of Expertise',
+        choices=CATEGORY_CHOICES,
+        validators=[DataRequired()]
+    )
+    update_expertise = SubmitField('Update Expertise')
