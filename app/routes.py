@@ -1237,7 +1237,6 @@ def manager_statistics_edit():
 
     if request.method == 'POST':
         cost_site = request.form.get('site')
-        cost_expert = request.form.get('expert')
 
         items = Item.query.all()
 
@@ -1245,8 +1244,6 @@ def manager_statistics_edit():
             for item in items:
                 if cost_site:
                     item.site_fee_percentage = float(cost_site)
-                if cost_expert:
-                    item.expert_fee_percentage = float(cost_expert)
 
             db.session.commit()
         return redirect(url_for('manager_statistics'))
