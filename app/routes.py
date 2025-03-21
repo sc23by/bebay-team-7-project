@@ -954,6 +954,7 @@ def reassign_item(item_id):
 
     return redirect(url_for('expert_assignments'))
 
+# i dont think this is needed
 @app.route('/expert/message_seller/<int:item_id>', methods=['GET', 'POST'])
 @expert_required
 def expert_message_seller(item_id):
@@ -1011,31 +1012,51 @@ def inbox():
     return render_template('inbox.html', messages=messages)
 
 # Route: Chat
+@app.route('/chat/<int:user_id>/', defaults={'item_id': None}, methods=['GET', 'POST'])
 @app.route('/chat/<int:user_id>/<int:item_id>', methods=['GET', 'POST'])
 @login_required
 def chat(user_id, item_id):
     """
-    Show conversation history with a specific user for a specific item.
-    Allow sending replies.
+    Show conversation history with a specific user.
+    Optional: filter by item.
     """
     recipient = User.query.get_or_404(user_id)
-    item = Item.query.get_or_404(item_id)
 
-    # Fetch messages **only** for this user & item
-    messages = UserMessage.query.filter(
-        ((UserMessage.sender_id == current_user.id) & (UserMessage.recipient_id == user_id) & (UserMessage.item_id == item_id)) |
-        ((UserMessage.sender_id == user_id) & (UserMessage.recipient_id == current_user.id) & (UserMessage.item_id == item_id))
-    ).order_by(UserMessage.timestamp).all()
+    # Only fetch item if item_id is provided (avoid .get(None) warning)
+    item = None
+    if item_id is not None:
+        item = Item.query.get_or_404(item_id)
 
-    # Mark received messages as read
-    unread_messages = UserMessage.query.filter(
+    # Build query for messages between the two users
+    message_query = UserMessage.query.filter(
+        ((UserMessage.sender_id == current_user.id) & (UserMessage.recipient_id == user_id)) |
+        ((UserMessage.sender_id == user_id) & (UserMessage.recipient_id == current_user.id))
+    )
+
+    # Filter by item_id or lack thereof
+    if item_id is not None:
+        message_query = message_query.filter(UserMessage.item_id == item_id)
+    else:
+        message_query = message_query.filter(UserMessage.item_id == None)
+
+    messages = message_query.order_by(UserMessage.timestamp).all()
+
+    # Mark unread messages as read
+    unread_query = UserMessage.query.filter(
         UserMessage.sender_id == user_id,
         UserMessage.recipient_id == current_user.id,
-        UserMessage.item_id == item_id,
         UserMessage.read == False
-    ).all()
+    )
+
+    if item_id is not None:
+        unread_query = unread_query.filter(UserMessage.item_id == item_id)
+    else:
+        unread_query = unread_query.filter(UserMessage.item_id == None)
+
+    unread_messages = unread_query.all()
     for msg in unread_messages:
         msg.read = True
+
     db.session.commit()
 
     # Handle reply submission
@@ -1046,21 +1067,21 @@ def chat(user_id, item_id):
                 sender_id=current_user.id,
                 recipient_id=user_id,
                 item_id=item_id,
-                subject=f"{item.item_name}",
+                subject=item.item_name if item else None,
                 content=message_content,
                 read=False
             )
             db.session.add(new_message)
 
-            # Create a notification for the recipient
+            # Create notification
             notification = Notification(
                 user_id=user_id,
-                message=f"You have a new message from {current_user.username} about '{item.item_name}'."
+                message=f"You have a new message from {current_user.username}."
             )
             db.session.add(notification)
 
             db.session.commit()
-            return redirect(url_for('chat', user_id=user_id, item_id=item_id))  # Refresh chat page
+            return redirect(url_for('chat', user_id=user_id, item_id=item_id) if item_id else url_for('chat', user_id=user_id))
 
     return render_template('chat.html', messages=messages, recipient=recipient, item=item)
 
