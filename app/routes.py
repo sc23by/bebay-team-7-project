@@ -1362,7 +1362,7 @@ def manager_statistics_cost():
 def manager_accounts():
     page = request.args.get('page',1,type=int)
     
-    accounts = User.query.paginate(page=page,per_page=1,error_out=False)
+    accounts = User.query.paginate(page=page,per_page=5,error_out=False)
 
     return render_template("manager_accounts.html",accounts=accounts)
 
