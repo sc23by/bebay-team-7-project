@@ -197,7 +197,7 @@ class ListItemForm(FlaskForm):
         render_kw={"step": "0.01", "min": "0.01", "class": "currency-input"}
     )
 
-    authenticate = BooleanField('Authenticate Item')
+    authenticate = BooleanField('Would you like to authenticate this item?')
     
     submit = SubmitField('List Item')
 

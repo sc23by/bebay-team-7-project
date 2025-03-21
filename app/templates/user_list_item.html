@@ -7,17 +7,17 @@
             {{ form.hidden_tag() }}
             
             <div class="mb-3">
-                {{ form.item_name.label(class="form-label") }}
+                {{ form.item_name.label(class="form-label bold") }}
                 {{ form.item_name(class="form-control") }}
             </div>
             
             <div class="mb-3">
-                {{ form.description.label(class="form-label") }}
+                {{ form.description.label(class="form-label bold") }}
                 {{ form.description(class="form-control") }}
             </div>
             
             <div class="form-group">
-                <label for="minimum_price">Starting price</label>
+                <label class="bold" for="minimum_price">Starting price</label>
                 <div class="input-group">
                     <span class="input-group-text">£</span>
                     {{ form.minimum_price(class="form-control", id="minimum_price", placeholder="0.00") }}
@@ -26,37 +26,46 @@
             
             
             <div class="mb-3">
-                {{ form.item_image.label(class="form-label") }}
+                {{ form.item_image.label(class="form-label bold") }}
                 {{ form.item_image(class="form-control") }}
             </div>
             
-            <div class="mb-3">
-                {{ form.days.label(class="form-label") }}
-                {{ form.days(class="form-select") }}
+            <div class="row">
+                <div class="col">
+                    <div class="mb-3">
+                        {{ form.days.label(class="form-label bold") }}
+                        {{ form.days(class="form-select") }}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="mb-3">
+                        {{ form.hours.label(class="form-label bold") }}
+                        {{ form.hours(class="form-select") }}
+                    </div>
+                </div>
+                <div class="col">    
+                    <div class="mb-3">
+                        {{ form.minutes.label(class="form-label bold") }}
+                        {{ form.minutes(class="form-select") }}
+                    </div> 
+                </div>               
             </div>
-            
-            <div class="mb-3">
-                {{ form.hours.label(class="form-label") }}
-                {{ form.hours(class="form-select") }}
-            </div>
-            
-            <div class="mb-3">
-                {{ form.minutes.label(class="form-label") }}
-                {{ form.minutes(class="form-select") }}
-            </div>            
             
             <div class="form-group">
-                <label for="shipping_cost">Shipping cost</label>
+                <label class="bold" for="shipping_cost">Shipping cost</label>
                 <div class="input-group">
                     <span class="input-group-text">£</span>
                     {{ form.shipping_cost(class="form-control", id="shipping_cost", placeholder="0.00") }}
+    
                 </div>
             </div>
 
             <!-- Authenticate check -->
             <div class="mb-3">
-                {{ form.authenticate.label(class="form-label") }}
-                {{ form.authenticate() }}
+                <div class="form-check custom-checkbox">
+                {{ form.authenticate(class="form-check-input") }}
+                {{ form.authenticate.label(class="form-check-label bold") }}
+                </div>
             </div>
             
             <button type="submit" class="btn btn-primary">List Item</button>
