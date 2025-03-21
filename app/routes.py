@@ -1,7 +1,7 @@
 from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, request, flash, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
-from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm, EditExpertiseForm 
+from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm, EditExpertiseForm, CATEGORY_CHOICES 
 from app.models import User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo, Notification, SoldItem, UserMessage, FeeConfig
 from functools import wraps
 import matplotlib
@@ -500,7 +500,7 @@ def account():
         print(edit_expertise_form.expertise.data)
         db.session.commit()
         flash('Expertise updated.', 'success')
-        
+
     # populate forms with user information
     if request.method == 'GET' or not info_form.validate_on_submit() or not username_form.validate_on_submit() or not email_form.validate_on_submit() or not card_form.validate_on_submit() or not password_form.validate_on_submit():
         # user info
@@ -1544,7 +1544,8 @@ def manager_expert_availability():
         assigned_items=assigned_items,
         unassigned_items=unassigned_items,
         approved_items=approved_items,
-        rejected_items=rejected_items
+        rejected_items=rejected_items,
+        category_choices=CATEGORY_CHOICES
 )
 
 #Route: Assign an expert
