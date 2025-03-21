@@ -1423,11 +1423,6 @@ def manager_accounts_search():
     return render_template("manager_accounts.html",accounts=filtered_accounts)
 
 #Route: Manager Listing Page
-@app.route('/manager/listings',methods=['GET','POST'])
-@manager_required
-def manager_listings():
-    items = Item.query.all()
-    return render_template("manager_listings.html",items = items)
 
 #Route: Manager User Details Page
 @app.route('/manager/listings/<int:id>',methods=['GET'])
@@ -1447,7 +1442,7 @@ def manager_listings_update_number(username,update_number):
         user_account.priority = update_number
         db.session.commit()
 
-        return render_template("manager_listings.html",account = user_account)
+        return render_template("manager_listings_user.html",account = user_account)
     else:
         return "User not found", 404
 
