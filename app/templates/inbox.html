@@ -15,7 +15,7 @@
     <thead>
         <tr>
             <th>Chat With</th>
-            <th>Item</th>
+            <th>Subject</th>
             <th>Last Message</th>
             <th>Date</th>
             <th>Status</th>
@@ -23,21 +23,28 @@
     </thead>
     <tbody>
         {% for message in messages %}
+        {% set chat_user_id = message.recipient_id if message.sender_id == current_user.id else message.sender_id %}
         <tr>
             <td>
-                <a href="{{ url_for('chat', user_id=(message.sender_id if message.sender_id != current_user.id else message.recipient_id), item_id=message.item_id) }}">
-                    {% if message.sender_id == current_user.id %}
-                        {{ message.recipient.username }}
-                    {% else %}
-                        {{ message.sender.username }}
-                    {% endif %}
+                <a href="{% if message.item_id %}
+                            {{ url_for('chat', user_id=chat_user_id, item_id=message.item_id) }}
+                         {% else %}
+                            {{ url_for('chat', user_id=chat_user_id) }}
+                         {% endif %}">
+                    {{ message.recipient.username if message.sender_id == current_user.id else message.sender.username }}
                 </a>
             </td>
-            <td>{{ message.item.item_name }}</td>
-            <td>{{ message.content[:50] }}...</td>
+            <td>
+                {% if message.item %}
+                    {{ message.item.item_name }}
+                {% else %}
+                    <em>General Message</em>
+                {% endif %}
+            </td>            
+            <td>{{ message.content[:50] }}{% if message.content|length > 50 %}...{% endif %}</td>
             <td>{{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
             <td>
-                {% if message.read == False %}
+                {% if message.recipient_id == current_user.id and not message.read %}
                     🔵 Unread
                 {% else %}
                     ✅ Read

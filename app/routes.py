@@ -981,35 +981,56 @@ def expert_message_seller(item_id):
     return render_template('expert_messaging.html', item=item, seller=seller)
 
 # Route: Inbox for all users
+from sqlalchemy import func, case, or_, and_
+from sqlalchemy.orm import joinedload
+
 @app.route('/inbox')
 @login_required
 def inbox():
     """
-    Display unique conversations where the logged-in user is involved.
-    Show the most recent message for each sender-item combination,
-    even if the user was the sender and has not received a reply yet.
+    Show latest messages grouped by:
+    - sender + recipient + item_id (when item exists)
+    - sender + recipient only (when item_id is None)
     """
-    # Get the latest message from each user-item combination
-    latest_messages = db.session.query(
+    # Subquery: collapse general messages into a single conversation per user pair
+    base_query = db.session.query(
+        func.max(UserMessage.timestamp).label('latest_time'),
         UserMessage.sender_id,
         UserMessage.recipient_id,
-        UserMessage.item_id,
-        db.func.max(UserMessage.timestamp).label('latest_time')
+        case(
+            (UserMessage.item_id.is_(None), -1),  # treat general messages as item_id = -1
+            else_=UserMessage.item_id
+        ).label('group_item_id')
     ).filter(
-        (UserMessage.recipient_id == current_user.id) | (UserMessage.sender_id == current_user.id)  # Include both sent and received messages
-    ).group_by(UserMessage.sender_id, UserMessage.recipient_id, UserMessage.item_id) \
-     .subquery()
+        or_(
+            UserMessage.sender_id == current_user.id,
+            UserMessage.recipient_id == current_user.id
+        )
+    ).group_by(
+        UserMessage.sender_id,
+        UserMessage.recipient_id,
+        case(
+            (UserMessage.item_id.is_(None), -1),
+            else_=UserMessage.item_id
+        )
+    ).subquery()
 
-    # Fetch actual messages using the latest timestamp
-    messages = db.session.query(UserMessage).join(
-        latest_messages,
-        (UserMessage.sender_id == latest_messages.c.sender_id) &
-        (UserMessage.recipient_id == latest_messages.c.recipient_id) &
-        (UserMessage.item_id == latest_messages.c.item_id) &
-        (UserMessage.timestamp == latest_messages.c.latest_time)
+    # Now fetch actual messages that match those latest timestamps
+    messages = db.session.query(UserMessage).options(
+        joinedload(UserMessage.item),
+        joinedload(UserMessage.sender),
+        joinedload(UserMessage.recipient)
+    ).join(
+        base_query,
+        and_(
+            UserMessage.sender_id == base_query.c.sender_id,
+            UserMessage.recipient_id == base_query.c.recipient_id,
+            func.coalesce(UserMessage.item_id, -1) == base_query.c.group_item_id,
+            UserMessage.timestamp == base_query.c.latest_time
+        )
     ).order_by(UserMessage.timestamp.desc()).all()
 
-    return render_template('inbox.html', messages=messages)
+    return render_template("inbox.html", messages=messages)
 
 # Route: Chat
 @app.route('/chat/<int:user_id>/', defaults={'item_id': None}, methods=['GET', 'POST'])
