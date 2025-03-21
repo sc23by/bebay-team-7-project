@@ -1,0 +1,14 @@
+.navbar-brand {
+    font-weight: 600;
+    font-size: 30px;
+    padding-left: 15px;
+}
+
+.search {
+    width: 500px;
+}
+
+.search-button {
+    border-radius: 10px;
+    border-color: lightgray;
+}

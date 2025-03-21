@@ -19,7 +19,11 @@
             </div>
         {% endfor %}
     {% else %}
-        <p class="text-center text-muted">No items assigned for authentication!</p>
+        {% if query %}
+            <p class="text-center text-muted">No items match your search!</p>
+        {% else %}
+            <p class="text-center text-muted">No items assigned for authentication!</p>
+        {% endif %}
     {% endif %}
 </div>
 
