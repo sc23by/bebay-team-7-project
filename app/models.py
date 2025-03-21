@@ -101,9 +101,6 @@ class Item(db.Model):
 # Establish a relationship with User model (expert)
     expert = db.relationship('User', foreign_keys=[expert_id], backref='assigned_items')
 
-
-    expert = db.relationship('User',foreign_keys=[expert_id],backref='assigned_items')
-
     def highest_bid(self):
         """Returns the highest bid amount."""
         highest_bid = Bid.query.filter_by(item_id=self.item_id).order_by(Bid.bid_amount.desc()).first()
@@ -171,5 +168,13 @@ class UserMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    item_id = db.Column(db.Integer, db.ForeignKey('item.item_id'), nullable=True)  # Link to item
+    subject = db.Column(db.String(200), nullable=False)  # New field for chat subject
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    read = db.Column(db.Boolean, default=False)
+
+    # Define relationships
+    sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
+    recipient = db.relationship('User', foreign_keys=[recipient_id], backref='received_messages')
+    item = db.relationship('Item', backref='messages')

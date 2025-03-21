@@ -1,0 +1,79 @@
+<!-- User Bids Page, see items bidded on by user -->
+{% extends 'base_user.html' %}
+{% block content %}
+<body class="container-fluid bg-light">
+
+    <div class="row vh-100">
+        <!-- Sidebar -->
+        <form class="col-md-3 col-lg-2 bg-white shadow-sm p-4"  action="{{ url_for('account') }}" method="post">
+            {{ form.hidden_tag() }}
+            <div class="sidebar">{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.my_bids(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.my_listings(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.logout(class="btn btn-outline-secondary custom-button") }}</div>
+        </form>
+
+        <!-- Content Area -->
+        <div class="col-md-9 col-lg-10 p-5">
+            <h2 class="mb-4">My Bids</h2>
+
+            {% if bidded_items %}
+                <div class="row row-cols-3 row-cols-md-4 g-4">
+                    {% for item in bidded_items %}
+                        <div class="col gallery">
+                            <div class="card h-100 {{ 'expired-item' if item.time_left.total_seconds() <= 0 else '' }}">
+                                <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
+                                    class="card-img-top" alt="{{ item.item_name }}">
+                                {% if item in current_user.watchlist %}
+                                    <span class="fa fa-heart selected" data-value="{{ current_user.watchlist | default(0) }}"
+                                        data-item-id="{{ item.item_id }}"></span>
+                                    <input type="hidden" id="heart_Value" name="watch" value="1">
+                                    <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
+                                {% else %}
+                                    <span class="fa fa-heart" data-value="{{ current_user.watchlist | default(0) }}"
+                                        data-item-id="{{ item.item_id }}"></span>
+                                    <input type="hidden" id="heart_Value" name="watch" value="0">
+                                    <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ item.item_name }}</h5>
+                                    <p class="card-text">Starting Price: £{{ item.minimum_price }}</p>
+                                    <p class="card-text">Current Highest Bid: 
+                                        {% if item_bids[item.item_id] is none %}
+                                            No bids yet
+                                        {% else %}
+                                            £{{ item_bids[item.item_id] }}
+                                        {% endif %}
+                                    </p>
+                                    <p class="countdown">Time Left: 
+                                        {% if item.expiration_time %}
+                                            <span class="time_left"
+                                                data-item-id="{{ item.item_id }}"
+                                                data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
+                                            </span>
+                                        {% else %}
+                                            <span>No expiration time set.</span>
+                                        {% endif %}
+                                    </p>                                    
+                                    <p class="card-text shipping">Shipping Price: £{{ item.shipping_cost }}</p>                       
+                                    {% if item.item_id in waiting_list %}
+                                        <p class="card-text text-warning">Waiting for authentication.</p>
+                                    {% endif %}
+                                    <a href="{{ url_for('user_item_details', item_id=item.item_id) }}" class="btn btn-primary">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>   
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-center text-muted">No items listed</p>
+            {% endif %}
+        </div>
+    </div>
+
+</body>
+{% endblock %}

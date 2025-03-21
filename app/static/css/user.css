@@ -1,0 +1,41 @@
+.navbar {
+    height: auto;
+}
+
+.navbar-nav {
+    padding: 0 15px 0 0;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 30px;
+    padding-left: 15px;
+}
+
+.search {
+    width: 500px;
+}
+
+.search-button {
+    border-radius: 10px;
+    border-color: lightgray;
+}
+
+.sort {
+    padding: 20px 0 0 15px;
+}
+
+.form-select {
+    width: 150px;
+    height: 40px;
+}
+
+.sidebar {
+    padding: 15px 0 0 0;
+}
+
+.custom-button {
+    width: 100%;
+    height: auto;
+    border-radius: 5px;
+}

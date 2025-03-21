@@ -71,8 +71,9 @@ class SideBarForm(FlaskForm):
     Buttons for navigation through profile section 
     """
     info = SubmitField('Info')
-    my_listings = SubmitField('My Listings')
-    watchlist = SubmitField('My Watchlist')
+    my_bids = SubmitField('Bids')
+    my_listings = SubmitField('Listings')
+    watchlist = SubmitField('Watchlist')
     notifications = SubmitField('Notifications')
     logout = SubmitField('Logout')
 
@@ -93,7 +94,7 @@ class UserInfoForm(FlaskForm):
         Regexp('^[A-Za-z]+$', message="Last name should only contain letters.")
     ]) 
 
-    update_info = SubmitField('Edit')
+    update_info = SubmitField('Edit Name')
 
 # Form for changing password
 class ChangeUsernameForm(FlaskForm):
@@ -195,6 +196,8 @@ class ListItemForm(FlaskForm):
         validators=[DataRequired(), NumberRange(min=0)],
         render_kw={"step": "0.01", "min": "0.01", "class": "currency-input"}
     )
+
+    authenticate = BooleanField('Authenticate Item')
     
     submit = SubmitField('List Item')
 

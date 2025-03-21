@@ -5,63 +5,72 @@
 
     <div class="row vh-100">
         <!-- Sidebar -->
-        <div class="col-md-3 col-lg-2 bg-white shadow-sm p-4">
-            <div class="d-grid gap-2 ">
-                <form action="{{ url_for('watchlist') }}" method="POST">
-                    {{ form.hidden_tag() }}
-
-                    <div>{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.my_listings(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
-                    <div>{{ form.logout(class="btn btn-outline-secondary custom-button") }}</div>
-                </form>
-            </div>
-        </div>
+        <form class="col-md-3 col-lg-2 bg-white shadow-sm p-4"  action="{{ url_for('account') }}" method="post">
+            {{ form.hidden_tag() }}
+            <div class="sidebar">{{ form.info(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.my_bids(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.my_listings(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.logout(class="btn btn-outline-secondary custom-button") }}</div>
+        </form>
 
         <!-- Content Area -->
         <div class="col-md-9 col-lg-10 p-5">
             <h2 class="mb-4">My Watchlist</h2>
             <!-- Sort watchlist items dynamically using js -->
-            <select id="watchlist_dropdown" class="form-select">
-                <option value="all">Show All</option>
+            <select id="items_dropdown" class="form-select">
+                <option value="all">Sort by:</option>
                 <option value="min_price">Price: Low to High</option>
                 <option value="name_asc">Name: A-Z</option>
+                <option value="unexpired">Available Items</option>
             </select>
-
-            <div id="watchlist_sort" class="row row-cols-3 row-cols-md-5 g-4">
+            <div id="watchlist_sort" class="row row-cols-3 row-cols-md-4 g-4">
                 {% for item in watched_items %}
-                <div class="col">
+                <div class="col gallery">
                     <div class="card h-100 {{ 'expired-item' if item.time_left.total_seconds() <= 0 else '' }}">
                         <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
-                             class="card-img-top" alt="{{ item.item_name }}">
+                            class="card-img-top" alt="{{ item.item_name }}">
+                            {% if item.seller_id != current_user.id %}
+                                {% if item in current_user.watchlist %}
+                                    <span class="fa fa-heart overlay selected" data-value="{{ current_user.watchlist | default(0) }}"
+                                        data-item-id="{{ item.item_id }}"></span>
+                                    <input type="hidden" id="heart_Value" name="watch" value="1">
+                                    <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
+                                {% else %}
+                                    <span class="fa fa-heart overlay " data-value="{{ current_user.watchlist | default(0) }}"
+                                        data-item-id="{{ item.item_id }}"></span>
+                                    <input type="hidden" id="heart_Value" name="watch" value="0">
+                                    <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
+                                {% endif %}
+                            {% endif %}
                         <div class="card-body">
                             <h5 class="card-title">{{ item.item_name }}</h5>
-                            <p>Time Left: 
-                                {% if item.time_left.total_seconds() > 0 %}
-                                    {{ item.time_left.days }} days,
-                                    {{ item.time_left.seconds // 3600 }} hours,
-                                    {{ (item.time_left.seconds // 60) % 60 }} minutes,
-                                    {{ item.time_left.seconds % 60 }} seconds
+                            <p class="card-text">Starting Price: £{{ item.minimum_price }}</p>
+                            <p class="card-text">Current Highest Bid: 
+                                {% if item_bids[item.item_id] is none %}
+                                    No bids yet
                                 {% else %}
-                                    Expired
+                                    £{{ item_bids[item.item_id] }}
                                 {% endif %}
                             </p>
-                            <p class="card-text">Price: £{{ item.minimum_price }}</p>
+                            <p class="countdown">Time Left: 
+                                {% if item.expiration_time %}
+                                    <span class="time_left"
+                                        data-item-id="{{ item.item_id }}"
+                                        data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
+                                    </span>
+                                {% else %}
+                                    <span>No expiration time set.</span>
+                                {% endif %}
+                            </p>                            
+                            <p class="card-text shipping">Shipping Price: £{{ item.shipping_cost }}</p>                       
+                            {% if item.approved %}
+                                <span class="badge bg-success">Approved</span>
+                            {% endif %}
                             <a href="{{ url_for('user_item_details', item_id=item.item_id) }}" class="btn btn-primary">
                                 View Details
                             </a>
-                            {% if item in current_user.watchlist %}
-                                <span class="fa fa-heart selected" data-value="{{ current_user.watchlist | default(0) }}"
-                                    data-item-id="{{ item.item_id }}"></span>
-                                <input type="hidden" id="heart_Value" name="watch" value="1">
-                                <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
-                            {% else %}
-                                <span class="fa fa-heart " data-value="{{ current_user.watchlist | default(0) }}"
-                                    data-item-id="{{ item.item_id }}"></span>
-                                <input type="hidden" id="heart_Value" name="watch" value="0">
-                                <input type="hidden" id="item_id" name="item_id" value="{{ item.item_id}}">
-                            {% endif %}
                         </div>
                     </div>
                 </div>
