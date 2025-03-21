@@ -47,7 +47,6 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(response => response.json())
         .then(data => {
             if (data.checkout_url) {
-                sessionStorage.setItem("previousPage", window.location.href);
                 window.location.href = data.checkout_url;
             } else {
                 alert("Payment Error: " + data.error);

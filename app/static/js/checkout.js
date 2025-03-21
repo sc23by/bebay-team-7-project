@@ -4,7 +4,6 @@ document.getElementById("checkout-button").addEventListener("click", function ()
     })
     .then(response => response.json())
     .then(session => {
-        sessionStorage.setItem("previousPage", window.location.href);
         window.location.href = session.url;
     })
     .catch(error => console.error("Error:", error));

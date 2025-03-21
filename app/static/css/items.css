@@ -113,7 +113,17 @@
     font-weight: 400;
 }
 
-.buttons {
-    padding-top: 20px;
+.item-buttons {
+    display: block;
+    padding-top: 10px;
 }
+
+#pay-now {
+    margin-top: 10px; 
+}
+
+a.button {
+    margin-top: 10px;
+}
+
 
