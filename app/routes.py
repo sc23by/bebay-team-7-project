@@ -1155,18 +1155,12 @@ def manager_statistics():
         total_revenue += sold_item.price 
 
     items = Item.query.all()
-    
-    if items:
-        generated_percentage = items[0].site_fee_percentage
-    else:
-        generated_percentage = 1
 
     for item in items:
         if item.sold_item:
-            final_price = item.sold_item[0].price
+            final_price = item.sold_item.price
             site_fee = item.calculate_fee(final_price, expert_approved=False)
             total_profit += site_fee
-
 
     current_date = datetime.now()
     three_weeks_ago = current_date - timedelta(weeks=3)
@@ -1224,7 +1218,7 @@ def manager_statistics():
 
     img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
 
-    return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, week_labels=week_labels,values=values,total_revenue=total_revenue,total_profit=total_profit,generated_percentage=generated_percentage)
+    return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, week_labels=week_labels,values=values,total_revenue=total_revenue,total_profit=total_profit,generated_percentage=(total_profit/total_revenue)*100)
 
 @app.route('/manager/statistics/edit',methods=['GET','POST'])
 @manager_required
