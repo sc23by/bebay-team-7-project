@@ -61,7 +61,8 @@ def loggedInClientP2(client):
                          password=bcrypt.generate_password_hash('password'),
                          first_name='Test2', 
                          last_name='User', 
-                         priority=2)
+                         priority=2,
+                         expertise='other')
         db.session.add(test_user)
         db.session.commit()
 

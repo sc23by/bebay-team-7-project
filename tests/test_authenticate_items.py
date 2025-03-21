@@ -24,6 +24,7 @@ def create_form_data():
             filename="test_image.jpg",
             content_type="image/jpeg"
         ),
+        "category":"other",
         "authenticate": True
     }
     return data
@@ -67,7 +68,8 @@ def test_manager_sees_request(loggedInClientP3):
             approved=False,
             site_fee_percentage=1.0,
             expert_fee_percentage=4.0,
-            sold=False)
+            sold=False,
+            category='other')
         
         db.session.add(item)
         db.session.commit()
@@ -129,7 +131,8 @@ def test_manager_assign_expert(loggedInClientP3):
             approved=False,
             site_fee_percentage=1.0,
             expert_fee_percentage=4.0,
-            sold=False)
+            sold=False,
+            category='other')
         
         db.session.add(item)
         db.session.commit()
@@ -170,11 +173,11 @@ def test_expert_vue_assignment(loggedInClientP2):
             date_time=None, # not authenticated yet
             expiration_time=None, # not authenticated yet
             approved=False,
-
             site_fee_percentage=1.0,
             expert_fee_percentage=4.0,
             sold=False,
-            expert = current_user)
+            expert = current_user,
+            category='other')
         
         db.session.add(item)
         db.session.commit()
@@ -209,7 +212,8 @@ def test_expert_aprove(loggedInClientP2):
             site_fee_percentage=1.0,
             expert_fee_percentage=4.0,
             sold=False,
-            expert = current_user)
+            expert = current_user,
+            category='other')
         
         db.session.add(item)
         db.session.commit()
@@ -252,7 +256,8 @@ def test_expert_decline(loggedInClientP2):
             site_fee_percentage=1.0,
             expert_fee_percentage=4.0,
             sold=False,
-            expert = current_user)
+            expert = current_user,
+            category='other')
         
         db.session.add(item)
         db.session.commit()
@@ -291,7 +296,8 @@ def test_expert_reassign(loggedInClientP2):
             site_fee_percentage=1.0,
             expert_fee_percentage=4.0,
             sold=False,
-            expert = current_user)
+            expert = current_user,
+            category='other')
         
         db.session.add(item)
         db.session.commit()
