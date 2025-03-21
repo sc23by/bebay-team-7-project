@@ -1138,7 +1138,7 @@ def manager_home():
     """
     Redirects to managers home page when website first opened.
     """
-    return render_template('manager_home.html')
+    return manager_statistics()
 
 
 #Route: Manager Stats Page
