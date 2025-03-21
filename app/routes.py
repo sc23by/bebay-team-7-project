@@ -760,7 +760,8 @@ def user_list_item():
             hours=int(form.hours.data),
             minutes=int(form.minutes.data),
             shipping_cost=form.shipping_cost.data,
-            approved=False
+            approved=False,
+            category=form.category.data
         )
         
         db.session.add(new_item)
