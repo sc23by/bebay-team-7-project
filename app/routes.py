@@ -1146,8 +1146,6 @@ def manager_home():
 @manager_required
 def manager_statistics():
 
-    bids = Bid.query.all()
-
     total_revenue = 0
     total_profit = 0
 
@@ -1201,7 +1199,6 @@ def manager_statistics():
             'week_end': week_end.strftime('%m-%d')
         })
 
-
     week_labels = []
 
     for week in weeks:
@@ -1229,8 +1226,6 @@ def manager_statistics():
 
     return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, week_labels=week_labels,values=values,total_revenue=total_revenue,total_profit=total_profit,generated_percentage=generated_percentage)
 
-
-# FIXME - choose a maethod of selecting expert fee
 @app.route('/manager/statistics/edit',methods=['GET','POST'])
 @manager_required
 def manager_statistics_edit():
@@ -1252,8 +1247,6 @@ def manager_statistics_edit():
         return redirect(url_for('manager_statistics'))
 
     return render_template('manager_statistics.html')
-
-# FIXME - choose a maethod of selecting expert fee
 
 @app.route('/manager/statistics/cost',methods=['GET','POST'])
 @manager_required
