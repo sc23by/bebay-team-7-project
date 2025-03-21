@@ -24,7 +24,7 @@
             </span>
         </p>
         <p class="countdown">Time Left: 
-            <span class="time_left"
+            <span id="time-left" class="time_left"
                   data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
             </span>
         </p>
@@ -48,6 +48,14 @@
                 <button type="submit" class="btn btn-primary mt-2">Place Bid</button>
             </form>
 
+            <!-- urls to use in js to redirect user to payment -->
+            <div id="auction-data"
+                data-time-left-url="{{ url_for('get_time_left', item_id=item.item_id) }}"
+                data-pay-now-url="{{ url_for('pay_for_item', item_id=item.item_id) }}"
+                data-shipping-cost="{{ item.shipping_cost }}"
+                data-highest-bid="{{ highest_bid }}">
+            </div>
+
             <div class="buttons">
                 <!-- Pay Now Button (Initially Hidden If Auction is Still Active) -->
                 {% if highest_bid != "No bids yet" and current_user.id == highest_bidder_id %}
@@ -61,60 +69,5 @@
         </div>
     </div>
     </div>
-
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    function updateTimeLeft() {
-        fetch("{{ url_for('get_time_left', item_id=item.item_id) }}")
-        .then(response => response.json())
-        .then(data => {
-            let timeLeftElement = document.getElementById("time-left");
-            let payNowButton = document.getElementById("pay-now");
-
-            if (data.time_left === "Expired") {
-                timeLeftElement.innerHTML = "Expired";
-
-                // Show Pay Now button immediately if it exists
-                if (payNowButton) {
-                    payNowButton.style.display = "block";
-                }
-            } else {
-                timeLeftElement.innerHTML = data.time_left;
-            }
-        });
-    }
-
-    // Run the time check immediately on page load
-    updateTimeLeft();
-
-    // Reduce delay: Update countdown every 500ms instead of 1000ms
-    setInterval(updateTimeLeft, 500);
-
-    // Pay Now button functionality
-    document.getElementById("pay-now")?.addEventListener("click", function () {
-        let shippingCost = parseFloat("{{ item.shipping_cost }}");
-        let highestBid = parseFloat("{{ highest_bid }}");
-        let totalPrice = highestBid + shippingCost;
-
-        fetch("{{ url_for('pay_for_item', item_id=item.item_id) }}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ total_price: totalPrice })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.checkout_url) {
-                window.location.href = data.checkout_url;
-            } else {
-                alert("Payment Error: " + data.error);
-            }
-        });
-    });
-});
-
-</script>
 
 {% endblock %}
