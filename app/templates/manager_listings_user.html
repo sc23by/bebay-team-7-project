@@ -1,14 +1,59 @@
 {% extends "base_manager.html" %}
 
 {% block content %}
+<style>
+  .account-name{
+    color: black;
+    text-decoration: none;
+    font-weight: bold;
+  }
+
+  .card{
+    width: 65%;
+    margin-top: 10px;
+  }
+
+  .card-container{
+    margin-left: 30%;
+  }
+
+  .card-contents{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+
+  .card-body{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .title{
+    font-weight: bold;
+    text-align: center;
+  }
+
+
+</style>
+
+
+<div class="card-container">
+  <div class="card">
+    <h4 class="title">User Details</h4>
+    <div class="card-body">
+        <div class = "card-contents">
+          
 <div>
-  <span>
+  <span class="account-name">
       Username :{{ account.username }} {{account.priority}}
   </span>
   <div>
     <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
         <div class="btn-group" role="group">
-          <button type="button" class="btn btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+          <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
             Set
           </button>
           <ul class="dropdown-menu">
@@ -38,6 +83,10 @@
   </div>
   {% endfor %}
 {% endif %}
+</div>
+</div>
+</div>
+</div>
 
 
 
