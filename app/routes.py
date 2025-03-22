@@ -295,15 +295,15 @@ def messages():
 @app.route('/user')
 @user_required
 def user_home():
-    # Fetch only items that are NOT sold (expired items are still included)
+
     items = Item.query.filter(
         ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
     ).all()
 
-    # Get highest bid for each item
+    cart_count = get_cart_count()  # this line is important
     item_bids = {item.item_id: item.highest_bid() for item in items}
 
-    return render_template('user_home.html', pagetitle='User Home', items=items, item_bids=item_bids)
+    return render_template('user_home.html', pagetitle='User Home', items=items, item_bids=item_bids, cart_count=cart_count)
 
 # Route: Search in navbar
 @app.route('/user/search', methods = ['GET'])
@@ -829,6 +829,8 @@ def user_item_details(item_id):
     highest_bidder_id = highest_bidder.user_id if highest_bidder else None
 
     return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid, highest_bidder_id=highest_bidder_id)
+
+
 
 # Route: Placing a bid
 @socketio.on('new_bid')
@@ -1808,56 +1810,12 @@ def pay_for_item(item_id):
         return jsonify({'error': str(e)}), 500
 
 # Success route
-@app.route('/payment_success/<int:item_id>')
+@app.route('/payment_success')
 @user_required
-def payment_success(item_id):
-    item = Item.query.get_or_404(item_id)
-
-    # Find the highest bid for the item
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
-    winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
-
-    # Ensure only the winning bidder can mark the item as sold
-    if winning_bid and winning_bid.user_id == current_user.id:
-        # Mark item as sold
-        item.sold = True
-        db.session.commit()
-
-        # Add the item to SoldItem table
-        sold_item = SoldItem(
-            item_id=item_id,
-            seller_id=item.seller_id,
-            buyer_id=current_user.id,
-            price=highest_bid
-        )
-        db.session.add(sold_item)
-        db.session.commit()
-
-        return render_template("payment_success.html", item=item, price=highest_bid)
-    
-    else:
-        flash("Payment failed or unauthorized access.", "danger")
-        return redirect(url_for('user_home'))
-
-
-# API to fetch get remaining time on auction for an item in real time
-@app.route('/get_time_left/<int:item_id>')
-def get_time_left(item_id):
-    """
-    API to fetch remaining time for an item.
-    """
-    item = Item.query.get_or_404(item_id)
-    
-    # Calculate remaining time
-    if item.time_left.total_seconds() > 0:
-        time_left = f"{item.time_left.days} days, {item.time_left.seconds // 3600} hours, {(item.time_left.seconds // 60) % 60} minutes, {item.time_left.seconds % 60} seconds"
-    else:
-        time_left = "Expired"
-
-    return jsonify({"time_left": time_left})
-
-
-
-
+def payment_success():
+    item_ids_str = request.args.get('item_ids', '')
+    item_ids = [int(i) for i in item_ids_str.split(',') if i.isdigit()]
+    items = Item.query.filter(Item.item_id.in_(item_ids)).all()
+    return render_template('payment_success.html', items=items)
 
 
