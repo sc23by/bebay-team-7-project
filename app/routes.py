@@ -678,6 +678,7 @@ def watchlist():
         elif form.past_orders.data:
             return redirect(url_for("past_orders"))
         elif form.notifications.data:
+
             return redirect(url_for("notifications"))
         elif form.logout.data:
             return redirect(url_for("logout"))

@@ -44,7 +44,7 @@
                         </p>
                         <p class="countdown">Time Left: 
                             {% if item.expiration_time %}
-                                <span class="time_left"
+                                <span class="time_left {{ 'expired-text' if item.time_left.total_seconds() <= 0 else '' }}"
                                     data-item-id="{{ item.item_id }}"
                                     data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
                                 </span>
