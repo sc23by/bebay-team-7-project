@@ -1238,6 +1238,15 @@ def manager_statistics_edit():
     if request.method == 'POST':
         cost_site = request.form.get('site')
 
+        try:
+            cost_site = float(cost_site)
+            if cost_site > 100:
+                flash('The cost must be less than 100.', 'error') 
+                return redirect(url_for('manager_statistics'))
+        except ValueError:
+            flash('Invalid input. Please enter a valid number for the cost.', 'error')  # 숫자가 아닐 때 에러 처리
+            return redirect(url_for('manager_statistics'))
+
         items = Item.query.all()
 
         if items:
