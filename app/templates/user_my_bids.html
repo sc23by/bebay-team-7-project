@@ -11,6 +11,7 @@
             <div class="sidebar">{{ form.my_bids(class="btn btn-outline-secondary custom-button") }}</div>
             <div class="sidebar">{{ form.my_listings(class="btn btn-outline-secondary custom-button") }}</div>
             <div class="sidebar">{{ form.watchlist(class="btn btn-outline-secondary custom-button") }}</div>
+            <div class="sidebar">{{ form.past_orders(class="btn btn-outline-secondary custom-button") }}</div>
             <div class="sidebar">{{ form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
             <div class="sidebar">{{ form.logout(class="btn btn-outline-secondary custom-button") }}</div>
         </form>
@@ -49,7 +50,7 @@
                                     </p>
                                     <p class="countdown">Time Left: 
                                         {% if item.expiration_time %}
-                                            <span class="time_left"
+                                            <span class="time_left {{ 'expired-text' if item.time_left.total_seconds() <= 0 else '' }}"
                                                 data-item-id="{{ item.item_id }}"
                                                 data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
                                             </span>

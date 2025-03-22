@@ -1,8 +1,56 @@
 <!-- Guest Home Page, displayes listed items -->
 <!-- Params: pageTitle, userName -->
-
 {% extends "base_guest.html" %}
-
 {% block content %}
-    <p> Guest home page </p>
+    <div class="sort">
+        <select id="guest_items_dropdown" class="form-select">
+            <option value="available">Available Items</option>
+            <option value="min_price">Price: Low to High</option>
+            <option value="name_asc">Name: A-Z</option>
+            <option value="all_items">All Items</option>
+        </select>
+    </div>
+
+    <div id="guest_items_sort"  class="row row-cols-3 row-cols-md-5 g-4 gallery">
+        {% if items %}
+            {% for item in items %}
+            <div class="col gallery">
+                <div class="card h-100 {{ 'expired-item' if item.time_left.total_seconds() <= 0 else '' }}">
+                    <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
+                        class="card-img-top" alt="{{ item.item_name }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ item.item_name }}</h5>
+                        <p# class="card-text">Starting Price: £{{ item.minimum_price}}</p>
+                        <p class="card-text">Current Highest Bid: 
+                            {% if item_bids[item.item_id] is none %}
+                                No bids yet
+                            {% else %}
+                                £{{ item_bids[item.item_id] }}
+                            {% endif %}
+                        </p>
+                        <p class="countdown">Time Left: 
+                            {% if item.expiration_time %}
+                                <span class="time_left {{ 'expired-text' if item.time_left.total_seconds() <= 0 else '' }}"
+                                    data-item-id="{{ item.item_id }}"
+                                    data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
+                                </span>
+                            {% else %}
+                                <span>No expiration time set.</span>
+                            {% endif %}
+                        </p>                        
+                        <p class="card-text shipping">Shipping Price: £{{ item.shipping_cost }}</p>                       
+                        {% if item.approved %}
+                            <span class="badge bg-success">Approved</span>
+                        {% endif %}
+                        <a href="{{ url_for('register')}}" class="btn btn-primary">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-center text-muted">No items listed</p>
+        {% endif %}
+    </div>
 {% endblock %}

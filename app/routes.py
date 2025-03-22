@@ -206,8 +206,81 @@ def guest_home():
     """
     if current_user.is_authenticated:
         return redirect_based_on_priority(current_user)
-    return render_template('guest_home.html')
 
+    # show non expired items
+    items = Item.query.filter(
+        ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+        Item.expiration_time > datetime.utcnow()
+    ).all()
+
+    # Get highest bid for each item
+    item_bids = {item.item_id: item.highest_bid() for item in items}
+
+    return render_template('guest_home.html', pagetitle='Guest Home', items=items, item_bids=item_bids)
+
+@app.route('/guest_search')
+@guest_required
+def guest_search():
+    search_query = request.args.get('query', '').strip()
+
+    if not search_query:
+        items = Item.query.all()
+    else:
+        items = Item.query.filter(Item.item_name.ilike(f"%{search_query}%")).all()
+
+    item_bids = {}
+    for item in items:
+        highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item.item_id).scalar()
+        item_bids[item.item_id] = highest_bid if highest_bid is not None else None 
+    
+    return render_template("guest_home.html", items = items, item_bids = item_bids, query=search_query)
+
+# Route: Sort items on main page
+@app.route('/guest_sort_items', methods=['GET'])
+def guest_sort_items():
+    """
+    Handles json request to allow dynamic sort feature to sort items
+    """
+    # if user selects the sort function
+    sort_by = request.args.get('sort', 'all')
+
+    # query the items on the main page
+    if sort_by == "min_price":
+        sorted_items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)), Item.expiration_time > datetime.utcnow()
+        ).order_by(Item.minimum_price.asc()).all()
+    elif sort_by == "name_asc":
+        sorted_items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)), Item.expiration_time > datetime.utcnow()
+        ).order_by(Item.item_name.asc()).all()
+    elif sort_by == "all_items":
+        sorted_items = sorted_items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+        ).all()
+    else:
+        sorted_items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+            Item.expiration_time > datetime.utcnow()
+        ).all() 
+
+    item_bids = {item.item_id: item.highest_bid() for item in sorted_items}
+    
+    # Convert to JSON format
+    items = [{
+        "item_id": item.item_id,
+        "item_name": item.item_name,
+        "minimum_price": str(item.minimum_price),
+        "shipping_cost": str(item.shipping_cost),
+        "item_image": item.item_image,
+         "current_highest_bid": str(item_bids.get(item.item_id, "No bids yet")),
+        "approved": item.approved,
+        "expiration_time": str(item.expiration_time),
+        "time_left" : item.time_left.total_seconds(),
+        "seller_id" : item.seller_id,
+        "is_watched": True
+    } for item in sorted_items]
+
+    return jsonify(items)
 
 # Route: Registration Page    
 @app.route('/register', methods=['GET', 'POST'])
@@ -295,9 +368,13 @@ def messages():
 @app.route('/user')
 @user_required
 def user_home():
-    # Fetch only items that are NOT sold (expired items are still included)
+    """
+    Redirects to main page when website first opened. Displays only items not in waiting list.
+    """
+    # show non expired items
     items = Item.query.filter(
         ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+        Item.expiration_time > datetime.utcnow()
     ).all()
 
     # Get highest bid for each item
@@ -382,20 +459,21 @@ def sort_items():
     # query the items on the main page
     if sort_by == "min_price":
         sorted_items = Item.query.filter(
-            ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)), Item.expiration_time > datetime.utcnow()
         ).order_by(Item.minimum_price.asc()).all()
     elif sort_by == "name_asc":
         sorted_items = Item.query.filter(
-            ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)), Item.expiration_time > datetime.utcnow()
         ).order_by(Item.item_name.asc()).all()
-    elif sort_by == "unexpired":
-        items = Item.query.filter(
-            ~Item.item_id.in_(db.session.query(WaitingList.item_id)), Item.sold == False).all()
-        sorted_items = [item for item in items if item.time_left != 0]
+    elif sort_by == "all_items":
+        sorted_items = sorted_items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+        ).all()
     else:
         sorted_items = Item.query.filter(
             ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
-        ).all()
+            Item.expiration_time > datetime.utcnow()
+        ).all() 
 
     item_bids = {item.item_id: item.highest_bid() for item in sorted_items}
     
@@ -435,6 +513,8 @@ def account():
             return redirect(url_for("my_listings"))
         elif sidebar_form.watchlist.data:
             return redirect(url_for("watchlist"))
+        elif sidebar_form.past_orders.data:
+            return redirect(url_for("past_orders"))
         elif sidebar_form.notifications.data:
             return redirect(url_for("notifications"))
         elif sidebar_form.logout.data:
@@ -562,6 +642,8 @@ def my_bids():
             return redirect(url_for("my_listings"))
         elif form.watchlist.data:
             return redirect(url_for("watchlist"))
+        elif form.past_orders.data:
+            return redirect(url_for("past_orders"))
         elif form.notifications.data:
             return redirect(url_for("notifications"))
         elif form.logout.data:
@@ -611,17 +693,14 @@ def my_listings():
 
     return render_template('user_my_listings.html', pagetitle='Listings', form=form, items=items, item_bids=item_bids, waiting_list = waiting_list)
 
-# Route: Watchlist
-@app.route('/user/watchlist', methods=['GET', 'POST'])
+# Route: Past Orders
+@app.route('/user/past_orders', methods=['GET', 'POST'])
 @user_required
-def watchlist():
+def past_orders():
     """
-    Redirects to watchlist page, has buttons to other pages.
+    Redirects to my listings page, has buttons to other pages.
     """
     form = SideBarForm()
-
-    user = User.query.get(current_user.id)
-    watched_items = user.watchlist
 
     if form.validate_on_submit():
         if form.info.data:
@@ -632,7 +711,47 @@ def watchlist():
             return redirect(url_for("my_listings"))
         elif form.watchlist.data:
             return redirect(url_for("watchlist"))
+        elif form.past_orders.data:
+            return redirect(url_for("past_orders"))
         elif form.notifications.data:
+            return redirect(url_for("notifications"))
+        elif form.logout.data:
+            return redirect(url_for("logout"))
+
+    purchased_items = (db.session.query(Item).join(SoldItem, SoldItem.item_id == Item.item_id)
+        .filter(SoldItem.buyer_id == current_user.id)
+        .all()
+    )
+
+    item_bids = {item.item_id: item.highest_bid() for item in purchased_items}
+
+    return render_template('user_past_orders.html', pagetitle='Past Orders', form=form, purchased_items=purchased_items, item_bids=item_bids)
+
+# Route: Watchlist
+@app.route('/user/watchlist', methods=['GET', 'POST'])
+@user_required
+def watchlist():
+    """
+    Redirects to watchlist page, has buttons to other pages.
+    """
+    form = SideBarForm()
+
+    user = User.query.get(current_user.id)
+    watched_items = db.session.query(Item).join(Watched_item).filter((Watched_item.c.user_id == current_user.id), Item.expiration_time > datetime.utcnow()).all()
+
+    if form.validate_on_submit():
+        if form.info.data:
+            return redirect(url_for("account"))
+        elif form.my_bids.data:
+            return redirect(url_for("my_bids"))
+        elif form.my_listings.data:
+            return redirect(url_for("my_listings"))
+        elif form.watchlist.data:
+            return redirect(url_for("watchlist"))
+        elif form.past_orders.data:
+            return redirect(url_for("past_orders"))
+        elif form.notifications.data:
+
             return redirect(url_for("notifications"))
         elif form.logout.data:
             return redirect(url_for("logout"))
@@ -652,19 +771,22 @@ def sort_watchlist():
     sort_by = request.args.get('sort', 'all')
 
     # query the items in the user's watchlist
-    items = db.session.query(Item).join(Watched_item).filter(Watched_item.c.user_id == current_user.id)
+    items = db.session.query(Item).join(Watched_item).filter((Watched_item.c.user_id == current_user.id), Item.expiration_time > datetime.utcnow()).all()
 
     item_bids = {item.item_id: item.highest_bid() for item in items}
 
+    query = db.session.query(Item).join(Watched_item).filter(
+        Watched_item.c.user_id == current_user.id,
+        Item.expiration_time > datetime.utcnow())
+
     if sort_by == "min_price":
-        sorted_items = items.order_by(Item.minimum_price.asc()).all()
+        sorted_items = query.order_by(Item.minimum_price.asc()).all()
     elif sort_by == "name_asc":
-        sorted_items = items.order_by(Item.item_name.asc()).all()
-    elif sort_by == "unexpired":
-        items = db.session.query(Item).filter(Item.sold == False).all()
-        sorted_items = [item for item in items if item.time_left != 0]
-    else :
-        sorted_items = items.all()
+        sorted_items = query.order_by(Item.item_name.asc()).all()
+    elif sort_by == "all_items":
+        sorted_items = db.session.query(Item).join(Watched_item).filter(Watched_item.c.user_id == current_user.id)
+    else:
+        sorted_items = query.all()
 
     # Convert to JSON format
     watched_items = [{

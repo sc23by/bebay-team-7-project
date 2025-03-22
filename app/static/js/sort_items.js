@@ -1,17 +1,17 @@
 document.addEventListener("DOMContentLoaded", function() {
-    let sortDropdown = document.getElementById("items_dropdown"); // Make sure this matches the dropdown ID in HTML
+    let items_container = document.getElementById("items_sort");
+    let sortDropdown = document.getElementById("items_dropdown");
     if (sortDropdown) {
         sortDropdown.addEventListener("change", function() {
             let selected = this.value;
 
             fetch(`/user/sort_items?sort=${selected}`)
-                .then(response => response.json() )
+                .then(response => response.json())
                 .then(data => {
-                    let container = document.getElementById("items_sort");
                     // Clear previous items
-                    container.innerHTML = ""; 
+                    items_container.innerHTML = ""; 
                     
-                    //data to sort by
+                    // Dynamically update sorted items
                     data.forEach(item => {
                         let item_Element = document.createElement("div");
                         item_Element.className = "col gallery";
@@ -24,9 +24,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         item_Element.dataset.time_left = item.time_left;
                         item_Element.dataset.seller_id = item.seller_id;
 
-                        updateCountdown();
-
-                        let highest_bid = item.current_highest_bid !== null 
+                        let highest_bid = item.current_highest_bid !== "None"  
                             ? `£${item.current_highest_bid}` 
                             : "No bids yet";
 
@@ -39,7 +37,6 @@ document.addEventListener("DOMContentLoaded", function() {
                             <input type="hidden" name="watch" value="${item.is_watched ? '1' : '0'}">
                         ` : "";
 
-                        // what to print when sorted
                         item_Element.innerHTML = `
                             <div class="card h-100 ${expired_item}">
                                     <img src="/static/images/items/${item.item_image}" class="card-img-top" alt="${item.item_name}">
@@ -50,21 +47,23 @@ document.addEventListener("DOMContentLoaded", function() {
                                         <p class="card-text">Current Highest Bid: ${highest_bid}</p>
                                         <p class="countdown">Time Left: 
                                             <span class="time_left"
-                                                data-item-id=${ item.item_id }"
-                                                data-expiration="${ item.expiration_time }">
+                                                data-item-id="${item.item_id}"
+                                                data-expiration="${item.expiration_time}">
                                             </span>
                                         </p> 
-                                        <p class="card-text shipping">Shipping Price: £${ item.shipping_cost }</p>                       
+                                        <p class="card-text shipping">Shipping Price: £${item.shipping_cost}</p>                       
                                         ${item.approved ? `<span class="badge bg-success">Approved</span>` : ""}
-                                        <a href="/user/item_details/${item.item_id}" class="btn btn-primary">
+                                        <a href="/item/${item.item_id}" class="btn btn-primary">
                                             View Details
                                         </a>
                                     </div>
                             </div>
                         `;
-                        container.appendChild(item_Element);
-                    });  
-                })
+                        
+                        items_container.appendChild(item_Element);
+                    });
+                    updateCountdown();
+                });
         });
-    }   
+    }
 });
