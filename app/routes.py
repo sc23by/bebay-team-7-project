@@ -1941,3 +1941,36 @@ def pay_selected_items():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+
+@app.route('/payment_success_multi')
+@user_required
+def payment_success_multi():
+    item_ids_str = request.args.get('item_ids', '')
+    item_ids = [int(i) for i in item_ids_str.split(',') if i.isdigit()]
+
+    if not item_ids:
+        flash("No valid items provided for payment confirmation.", "danger")
+        return redirect(url_for('user_home'))
+
+    # Fetch matching SoldItems and mark as paid
+    sold_items = SoldItem.query.filter(
+        SoldItem.buyer_id == current_user.id,
+        SoldItem.item_id.in_(item_ids)
+    ).all()
+
+    for sold in sold_items:
+        sold.paid = True
+
+    db.session.commit()
+
+    flash("Payment successful! Items have been marked as paid.", "success")
+    return redirect(url_for('payment_success', item_ids=",".join(map(str, item_ids))))
+
+
+@app.context_processor
+def inject_cart_count():
+    if current_user.is_authenticated:
+        unpaid_count = SoldItem.query.filter_by(buyer_id=current_user.id, paid=False).count()
+        return {'cart_count': unpaid_count}
+    return {'cart_count': 0}
