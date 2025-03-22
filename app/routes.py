@@ -206,8 +206,81 @@ def guest_home():
     """
     if current_user.is_authenticated:
         return redirect_based_on_priority(current_user)
-    return render_template('guest_home.html')
 
+    # show non expired items
+    items = Item.query.filter(
+        ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+        Item.expiration_time > datetime.utcnow()
+    ).all()
+
+    # Get highest bid for each item
+    item_bids = {item.item_id: item.highest_bid() for item in items}
+
+    return render_template('guest_home.html', pagetitle='Guest Home', items=items, item_bids=item_bids)
+
+@app.route('/guest_search')
+@guest_required
+def guest_search():
+    search_query = request.args.get('query', '').strip()
+
+    if not search_query:
+        items = Item.query.all()
+    else:
+        items = Item.query.filter(Item.item_name.ilike(f"%{search_query}%")).all()
+
+    item_bids = {}
+    for item in items:
+        highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item.item_id).scalar()
+        item_bids[item.item_id] = highest_bid if highest_bid is not None else None 
+    
+    return render_template("guest_home.html", items = items, item_bids = item_bids, query=search_query)
+
+# Route: Sort items on main page
+@app.route('/guest_sort_items', methods=['GET'])
+def guest_sort_items():
+    """
+    Handles json request to allow dynamic sort feature to sort items
+    """
+    # if user selects the sort function
+    sort_by = request.args.get('sort', 'all')
+
+    # query the items on the main page
+    if sort_by == "min_price":
+        sorted_items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)), Item.expiration_time > datetime.utcnow()
+        ).order_by(Item.minimum_price.asc()).all()
+    elif sort_by == "name_asc":
+        sorted_items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)), Item.expiration_time > datetime.utcnow()
+        ).order_by(Item.item_name.asc()).all()
+    elif sort_by == "all_items":
+        sorted_items = sorted_items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+        ).all()
+    else:
+        sorted_items = Item.query.filter(
+            ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
+            Item.expiration_time > datetime.utcnow()
+        ).all() 
+
+    item_bids = {item.item_id: item.highest_bid() for item in sorted_items}
+    
+    # Convert to JSON format
+    items = [{
+        "item_id": item.item_id,
+        "item_name": item.item_name,
+        "minimum_price": str(item.minimum_price),
+        "shipping_cost": str(item.shipping_cost),
+        "item_image": item.item_image,
+         "current_highest_bid": str(item_bids.get(item.item_id, "No bids yet")),
+        "approved": item.approved,
+        "expiration_time": str(item.expiration_time),
+        "time_left" : item.time_left.total_seconds(),
+        "seller_id" : item.seller_id,
+        "is_watched": True
+    } for item in sorted_items]
+
+    return jsonify(items)
 
 # Route: Registration Page    
 @app.route('/register', methods=['GET', 'POST'])

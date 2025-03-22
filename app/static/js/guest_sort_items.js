@@ -1,15 +1,15 @@
 document.addEventListener("DOMContentLoaded", function() {
-    let items_container = document.getElementById("items_sort");
-    let sortDropdown = document.getElementById("items_dropdown");
-    if (sortDropdown) {
-        sortDropdown.addEventListener("change", function() {
+    let guest_items_container = document.getElementById("guest_items_sort");
+    let guest_sort_dropdown = document.getElementById("guest_items_dropdown");
+    if (guest_sort_dropdown) {
+        guest_sort_dropdown.addEventListener("change", function() {
             let selected = this.value;
 
-            fetch(`/user/sort_items?sort=${selected}`)
+            fetch(`/guest_sort_items?sort=${selected}`)
                 .then(response => response.json())
                 .then(data => {
                     // Clear previous items
-                    items_container.innerHTML = ""; 
+                    guest_items_container.innerHTML = ""; 
                     
                     // Dynamically update sorted items
                     data.forEach(item => {
@@ -26,19 +26,15 @@ document.addEventListener("DOMContentLoaded", function() {
 
                         updateCountdown();
 
-                        let highest_bid = item.current_highest_bid !== "None"  
+                        let highest_bid = item.current_highest_bid !== "None" 
                             ? `£${item.current_highest_bid}` 
                             : "No bids yet";
 
+                        // Default empty like_button
+                        let like_button = "";
+
                         let expired_item = item.time_left <= 0 ? "expired-item" : "";
-
-                        let like_button = item.seller_id !== current_user_id ? `
-                            <span class="fa fa-heart ${item.is_watched ? 'selected' : ''}" 
-                                data-item-id="${item.item_id}">
-                            </span>
-                            <input type="hidden" name="watch" value="${item.is_watched ? '1' : '0'}">
-                        ` : "";
-
+                        console.log()
                         item_Element.innerHTML = `
                             <div class="card h-100 ${expired_item}">
                                     <img src="/static/images/items/${item.item_image}" class="card-img-top" alt="${item.item_name}">
@@ -55,14 +51,14 @@ document.addEventListener("DOMContentLoaded", function() {
                                         </p> 
                                         <p class="card-text shipping">Shipping Price: £${item.shipping_cost}</p>                       
                                         ${item.approved ? `<span class="badge bg-success">Approved</span>` : ""}
-                                        <a href="/item/${item.item_id}" class="btn btn-primary">
+                                        <a href="/register" class="btn btn-primary">
                                             View Details
                                         </a>
                                     </div>
                             </div>
                         `;
                         
-                        items_container.appendChild(item_Element);
+                        guest_items_container.appendChild(item_Element);
                     });
                 });
         });
