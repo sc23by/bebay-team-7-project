@@ -1835,3 +1835,32 @@ def get_time_left(item_id):
 
     return jsonify({"time_left": time_left})
 
+
+
+#User Route: Cart route for the checkout items
+
+@app.route('/cart')
+@user_required
+def cart():
+    # Fetch only unpaid items won by current user
+    won_items = SoldItem.query.filter_by(buyer_id=current_user.id, paid=False).all()
+    item_ids = [s.item_id for s in won_items]
+    items = Item.query.filter(Item.item_id.in_(item_ids)).all()
+    
+    cart_count = get_cart_count()  # Assuming this function exists
+    
+    return render_template('cart.html', pagetitle='My Cart', items=items, cart_count=cart_count)
+
+# Function that retrieves the count whether the cart is empty or not
+def get_cart_count():
+    if current_user.is_authenticated:
+        return SoldItem.query.filter_by(buyer_id=current_user.id).count()
+    return 0
+
+
+
+@app.context_processor
+def inject_cart_count():
+    if current_user.is_authenticated and current_user.priority == 1:
+        return {'cart_count': SoldItem.query.filter_by(buyer_id=current_user.id).count()}
+    return {'cart_count': 0}
