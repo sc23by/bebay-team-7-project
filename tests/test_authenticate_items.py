@@ -24,6 +24,7 @@ def create_form_data():
             filename="test_image.jpg",
             content_type="image/jpeg"
         ),
+        "category":"other",
         "authenticate": True
     }
     return data
@@ -65,10 +66,10 @@ def test_manager_sees_request(loggedInClientP3):
             date_time=None, # not authenticated yet
             expiration_time=None, # not authenticated yet
             approved=False,
-            expert_payment_percentage=10.0,
             site_fee_percentage=1.0,
             expert_fee_percentage=4.0,
-            sold=False)
+            sold=False,
+            category='other')
         
         db.session.add(item)
         db.session.commit()
@@ -128,10 +129,10 @@ def test_manager_assign_expert(loggedInClientP3):
             date_time=None, # not authenticated yet
             expiration_time=None, # not authenticated yet
             approved=False,
-            expert_payment_percentage=10.0,
             site_fee_percentage=1.0,
             expert_fee_percentage=4.0,
-            sold=False)
+            sold=False,
+            category='other')
         
         db.session.add(item)
         db.session.commit()
@@ -144,7 +145,7 @@ def test_manager_assign_expert(loggedInClientP3):
         'item_id': 1,
         'selected_expert': 10,
         'selected_time': 1,
-        'expert_payment_percentage': 50})
+        'expert_fee_percentage': 50})
     
     assert response.status_code == 302
 
@@ -172,11 +173,11 @@ def test_expert_vue_assignment(loggedInClientP2):
             date_time=None, # not authenticated yet
             expiration_time=None, # not authenticated yet
             approved=False,
-            expert_payment_percentage=10.0,
             site_fee_percentage=1.0,
             expert_fee_percentage=4.0,
             sold=False,
-            expert = current_user)
+            expert = current_user,
+            category='other')
         
         db.session.add(item)
         db.session.commit()
@@ -201,18 +202,18 @@ def test_expert_aprove(loggedInClientP2):
             description="Wow what an item",
             minimum_price=10.99,
             shipping_cost=5.50,
-            days=3,
-            hours=2,
+            days=0,
+            hours=0,
             minutes=30,
             item_image="test_image.jpg",
             date_time=None, # not authenticated yet
             expiration_time=None, # not authenticated yet
             approved=False,
-            expert_payment_percentage=10.0,
             site_fee_percentage=1.0,
             expert_fee_percentage=4.0,
             sold=False,
-            expert = current_user)
+            expert = current_user,
+            category='other')
         
         db.session.add(item)
         db.session.commit()
@@ -230,6 +231,9 @@ def test_expert_aprove(loggedInClientP2):
         item = Item.query.filter_by(item_id=1).first()
         assert item.approved == True
         assert item.expiration_time is not None
+        current_time = datetime.utcnow()
+        min_valid_expiration = current_time + timedelta(minutes=25)
+        assert item.expiration_time >= min_valid_expiration
 
 def test_expert_decline(loggedInClientP2):
     print(f"{Colours.YELLOW}Testing authenticate items - expert can decline items:{Colours.RESET}")
@@ -249,11 +253,11 @@ def test_expert_decline(loggedInClientP2):
             date_time=None, # not authenticated yet
             expiration_time=None, # not authenticated yet
             approved=False,
-            expert_payment_percentage=10.0,
             site_fee_percentage=1.0,
             expert_fee_percentage=4.0,
             sold=False,
-            expert = current_user)
+            expert = current_user,
+            category='other')
         
         db.session.add(item)
         db.session.commit()
@@ -289,11 +293,11 @@ def test_expert_reassign(loggedInClientP2):
             date_time=None, # not authenticated yet
             expiration_time=None, # not authenticated yet
             approved=False,
-            expert_payment_percentage=10.0,
             site_fee_percentage=1.0,
             expert_fee_percentage=4.0,
             sold=False,
-            expert = current_user)
+            expert = current_user,
+            category='other')
         
         db.session.add(item)
         db.session.commit()

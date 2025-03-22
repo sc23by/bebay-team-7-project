@@ -1,6 +1,14 @@
 {% extends "base_expert.html" %}
 {% block content %}
 
-    <p> Expert message page. </p>
+<h2>Message Seller: {{ seller.username }}</h2>
+
+<form method="POST">
+    <div class="form-group">
+        <label for="message">Your Message:</label>
+        <textarea name="message" id="message" class="form-control" rows="4" required></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary mt-2">Send Message</button>
+</form>
 
 {% endblock %}

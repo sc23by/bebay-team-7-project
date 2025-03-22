@@ -20,7 +20,7 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String(30), nullable=False)
     last_name = db.Column(db.String(30), nullable=False)
     priority = db.Column(db.Integer, nullable=False, default=1)
-    profile_picture = db.Column(db.String(255), nullable=False, default="default_profile.jpg")
+    expertise = db.Column(db.String(50), nullable=True, default=None)
 
     watchlist = db.relationship('Item', secondary=Watched_item, backref='watched_by') # allows user to watch multiple items
     items = db.relationship('Item',foreign_keys='Item.seller_id',backref='seller', lazy=True)
@@ -71,7 +71,6 @@ class Item(db.Model):
     expiration_time = db.Column(db.DateTime, nullable=True)  
     approved = db.Column(db.Boolean, default=None, nullable=True)
     shipping_cost = db.Column(db.Numeric(10,2), nullable=False)
-    expert_payment_percentage = db.Column(db.Float, nullable=False, default=10.0) # Default can be changed by managers
     expert_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = True)
     # Store the fixed fees at the time of listing
     site_fee_percentage = db.Column(db.Float, nullable=False,default=1.00)
@@ -81,6 +80,8 @@ class Item(db.Model):
     #relationship
     bids = db.relationship('Bid',backref='item',lazy=True)
     sold_item = db.relationship('SoldItem',backref='item',lazy=True)
+    # category
+    category = db.Column(db.String(50), nullable=False)  # Must be one of the pre-defined choices
 
     
     def get_image_url(self):
@@ -168,5 +169,13 @@ class UserMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    item_id = db.Column(db.Integer, db.ForeignKey('item.item_id'), nullable=True)  # Link to item
+    subject = db.Column(db.String(200), nullable=True)  # New field for chat subject
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    read = db.Column(db.Boolean, default=False)
+
+    # Define relationships
+    sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
+    recipient = db.relationship('User', foreign_keys=[recipient_id], backref='received_messages')
+    item = db.relationship('Item', backref='messages')

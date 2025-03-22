@@ -1,10 +1,19 @@
 <!-- User Account Page, see user information -->
-{% extends 'base_user.html' %}
+{% if current_user.priority == 1 %}
+    {% extends "base_user.html" %}
+{% elif current_user.priority == 2 %}
+    {% extends "base_expert.html" %}
+{% elif current_user.priority == 3 %}
+    {% extends "base_manager.html" %}
+{% else %}
+    {% extends "base_guest.html" %}
+{% endif %}
 {% block content %}
 <body class="container-fluid bg-light">
 
     <div class="row vh-100">
         <!-- Sidebar -->
+        {% if current_user.priority == 1 %}
         <form class="col-md-3 col-lg-2 bg-white shadow-sm p-4"  action="{{ url_for('account') }}" method="post">
             {{ sidebar_form.hidden_tag() }}
             <div class="sidebar">{{ sidebar_form.info(class="btn btn-outline-secondary custom-button") }}</div>
@@ -15,7 +24,7 @@
             <div class="sidebar">{{ sidebar_form.notifications(class="btn btn-outline-secondary custom-button") }}</div>
             <div class="sidebar">{{ sidebar_form.logout(class="btn btn-outline-secondary custom-button") }}</div>
         </form>
-
+        {% endif %}
         <!-- Content Area -->
         <div class="col-md-9 col-lg-10 p-5">
             <h2 class="mb-4">My Info</h2>
@@ -115,6 +124,24 @@
                     </div>
                 </div>
             </form>
+
+            {% if current_user.priority == 2 %}
+                <h4>Expertise</h4>
+
+                <form action="{{ url_for('account') }}" method="post">
+                    {{ edit_expertise_form.hidden_tag() }}
+                    <div class="mb-3 row">
+                        {{ edit_expertise_form.expertise.label(class="col-sm-2 col-form-label") }}
+                        {{ edit_expertise_form.expertise(class="form-select col-sm-6") }}
+                        <div class="col-sm-2">
+                            {{ edit_expertise_form.update_expertise(class="btn btn-outline-primary") }}
+                        </div>
+                    </div>
+                </form>
+            {% endif %}
+
+
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-dark">Logout</a>
         </div>
     </div>
 </body>

@@ -1,0 +1,13 @@
+.search-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 5px; /* Space between input and button */
+}
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 30px;
+    padding-left: 15px;
+}

@@ -1,0 +1,52 @@
+{% if current_user.priority == 1 %}
+    {% extends "base_user.html" %}
+{% elif current_user.priority == 2 %}
+    {% extends "base_expert.html" %}
+{% elif current_user.priority == 3 %}
+    {% extends "base_manager.html" %}
+{% else %}
+    {% extends "base_guest.html" %}
+{% endif %}
+
+{% block content %}
+<h2>Chat with {{ recipient.username }}</h2>
+{% if item %}
+    <p class="text-muted">about "{{ item.item_name }}"</strong></p>
+{% else %}
+
+{% endif %}
+
+<div class="chat-box">
+    {% for message in messages %}
+        <div class="{% if message.sender_id == current_user.id %}my-message{% else %}their-message{% endif %}">
+            <p><strong>{{ message.sender.username }}:</strong> {{ message.content }}</p>
+            <small>{{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Reply Form -->
+<form method="POST">
+    <textarea name="message" required placeholder="Type a message..." class="form-control"></textarea>
+    <button type="submit" class="btn btn-primary mt-2">Send</button>
+</form>
+
+<style>
+    .chat-box {
+        border: 1px solid #ccc;
+        padding: 15px;
+        max-height: 400px;
+        overflow-y: scroll;
+        margin-bottom: 10px;
+    }
+    .my-message {
+        text-align: right;
+        color: blue;
+    }
+    .their-message {
+        text-align: left;
+        color: green;
+    }
+</style>
+
+{% endblock %}

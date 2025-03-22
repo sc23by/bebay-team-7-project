@@ -70,7 +70,8 @@ def test_list_item(loggedInClientP1):
                 stream=io.BytesIO(b"Fake image data"),
                 filename="test_image.jpg",
                 content_type="image/jpeg"
-            )
+            ),
+            "category":"electronics"
         }
         return data
 
@@ -106,7 +107,9 @@ def test_invalid_list_item(loggedInClientP1):
                 stream=io.BytesIO(b"Fake image data"),
                 filename="test_image.txt", # text file is invalid
                 content_type="image/jpeg"
-            )
+            ),
+            "category":"fashion"
+            
         }
         return data
 
@@ -137,7 +140,8 @@ def test_invalid_price(loggedInClientP1):
                 stream=io.BytesIO(b"Fake image data"),
                 filename="test_image.jpeg",
                 content_type="image/jpeg"
-            )
+            ),
+            "category":"fashion"
         }
         return data
 
@@ -169,7 +173,8 @@ def test_boundry_price(loggedInClientP1):
                 stream=io.BytesIO(b"Fake image data"),
                 filename="test_image.jpeg",
                 content_type="image/jpeg"
-            )
+            ),
+            "category":"fashion"
         }
         return data
 
@@ -205,7 +210,8 @@ def test_invalid_shipping_cost(loggedInClientP1):
                 stream=io.BytesIO(b"Fake image data"),
                 filename="test_image.jpeg",
                 content_type="image/jpeg"
-            )
+            ),
+            "category":"fashion"
         }
         return data
 
@@ -237,7 +243,8 @@ def test_boundry_shipping_cost(loggedInClientP1):
                 stream=io.BytesIO(b"Fake image data"),
                 filename="test_image.jpeg",
                 content_type="image/jpeg"
-            )
+            ),
+            "category":"fashion"
         }
         return data
 
@@ -273,7 +280,8 @@ def test_missing_data(loggedInClientP1):
                 stream=io.BytesIO(b"Fake image data"),
                 filename="test_image.jpeg",
                 content_type="image/jpeg"
-            )
+            ),
+            "category":"fashion"
         }
         return data
 
@@ -300,7 +308,8 @@ def test_view_items(loggedInClientP1):
             expiration_time=expiration_time,
             approved=True,
             shipping_cost=10.50,
-            expert_payment_percentage=0.15 )
+            expert_fee_percentage=0.15,
+            category="other" )
 
         db.session.add(new_item)
         db.session.commit()
@@ -334,7 +343,8 @@ def test_watchlist_items(loggedInClientP1):
             expiration_time=expiration_time,
             approved=True,
             shipping_cost=10.50,
-            expert_payment_percentage=0.15 )
+            expert_fee_percentage=0.15,
+            category="other" )
 
         db.session.add(new_item)
         db.session.commit()

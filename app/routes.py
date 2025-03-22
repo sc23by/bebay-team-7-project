@@ -1,7 +1,7 @@
 from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, request, flash, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
-from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
+from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm, EditExpertiseForm, CATEGORY_CHOICES 
 from app.models import User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo, Notification, SoldItem, UserMessage, FeeConfig
 from functools import wraps
 import matplotlib
@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import desc
 import numpy as np
 import stripe
+from datetime import datetime
 # Parses data sent by JS
 import json
 # Websockets
@@ -287,24 +288,6 @@ def messages():
     ).order_by(UserMessage.timestamp).all()
     return render_template('messages.html', messages=messages)
 
-@socketio.on('send_message')
-def handle_send_message(data):
-    # Create a new message using the UserMessage model
-    print("Received send_message with data:", data)  # Debug print
-    message = UserMessage(
-        sender_id=data['sender_id'],
-        recipient_id=data['recipient_id'],
-        content=data['content']
-    )
-    db.session.add(message)
-    db.session.commit()
-    # Broadcast the message back to clients
-    socketio.emit('receive_message', {
-        'sender_id': data['sender_id'],
-        'recipient_id': data['recipient_id'],
-        'content': data['content'],
-        'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
-    })
 
 # User Pages
 
@@ -320,10 +303,11 @@ def user_home():
         ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
         Item.expiration_time > datetime.utcnow()
     ).all()
-    
+
+    # Get highest bid for each item
     item_bids = {item.item_id: item.highest_bid() for item in items}
-    
-    return render_template('user_home.html', pagetitle='User Home', items=items, item_bids = item_bids)
+
+    return render_template('user_home.html', pagetitle='User Home', items=items, item_bids=item_bids)
 
 # Route: Search in navbar
 @app.route('/user/search', methods = ['GET'])
@@ -341,7 +325,27 @@ def search():
         highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item.item_id).scalar()
         item_bids[item.item_id] = highest_bid if highest_bid is not None else None 
     
-    return render_template("user_home.html", items = items, item_bids = item_bids)
+    return render_template("user_home.html", items = items, item_bids = item_bids, query=search_query)
+
+# Route: Search in navbar for experts
+@app.route('/expert/search', methods = ['GET'])
+@expert_required
+def expert_search():
+
+    expert_id = current_user.id
+    search_query = request.args.get('query', '').strip()
+
+    if not search_query:
+        items = Item.query.filter(Item.expiration_time.is_(None), Item.expert_id == expert_id).all()
+    else:
+        items = Item.query.filter(
+            Item.item_name.ilike(f"%{search_query}%"),
+            Item.expiration_time.is_(None),
+            Item.expert_id == expert_id
+        ).all()
+
+
+    return render_template("expert_assignments.html", items = items, query=search_query)
 
 # Route: Watch
 @app.route('/user/watch', methods=['POST'])
@@ -420,7 +424,7 @@ def sort_items():
 
 # Route: Account
 @app.route('/user/account', methods=['GET', 'POST'])
-@user_required
+@login_required
 def account():
     """
     Redirects to account page, has buttons to other pages and user information.
@@ -448,6 +452,7 @@ def account():
     email_form = ChangeEmailForm()
     password_form = ChangePasswordForm()
     card_form = CardInfoForm()
+    edit_expertise_form = EditExpertiseForm()
     
     user = User.query.get(current_user.id)
     # find users payment and shipping info from PaymentInfo table 
@@ -517,6 +522,12 @@ def account():
         db.session.commit()
         flash('Payment info updated successfully!', 'success')
 
+    if edit_expertise_form.update_expertise.data and edit_expertise_form.validate_on_submit():
+        current_user.expertise = edit_expertise_form.expertise.data
+        print(edit_expertise_form.expertise.data)
+        db.session.commit()
+        flash('Expertise updated.', 'success')
+
     # populate forms with user information
     if request.method == 'GET' or not info_form.validate_on_submit() or not username_form.validate_on_submit() or not email_form.validate_on_submit() or not card_form.validate_on_submit() or not password_form.validate_on_submit():
         # user info
@@ -534,8 +545,11 @@ def account():
             card_form.card_number.data = None
             card_form.shipping_address.data = None
 
+        edit_expertise_form.expertise.data = user.expertise
+
+
     return render_template('user_account.html', pagetitle='Account', sidebar_form=sidebar_form, info_form=info_form, 
-        username_form=username_form, email_form=email_form, password_form=password_form, card_form=card_form)
+        username_form=username_form, email_form=email_form, password_form=password_form, card_form=card_form, edit_expertise_form=edit_expertise_form)
 
 # Route: My Bids
 @app.route('/user/my_bids', methods=['GET', 'POST'])
@@ -719,7 +733,7 @@ def sort_watchlist():
 
 # Route: Notifications
 @app.route('/user/notifications', methods=['GET', 'POST'])
-@user_required
+@login_required
 def notifications():
     """
     Redirects to my notifications page, has buttons to other pages.
@@ -741,10 +755,28 @@ def notifications():
             return redirect(url_for("logout"))
 
     notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.timestamp.desc()).all()
-    Notification.query.filter_by(user_id=current_user.id, read=False).update({"read": True})
     db.session.commit()
  
     return render_template('user_notifications.html', pagetitle='Notifications', form=form, notifications=notifications)
+
+# Route: Mark read notifications as read
+@app.route('/mark_notifications_as_read')
+@login_required
+def mark_notifications_as_read():
+    """
+    Marks all unread notifications for the user as read.
+    This is triggered AFTER the page has loaded.
+    """
+    unread_notifications = Notification.query.filter_by(user_id=current_user.id, read=False).all()
+
+    for notification in unread_notifications:
+        notification.read = True
+
+    db.session.commit()
+
+    # Return a blank response (so the browser doesn't show anything)
+    return '', 204
+
 
 # Route: Delete Notification
 @app.route('/notification/delete/<int:notification_id>', methods=['GET', 'POST'])
@@ -806,7 +838,8 @@ def user_list_item():
             hours=int(form.hours.data),
             minutes=int(form.minutes.data),
             shipping_cost=form.shipping_cost.data,
-            approved=False
+            approved=False,
+            category=form.category.data
         )
         
         db.session.add(new_item)
@@ -938,9 +971,9 @@ def approve_item(item_id):
     # Set start and expiration time
     date_time = datetime.utcnow()
     item_to_approve.expiration_time = datetime.utcnow() + timedelta(
-        item_to_approve.days,
-        item_to_approve.hours,
-        item_to_approve.minutes
+        days=item_to_approve.days,
+        hours=item_to_approve.hours,
+        minutes=item_to_approve.minutes
     )
     
     
@@ -961,9 +994,9 @@ def decline_item(item_id):
     item_to_approve.approved = False
     # Set expiration time
     item_to_approve.expiration_time = datetime.utcnow() + timedelta(
-        item_to_approve.days,
-        item_to_approve.hours,
-        item_to_approve.minutes
+        days=item_to_approve.days,
+        hours=item_to_approve.hours,
+        minutes=item_to_approve.minutes
     )
     # Remove from waiting list
     WaitingList.query.filter_by(item_id=item_id).delete()
@@ -988,6 +1021,158 @@ def reassign_item(item_id):
     flash("Expert unassigned successfully.", "warning")
 
     return redirect(url_for('expert_assignments'))
+
+# i dont think this is needed
+@app.route('/expert/message_seller/<int:item_id>', methods=['GET', 'POST'])
+@expert_required
+def expert_message_seller(item_id):
+    """
+    Allows an expert to send a private message to the seller of an item.
+    """
+    item = Item.query.get_or_404(item_id)
+    seller = item.seller  # Retrieve the seller's user object
+
+    if request.method == 'POST':
+        message_content = request.form.get('message')
+
+        if message_content:
+            new_message = UserMessage(
+                sender_id=current_user.id,
+                recipient_id=seller.id,
+                content=message_content
+            )
+            db.session.add(new_message)
+            db.session.commit()
+            flash("Message sent successfully!", "success")
+            return redirect(url_for('expert_assignments'))
+
+    return render_template('expert_messaging.html', item=item, seller=seller)
+
+# Route: Inbox for all users
+from sqlalchemy import func, case, or_, and_
+from sqlalchemy.orm import joinedload
+
+@app.route('/inbox')
+@login_required
+def inbox():
+    """
+    Show latest messages grouped by:
+    - sender + recipient + item_id (when item exists)
+    - sender + recipient only (when item_id is None)
+    """
+    # Subquery: collapse general messages into a single conversation per user pair
+    base_query = db.session.query(
+        func.max(UserMessage.timestamp).label('latest_time'),
+        UserMessage.sender_id,
+        UserMessage.recipient_id,
+        case(
+            (UserMessage.item_id.is_(None), -1),  # treat general messages as item_id = -1
+            else_=UserMessage.item_id
+        ).label('group_item_id')
+    ).filter(
+        or_(
+            UserMessage.sender_id == current_user.id,
+            UserMessage.recipient_id == current_user.id
+        )
+    ).group_by(
+        UserMessage.sender_id,
+        UserMessage.recipient_id,
+        case(
+            (UserMessage.item_id.is_(None), -1),
+            else_=UserMessage.item_id
+        )
+    ).subquery()
+
+    # Now fetch actual messages that match those latest timestamps
+    messages = db.session.query(UserMessage).options(
+        joinedload(UserMessage.item),
+        joinedload(UserMessage.sender),
+        joinedload(UserMessage.recipient)
+    ).join(
+        base_query,
+        and_(
+            UserMessage.sender_id == base_query.c.sender_id,
+            UserMessage.recipient_id == base_query.c.recipient_id,
+            func.coalesce(UserMessage.item_id, -1) == base_query.c.group_item_id,
+            UserMessage.timestamp == base_query.c.latest_time
+        )
+    ).order_by(UserMessage.timestamp.desc()).all()
+
+    return render_template("inbox.html", messages=messages)
+
+# Route: Chat
+@app.route('/chat/<int:user_id>/', defaults={'item_id': None}, methods=['GET', 'POST'])
+@app.route('/chat/<int:user_id>/<int:item_id>', methods=['GET', 'POST'])
+@login_required
+def chat(user_id, item_id):
+    """
+    Show conversation history with a specific user.
+    Optional: filter by item.
+    """
+    recipient = User.query.get_or_404(user_id)
+
+    # Only fetch item if item_id is provided (avoid .get(None) warning)
+    item = None
+    if item_id is not None:
+        item = Item.query.get_or_404(item_id)
+
+    # Build query for messages between the two users
+    message_query = UserMessage.query.filter(
+        ((UserMessage.sender_id == current_user.id) & (UserMessage.recipient_id == user_id)) |
+        ((UserMessage.sender_id == user_id) & (UserMessage.recipient_id == current_user.id))
+    )
+
+    # Filter by item_id or lack thereof
+    if item_id is not None:
+        message_query = message_query.filter(UserMessage.item_id == item_id)
+    else:
+        message_query = message_query.filter(UserMessage.item_id == None)
+
+    messages = message_query.order_by(UserMessage.timestamp).all()
+
+    # Mark unread messages as read
+    unread_query = UserMessage.query.filter(
+        UserMessage.sender_id == user_id,
+        UserMessage.recipient_id == current_user.id,
+        UserMessage.read == False
+    )
+
+    if item_id is not None:
+        unread_query = unread_query.filter(UserMessage.item_id == item_id)
+    else:
+        unread_query = unread_query.filter(UserMessage.item_id == None)
+
+    unread_messages = unread_query.all()
+    for msg in unread_messages:
+        msg.read = True
+
+    db.session.commit()
+
+    # Handle reply submission
+    if request.method == "POST":
+        message_content = request.form.get("message")
+        if message_content:
+            new_message = UserMessage(
+                sender_id=current_user.id,
+                recipient_id=user_id,
+                item_id=item_id,
+                subject=item.item_name if item else None,
+                content=message_content,
+                read=False
+            )
+            db.session.add(new_message)
+
+            # Create notification
+            notification = Notification(
+                user_id=user_id,
+                message=f"You have a new message from {current_user.username}."
+            )
+            db.session.add(notification)
+
+            db.session.commit()
+            return redirect(url_for('chat', user_id=user_id, item_id=item_id) if item_id else url_for('chat', user_id=user_id))
+
+    return render_template('chat.html', messages=messages, recipient=recipient, item=item)
 
 #Route: Expert Messaging Page
 @app.route('/expert/messaging')
@@ -1153,7 +1338,6 @@ def manager_statistics():
 
     plt.xlabel('Week')
     plt.ylabel('GBP')
-    plt.title('Weekly Revenue')
 
 
     img = io.BytesIO()
@@ -1281,7 +1465,6 @@ def manager_statistics_cost():
 
     plt.xlabel('Week')
     plt.ylabel('GBP')
-    plt.title('Weekly Cost')
 
     img = io.BytesIO()
     plt.savefig(img,format='png')
@@ -1300,7 +1483,7 @@ def manager_statistics_cost():
 def manager_accounts():
     page = request.args.get('page',1,type=int)
     
-    accounts = User.query.paginate(page=page,per_page=1,error_out=False)
+    accounts = User.query.paginate(page=page,per_page=5,error_out=False)
 
     return render_template("manager_accounts.html",accounts=accounts)
 
@@ -1313,6 +1496,10 @@ def manager_accounts_update_number(username,update_number):
     
     if account and (1<= update_number <=3) :
         account.priority = update_number
+        if update_number == 2:
+            account.expertise = "other"
+        else:
+            account.expertise = None
         db.session.commit()
 
         return redirect(url_for('manager_accounts'))
@@ -1467,7 +1654,8 @@ def manager_expert_availability():
         assigned_items=assigned_items,
         unassigned_items=unassigned_items,
         approved_items=approved_items,
-        rejected_items=rejected_items
+        rejected_items=rejected_items,
+        category_choices=CATEGORY_CHOICES
 )
 
 #Route: Assign an expert
@@ -1477,7 +1665,7 @@ def assign_expert():
     expert_id = request.form.get('selected_expert')
     item_id = request.form.get('item_id')
     selected_time_id = request.form.get('selected_time')
-    expert_payment_percentage = request.form.get('expert_payment_percentage', type=float)
+    expert_fee_percentage = request.form.get('expert_fee_percentage', type=float)
 
     item = Item.query.get(item_id)
     selected_time = ExpertAvailabilities.query.filter_by(availability_id=selected_time_id, user_id=expert_id).first()
@@ -1485,9 +1673,15 @@ def assign_expert():
     if item and selected_time:
         item.expert_id = expert_id
         item.date_time = datetime.combine(selected_time.date, selected_time.start_time)  # FIXED: Set date_time
-        item.expert_payment_percentage = expert_payment_percentage  # Save the percentage
+        item.expert_fee_percentage = expert_fee_percentage  # Save the percentage
         
         db.session.delete(selected_time)  # Remove from availability
+
+        notification = Notification(
+            user_id=expert_id,
+            message=f"You have been assigned to authenticate the item '{item.item_name}'."
+        )
+        db.session.add(notification)
         db.session.commit()
 
         flash(f'Expert assigned successfully for {item.date_time.strftime("%Y-%m-%d %I:%M %p")}', 'success')
@@ -1518,6 +1712,13 @@ def unassign_expert():
         item.expert_id = None
         item.date_time = None
 
+        notification = Notification(
+            user_id=expert_id,  
+            message=f"You have been assigned to authenticate the item '{item.item_name}'."
+        )
+
+        db.session.add(notification)
+
         db.session.commit()
         
         flash('Expert unassigned successfully! Item has been added back to the waiting list.', 'warning')
@@ -1547,14 +1748,14 @@ def update_expert_payment():
         return redirect(url_for('index'))
 
     item_id = request.form.get('item_id')
-    expert_payment_percentage = request.form.get('expert_payment_percentage', type=float)
+    expert_fee_percentage = request.form.get('expert_fee_percentage', type=float)
 
     item = Item.query.get(item_id)
 
     if item and item.expert_id:  # Ensure the item is assigned to an expert
-        item.expert_payment_percentage = expert_payment_percentage
+        item.expert_fee_percentage = expert_fee_percentage
         db.session.commit()
-        flash(f'Expert payment percentage updated to {expert_payment_percentage}%', 'success')
+        flash(f'Expert payment percentage updated to {expert_fee_percentage}%', 'success')
 
     return redirect(url_for('manager_expert_availability'))
 
@@ -1584,7 +1785,7 @@ def manager_fees():
 def pay_for_item(item_id):
     """
     Creates a Stripe Checkout Session for the highest bidder,
-    including the shipping cost in the total payment amount.
+    including shipping cost and expert fee (if applicable) in the total payment amount.
     """
     item = Item.query.get_or_404(item_id)
 
@@ -1597,35 +1798,54 @@ def pay_for_item(item_id):
         flash("You are not the winning bidder!", "danger")
         return redirect(url_for('user_item_details', item_id=item_id))
 
-    # Convert to float to ensure proper calculations
+    # Convert values to float for proper calculations
     bid_price = float(highest_bid)
     shipping_price = float(item.shipping_cost)
 
-    # Calculate total checkout cost (Winning Bid + Shipping Cost)
-    total_price = bid_price + shipping_price
+    # Check if expert authentication is required
+    if item.expert_id:
+        expert_fee = bid_price * (item.expert_fee_percentage / 100)
+    else:
+        expert_fee = 0.0  # No expert fee if authentication isn't required
+
+    # Calculate total checkout cost (Winning Bid + Shipping Cost + Expert Fee)
+    total_price = bid_price + shipping_price + expert_fee
 
     # Create Stripe Checkout Session
     try:
+        line_items = [
+            {
+                'price_data': {
+                    'currency': 'gbp',
+                    'product_data': {'name': item.item_name},
+                    'unit_amount': int(bid_price * 100),  # Convert bid price to pence
+                },
+                'quantity': 1,
+            },
+            {
+                'price_data': {
+                    'currency': 'gbp',
+                    'product_data': {'name': 'Shipping Cost'},
+                    'unit_amount': int(shipping_price * 100),  # Convert shipping price to pence
+                },
+                'quantity': 1,
+            }
+        ]
+
+        # Add expert fee only if applicable
+        if expert_fee > 0:
+            line_items.append({
+                'price_data': {
+                    'currency': 'gbp',
+                    'product_data': {'name': 'Expert Fee'},
+                    'unit_amount': int(expert_fee * 100),  # Convert expert fee to pence
+                },
+                'quantity': 1,
+            })
+
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
-            line_items=[
-                {
-                    'price_data': {
-                        'currency': 'gbp',
-                        'product_data': {'name': item.item_name},
-                        'unit_amount': int(bid_price * 100),  # Convert bid price to pence
-                    },
-                    'quantity': 1,
-                },
-                {
-                    'price_data': {
-                        'currency': 'gbp',
-                        'product_data': {'name': 'Shipping Cost'},
-                        'unit_amount': int(shipping_price * 100),  # Convert shipping price to pence
-                    },
-                    'quantity': 1,
-                }
-            ],
+            line_items=line_items,
             mode='payment',
             success_url=url_for('payment_success', item_id=item_id, _external=True),
             cancel_url=url_for('user_item_details', item_id=item_id, _external=True),
@@ -1641,12 +1861,18 @@ def pay_for_item(item_id):
 def payment_success(item_id):
     item = Item.query.get_or_404(item_id)
 
-    # Mark item as sold
+    # Find the highest bid for the item
     highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
     winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
 
+    # Ensure only the winning bidder can mark the item as sold
     if winning_bid and winning_bid.user_id == current_user.id:
-        sold_item = Solditem(
+        # Mark item as sold
+        item.sold = True
+        db.session.commit()
+
+        # Add the item to SoldItem table
+        sold_item = SoldItem(
             item_id=item_id,
             seller_id=item.seller_id,
             buyer_id=current_user.id,
@@ -1654,11 +1880,12 @@ def payment_success(item_id):
         )
         db.session.add(sold_item)
         db.session.commit()
-        flash("Payment successful! The item has been marked as sold.", "success")
+
+        return render_template("payment_success.html", item=item, price=highest_bid)
+    
     else:
         flash("Payment failed or unauthorized access.", "danger")
-
-    return redirect(url_for('user_home'))
+        return redirect(url_for('user_home'))
 
 
 # API to fetch get remaining time on auction for an item in real time
