@@ -1,17 +1,17 @@
 document.addEventListener("DOMContentLoaded", function() {
-    let sortWatchlistDropdown = document.getElementById("watchlist_dropdown"); // Ensure this matches the dropdown for watchlist
+    let watchlist_container = document.getElementById("watchlist_sort");
+    let sortWatchlistDropdown = document.getElementById("watchlist_dropdown");
     if (sortWatchlistDropdown) {
         sortWatchlistDropdown.addEventListener("change", function() {
             let selected = this.value;
 
             fetch(`/user/sort_watchlist?sort=${selected}`)
-                .then(response => response.json() )
+                .then(response => response.json())
                 .then(data => {
-                    let container = document.getElementById("watchlist_sort");
                     // Clear previous items
-                    container.innerHTML = "";  
-
-                    //data to sort by
+                    watchlist_container.innerHTML = ""; 
+                    
+                    // Dynamically update sorted items
                     data.forEach(item => {
                         let item_Element = document.createElement("div");
                         item_Element.className = "col gallery";
@@ -39,7 +39,6 @@ document.addEventListener("DOMContentLoaded", function() {
                             <input type="hidden" name="watch" value="${item.is_watched ? '1' : '0'}">
                         ` : "";
 
-                        // what to print when sorted
                         item_Element.innerHTML = `
                             <div class="card h-100 ${expired_item}">
                                     <img src="/static/images/items/${item.item_image}" class="card-img-top" alt="${item.item_name}">
@@ -50,22 +49,21 @@ document.addEventListener("DOMContentLoaded", function() {
                                         <p class="card-text">Current Highest Bid: ${highest_bid}</p>
                                         <p class="countdown">Time Left: 
                                             <span class="time_left"
-                                                data-item-id=${ item.item_id }"
-                                                data-expiration="${ item.expiration_time }">
+                                                data-item-id="${item.item_id}"
+                                                data-expiration="${item.expiration_time}">
                                             </span>
                                         </p> 
-                                        <p class="card-text shipping">Shipping Price: £${ item.shipping_cost }</p>                       
+                                        <p class="card-text shipping">Shipping Price: £${item.shipping_cost}</p>                       
                                         ${item.approved ? `<span class="badge bg-success">Approved</span>` : ""}
-                                        <a href="/user/item_details/${item.item_id}" class="btn btn-primary">
+                                        <a href="/item/${item.item_id}" class="btn btn-primary">
                                             View Details
                                         </a>
                                     </div>
                             </div>
                         `;
-                        container.appendChild(item_Element);
+                        watchlist_container.appendChild(item_Element);
                     });
-                                   
                 });
         });
-    }   
+    }
 });
