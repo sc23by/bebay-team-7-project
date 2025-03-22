@@ -6,14 +6,14 @@
 <div class="container">
     <div class="row">
         <div class="card">
-          <h4 class="title">Weekly Cost</h4>
+          <h4 class="title">Weekly Breakdown</h4>
           <div class="dropdown">
             <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
               Select Chart
             </button>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="{{url_for('manager_statistics')}}">Weekly Revenue</a></li>
-              <li><a class="dropdown-item" href="{{url_for('manager_statistics_cost')}}">Weekly Cost</a></li>
+              <li><a class="dropdown-item" href="{{url_for('manager_statistics')}}">Weekly Income</a></li>
+              <li><a class="dropdown-item" href="{{url_for('manager_statistics_cost')}}">Weekly Breakdown</a></li>
             </ul>
           </div>
           <img src="data:image/png;base64,{{img_data}}" class="card-img-top" alt="...">

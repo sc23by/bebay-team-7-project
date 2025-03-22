@@ -1234,7 +1234,11 @@ def manager_statistics():
             final_price = item.sold_item.price
             site_fee = item.calculate_fee(final_price, expert_approved=False)
             total_profit += site_fee
+    
+    generated_percentage = (total_profit / total_revenue) * 100 if total_revenue != 0 else 0
 
+
+    # calculate for graph
     current_date = datetime.now()
     three_weeks_ago = current_date - timedelta(weeks=3)
 
@@ -1245,7 +1249,7 @@ def manager_statistics():
         week_start = three_weeks_ago + timedelta(weeks=i)
         week_end = week_start + timedelta(days = 6,hours=23,minutes=59,seconds=59)
 
-        weekly_revenue = 0
+        weekly_income = 0
         sold_items_in_week = SoldItem.query.filter(
             SoldItem.sold_at >= week_start,
             SoldItem.sold_at <= week_end
@@ -1255,9 +1259,9 @@ def manager_statistics():
             item = sold_item.item
             final_price = sold_item.price
             site_fee = item.calculate_fee(final_price, expert_approved=False)
-            weekly_revenue += site_fee
+            weekly_income += site_fee
         
-        values.append(weekly_revenue)
+        values.append(weekly_income)
 
         weeks.append({
             'week_start': week_start.strftime('%m-%d'),
@@ -1272,7 +1276,7 @@ def manager_statistics():
 
     plt.figure(figsize=(10,6))
 
-    plt.bar(week_labels, values,label='Weekly Revenue')
+    plt.bar(week_labels, values,label='Weekly Income')
     plt.autoscale(axis='y')
 
     plt.legend()
@@ -1288,7 +1292,6 @@ def manager_statistics():
     ratio = [0.75]
 
     img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
-    generated_percentage = (total_profit / total_revenue) * 100 if total_revenue != 0 else 0
 
     return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, values=values, week_labels=week_labels,total_revenue=total_revenue,total_profit=total_profit,generated_percentage=generated_percentage)
 
@@ -1336,57 +1339,50 @@ def manager_statistics_cost():
 
     for item in items:
         if item.sold_item:
-            final_price = item.sold_item[0].price
+            final_price = item.sold_item.price
             site_fee = item.calculate_fee(final_price, expert_approved=False)
             total_profit += site_fee
-    
-    if items:
-        generated_percentage = items[0].site_fee_percentage
-    else:
-        generated_percentage = 1
 
+    generated_percentage = (total_profit / total_revenue) * 100 if total_revenue != 0 else 0
 
-    sold_items = SoldItem.query.all()
-
+    # calculate for graph    
     current_date = datetime.now()
     three_weeks_ago = current_date - timedelta(weeks=3)
 
     weeks = []
-    expert_fee_value = []
-    cost_value = []
+    expert_fee_values = []
+    sold_values = []
+    income_value = []
 
     for i in range(4):
         week_start = three_weeks_ago + timedelta(weeks=i)
         week_end = week_start + timedelta(days = 6,hours=23,minutes=59,seconds=59)
 
+        weekly_expert_fee = 0
+        weekly_sold = 0
+        weekly_income = 0
 
-        expired_items = Item.query.filter(
-            Item.expiration_time >= week_start,
-            Item.expiration_time <= week_end            
+        sold_items_in_week = SoldItem.query.filter(
+            SoldItem.sold_at >= week_start,
+            SoldItem.sold_at <= week_end
         ).all()
 
+        for sold_item in sold_items_in_week:
+            item = sold_item.item
+            final_price = sold_item.price
+            # income amount
+            income_fee = item.calculate_fee(final_price, expert_approved=False)
+            weekly_income += income_fee
+            # expert payment amount
+            if item.approved:
+                site_fee =item.calculate_fee(final_price, expert_approved=True)
+                weekly_expert_fee = site_fee-weekly_income
+            # amount the user gets
+            weekly_sold = final_price-(weekly_income + weekly_expert_fee)
 
-        weekly_expert_fee = 0
-        item_cost = 0
-
-        for item in expired_items:
-            if item.sold_item:
-                for sold_item in item.sold_item:
-                        final_price = sold_item.price
-                        site_fee = item.calculate_fee(final_price,expert_approved=False)
-
-                        if item.approved:                        
-                    
-                            expert_fee = item.calculate_fee(final_price,expert_approved=True) - site_fee
-                            weekly_expert_fee += expert_fee
-
-                            item_cost = final_price - (expert_fee + site_fee)
-                        else:
-                            item_cost += final_price - site_fee
-                            weekly_expert_fee = 0
-
-        expert_fee_value.append(weekly_expert_fee)
-        cost_value.append(item_cost)
+        expert_fee_values.append(weekly_expert_fee)
+        income_value.append(weekly_income)
+        sold_values.append(weekly_sold)
                         
         weeks.append({
             'week_start': week_start.strftime('%m-%d'),
@@ -1400,11 +1396,20 @@ def manager_statistics_cost():
 
     plt.figure(figsize=(10,6))
 
-    x=np.arange(len(expert_fee_value))
+    expert_fee_values = np.array(expert_fee_values)
+    income_value = np.array(income_value)
+    sold_values = np.array(sold_values)
 
-    plt.bar(week_labels, expert_fee_value, label='Expert Fee')
-    plt.bar(week_labels, cost_value, bottom = expert_fee_value, label='Item Cost')
+    # Stack the bars for each week
+    plt.bar(week_labels, expert_fee_values, label='Expert Fee')
+    plt.bar(week_labels, income_value, bottom=expert_fee_values, label='Site Income')
+    plt.bar(week_labels, sold_values, bottom=expert_fee_values + income_value, label='User Payment')
+
     plt.autoscale(axis='y')
+
+    # Add labels and legend
+    plt.xlabel('Week')
+    plt.ylabel('GBP')
     plt.legend()
 
     plt.xlabel('Week')
@@ -1413,8 +1418,6 @@ def manager_statistics_cost():
     img = io.BytesIO()
     plt.savefig(img,format='png')
     img.seek(0)
-
-    ratio = [0.75]
 
     img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
 
