@@ -1,4 +1,5 @@
 # route test setup - discovered by all route tests
+# creats clients and other fixtures
 import sys
 import os
 

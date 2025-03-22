@@ -5,34 +5,48 @@
 <div class="container">
     <div class="row">
         <div class="card">
-          <h4 class="title">Weekly Revenue</h4>
+          <h4 class="title">Weekly Income</h4>
           <div class="dropdown">
             <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
               Select Chart
             </button>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="{{url_for('manager_statistics')}}">Weekly Revenue</a></li>
-              <li><a class="dropdown-item" href="{{url_for('manager_statistics_cost')}}">Weekly Cost</a></li>
+              <li><a class="dropdown-item" href="{{url_for('manager_statistics')}}">Weekly Income</a></li>
+              <li><a class="dropdown-item" href="{{url_for('manager_statistics_cost')}}">Weekly Breakdown</a></li>
             </ul>
           </div>
           <img src="data:image/png;base64,{{img_data}}" class="card-img-top" alt="...">
           <div class="card-body">
-            <div>
+            <table class="table table-hover">
+              <thead class="table-light">
+                  <tr>
+                      <th>Total Revenue</th>
+                      <th>Generated Income</th>
+                      <th>Site Fee Percentage(%)</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  <tr>
+                      <td>{{ total_revenue }}</td>
+                      <td>{{ total_profit }}</td>
+                      <td>{{ generated_percentage }}</td>
 
-                <p class="card-text">Total Revenue: £ {{ total_revenue }}</p>
-                <p class="card-text">Generated Income: £ {{ total_profit }}</p>
-                <p class="card-text">Site Fee Percentage generated: {{ generated_percentage }}%</p>
-            </div>
+
+                  </tr>
+              </tbody>
+            </table>
+
             <div>
-            <p class="card-text">Cost per posting: <form action="{{url_for('manager_statistics_edit')}}" method="POST">
-              <input placeholder="Edit Cost" name="site" type="float">
-              <button class="btn btn-success" type="submit">Edit</button></form></p>
+              <span>
+                <p class="card-text">Percentage per posting:</p>
+              </span>
+              <span>
+                <form action="{{url_for('manager_statistics_edit')}}" method="POST" class="cost-form">
+                  <input placeholder="Edit Percentage" name="site" type="float" class="cost-input">
+                  <button class="btn btn-success cost-button" type="submit">Edit</button>
+                </form>
+              </span>              
             </div>
-            <div>
-              <p class="card-text">Cost per Experts: <form action="{{url_for('manager_statistics_edit')}}" method="POST">
-                <input placeholder="Edit Cost" name="expert" type="float">
-                <button class="btn btn-success" type="submit">Edit</button></form></p>
-              </div>
           </div>
         </div>
       </div>
