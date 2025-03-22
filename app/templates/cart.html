@@ -1,0 +1,85 @@
+{% extends "base_user.html" %}
+{% block content %}
+
+<!-- Title -->
+<div class="container mb-5">
+    <div class="text-center border-bottom pb-3 mb-4">
+        <h2 class="fw-semibold display-6 mb-1">Auction Checkout</h2>
+        <p class="text-muted small">Review and complete payment for items you've won.</p>
+    </div>
+</div>
+
+<form id="checkout-form">
+    <div class="container">
+        <div class="row">
+            <!-- LEFT: Items List -->
+            <div class="col-md-8">
+                {% set subtotal = 0 %}
+                {% for item in items %}
+                {% if items|length == 0 %}
+                    <div class="text-center text-muted">Your cart is empty. You have no unpaid items.</div>
+                {% endif %}
+
+                {% if item.highest_bid() and current_user.id == item.highest_bidder_id() and item.time_left.total_seconds() <= 0 %}
+                {% set subtotal = subtotal + item.highest_bid() %}
+                <div class="card mb-4 border border-light shadow-sm rounded-4 p-3 px-md-4 position-relative bg-white">
+                    <div class="row align-items-center g-3">
+                        <!-- Checkbox -->
+                        <div class="col-auto d-flex align-items-start pt-2">
+                            <input class="form-check-input item-checkbox custom-checkbox"
+                                type="checkbox"
+                                value="{{ item.item_id }}"
+                                data-price="{{ item.highest_bid() }}"
+                                id="item-{{ item.item_id }}"
+                                checked>
+                        </div>
+
+                        <!-- Image -->
+                        <div class="col-md-3 text-center">
+                            <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}"
+                                 class="img-fluid rounded-3" style="max-height: 130px;">
+                        </div>
+
+                        <!-- Details -->
+                        <div class="col-md-8">
+                            <h5 class="fw-semibold mb-1">{{ item.item_name }}</h5>
+
+                            <p class="mb-1 small"><strong>Item Price:</strong> £{{ item.highest_bid() }}</p>
+                            <p class="mb-1 small"><strong>Shipping:</strong> £{{ item.shipping_cost }}</p>
+                            {% if item.expert_id %}
+                            <p class="mb-1 small text-info">
+                                <strong>Expert Fee:</strong>
+                                £{{ "%.2f"|format(item.highest_bid() * (item.expert_fee_percentage / 100)) }}
+                            </p>
+                            {% endif %}
+
+                            <div class="mt-2">
+                                <span class="badge bg-success">You Won This!</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- RIGHT: Summary Box -->
+            <div class="col-md-4">
+                <div class="card border border-light shadow-sm rounded-4 p-4 sticky-top bg-white" style="top: 80px;">
+                    <h5 class="fw-semibold mb-3">Order Summary</h5>
+                    <div class="mb-2 d-flex justify-content-between">
+                        <span>Selected Item Total</span>
+                        <span id="selected-subtotal">£0.00</span>
+                    </div>
+                    <hr>
+                    <p class="text-muted small mb-4">Shipping and expert fees will be added per item during payment.</p>
+
+                    <button type="submit" class="btn btn-success w-100 py-2" id="pay-selected">Pay Now</button>
+                    <a href="{{ url_for('user_home') }}" class="btn btn-outline-secondary w-100 mt-2">Back to Listings</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% endblock %}

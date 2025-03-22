@@ -18,13 +18,12 @@
 
         <!-- Content Area -->
         <div class="col-md-9 col-lg-10 p-5">
-            <h2 class="mb-4">My Listings</h2>
-
-            {% if items %}
+            <h2 class="mb-4">Past Orders</h2>
+            {% if purchased_items %}
                 <div class="row row-cols-3 row-cols-md-4 g-4">
-                    {% for item in items %}
+                    {% for item in purchased_items %}
                     <div class="col gallery">
-                        <div class="card h-100 {{ 'expired-item' if item.time_left.total_seconds() <= 0 and item.item_id not in waiting_list else '' }}">
+                        <div class="card h-100 {{ 'expired-item' if item.time_left.total_seconds() <= 0 else '' }}">
                             <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
                                 class="card-img-top" alt="{{ item.item_name }}">
                             <div class="card-body">
@@ -38,16 +37,11 @@
                                     {% endif %}
                                 </p>
                                 <p class="countdown">Time Left: 
-                                    {% if item.expiration_time %}
-                                        <span class="time_left {{ 'expired-text' if item.time_left.total_seconds() <= 0 else '' }}"
-                                            data-item-id="{{ item.item_id }}"
-                                            data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
-                                        </span>
-                                    {% else %}
-                                        <span>No expiration time set.</span>
-                                    {% endif %}
+                                    <span class="time_left {{ 'expired-text' if item.time_left.total_seconds() <= 0 else '' }}"
+                                        data-item-id="{{ item.item_id }}"
+                                        data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
+                                    </span>
                                 </p>
-                                
                                 <p class="card-text shipping">Shipping Price: £{{ item.shipping_cost }}</p>                       
                                 {% if item.item_id in waiting_list %}
                                     <p class="card-text text-warning">Waiting for authentication.</p>
@@ -65,6 +59,5 @@
             {% endif %}
         </div>
     </div>
-
 </body>
 {% endblock %}
