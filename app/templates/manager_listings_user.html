@@ -45,7 +45,23 @@
   .user-header {
     display: flex;
     align-items: center;
-    gap: 10px; /* 간격 조정 */
+    gap: 10px; 
+  }
+
+  .listings{
+    font-weight: bold;
+  }
+
+  .no-listings{
+    display: flex;
+    text-align: center;
+    
+  }
+
+  .listings-card{
+    width: 200px;
+    height: 350px;
+    margin-right: 150px;
   }
 
 
@@ -80,24 +96,24 @@
 						<span>
 						Email: {{ account.email }} </span>
 					</div>
-					<p>
+					<p class="listings">
 						Listings
 					</p>
 					 {% if items %}
 					<div class="row row-cols-3 row-cols-md-5 g-4">
 						 {% for item in items %}
 						<div class="col">
-							<div class="card h-100">
+							<div class="listings-card">
 								<img src="{{ item.item_image }}" class="card-img-top" alt="...">
 								<div class="card-body">
 									<h5 class="card-title">{{item.item_name}}</h5>
-									<h5 class="card-title">{{item.description}}</h5>
+									
 								</div>
 							</div>
 						</div>
 						 {% endfor %}
              {% else %}
-              <p>No Listings</p>
+              <p class="no-listings">No Listings</p>
             {% endif %}
 					</div>
 				</div>
