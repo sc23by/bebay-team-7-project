@@ -9,7 +9,12 @@
 {% endif %}
 
 {% block content %}
-<h2>Chat with {{ recipient.username }} about "{{ item.item_name }}"</h2>
+<h2>Chat with {{ recipient.username }}</h2>
+{% if item %}
+    <p class="text-muted">about "{{ item.item_name }}"</strong></p>
+{% else %}
+
+{% endif %}
 
 <div class="chat-box">
     {% for message in messages %}

@@ -1,7 +1,7 @@
 from app import app, db, bcrypt
 from flask import render_template, redirect, url_for, request, flash, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
-from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm
+from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm, EditExpertiseForm, CATEGORY_CHOICES 
 from app.models import User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo, Notification, SoldItem, UserMessage, FeeConfig
 from functools import wraps
 import matplotlib
@@ -321,7 +321,27 @@ def search():
         highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item.item_id).scalar()
         item_bids[item.item_id] = highest_bid if highest_bid is not None else None 
     
-    return render_template("user_home.html", items = items, item_bids = item_bids)
+    return render_template("user_home.html", items = items, item_bids = item_bids, query=search_query)
+
+# Route: Search in navbar for experts
+@app.route('/expert/search', methods = ['GET'])
+@expert_required
+def expert_search():
+
+    expert_id = current_user.id
+    search_query = request.args.get('query', '').strip()
+
+    if not search_query:
+        items = Item.query.filter(Item.expiration_time.is_(None), Item.expert_id == expert_id).all()
+    else:
+        items = Item.query.filter(
+            Item.item_name.ilike(f"%{search_query}%"),
+            Item.expiration_time.is_(None),
+            Item.expert_id == expert_id
+        ).all()
+
+
+    return render_template("expert_assignments.html", items = items, query=search_query)
 
 # Route: Watch
 @app.route('/user/watch', methods=['POST'])
@@ -399,7 +419,7 @@ def sort_items():
 
 # Route: Account
 @app.route('/user/account', methods=['GET', 'POST'])
-@user_required
+@login_required
 def account():
     """
     Redirects to account page, has buttons to other pages and user information.
@@ -425,6 +445,7 @@ def account():
     email_form = ChangeEmailForm()
     password_form = ChangePasswordForm()
     card_form = CardInfoForm()
+    edit_expertise_form = EditExpertiseForm()
     
     user = User.query.get(current_user.id)
     # find users payment and shipping info from PaymentInfo table 
@@ -494,6 +515,12 @@ def account():
         db.session.commit()
         flash('Payment info updated successfully!', 'success')
 
+    if edit_expertise_form.update_expertise.data and edit_expertise_form.validate_on_submit():
+        current_user.expertise = edit_expertise_form.expertise.data
+        print(edit_expertise_form.expertise.data)
+        db.session.commit()
+        flash('Expertise updated.', 'success')
+
     # populate forms with user information
     if request.method == 'GET' or not info_form.validate_on_submit() or not username_form.validate_on_submit() or not email_form.validate_on_submit() or not card_form.validate_on_submit() or not password_form.validate_on_submit():
         # user info
@@ -511,8 +538,11 @@ def account():
             card_form.card_number.data = None
             card_form.shipping_address.data = None
 
+        edit_expertise_form.expertise.data = user.expertise
+
+
     return render_template('user_account.html', pagetitle='Account', sidebar_form=sidebar_form, info_form=info_form, 
-        username_form=username_form, email_form=email_form, password_form=password_form, card_form=card_form)
+        username_form=username_form, email_form=email_form, password_form=password_form, card_form=card_form, edit_expertise_form=edit_expertise_form)
 
 # Route: My Bids
 @app.route('/user/my_bids', methods=['GET', 'POST'])
@@ -760,7 +790,8 @@ def user_list_item():
             hours=int(form.hours.data),
             minutes=int(form.minutes.data),
             shipping_cost=form.shipping_cost.data,
-            approved=False
+            approved=False,
+            category=form.category.data
         )
         
         db.session.add(new_item)
@@ -943,6 +974,7 @@ def reassign_item(item_id):
 
     return redirect(url_for('expert_assignments'))
 
+# i dont think this is needed
 @app.route('/expert/message_seller/<int:item_id>', methods=['GET', 'POST'])
 @expert_required
 def expert_message_seller(item_id):
@@ -969,62 +1001,103 @@ def expert_message_seller(item_id):
     return render_template('expert_messaging.html', item=item, seller=seller)
 
 # Route: Inbox for all users
+from sqlalchemy import func, case, or_, and_
+from sqlalchemy.orm import joinedload
+
 @app.route('/inbox')
 @login_required
 def inbox():
     """
-    Display unique conversations where the logged-in user is involved.
-    Show the most recent message for each sender-item combination,
-    even if the user was the sender and has not received a reply yet.
+    Show latest messages grouped by:
+    - sender + recipient + item_id (when item exists)
+    - sender + recipient only (when item_id is None)
     """
-    # Get the latest message from each user-item combination
-    latest_messages = db.session.query(
+    # Subquery: collapse general messages into a single conversation per user pair
+    base_query = db.session.query(
+        func.max(UserMessage.timestamp).label('latest_time'),
         UserMessage.sender_id,
         UserMessage.recipient_id,
-        UserMessage.item_id,
-        db.func.max(UserMessage.timestamp).label('latest_time')
+        case(
+            (UserMessage.item_id.is_(None), -1),  # treat general messages as item_id = -1
+            else_=UserMessage.item_id
+        ).label('group_item_id')
     ).filter(
-        (UserMessage.recipient_id == current_user.id) | (UserMessage.sender_id == current_user.id)  # Include both sent and received messages
-    ).group_by(UserMessage.sender_id, UserMessage.recipient_id, UserMessage.item_id) \
-     .subquery()
+        or_(
+            UserMessage.sender_id == current_user.id,
+            UserMessage.recipient_id == current_user.id
+        )
+    ).group_by(
+        UserMessage.sender_id,
+        UserMessage.recipient_id,
+        case(
+            (UserMessage.item_id.is_(None), -1),
+            else_=UserMessage.item_id
+        )
+    ).subquery()
 
-    # Fetch actual messages using the latest timestamp
-    messages = db.session.query(UserMessage).join(
-        latest_messages,
-        (UserMessage.sender_id == latest_messages.c.sender_id) &
-        (UserMessage.recipient_id == latest_messages.c.recipient_id) &
-        (UserMessage.item_id == latest_messages.c.item_id) &
-        (UserMessage.timestamp == latest_messages.c.latest_time)
+    # Now fetch actual messages that match those latest timestamps
+    messages = db.session.query(UserMessage).options(
+        joinedload(UserMessage.item),
+        joinedload(UserMessage.sender),
+        joinedload(UserMessage.recipient)
+    ).join(
+        base_query,
+        and_(
+            UserMessage.sender_id == base_query.c.sender_id,
+            UserMessage.recipient_id == base_query.c.recipient_id,
+            func.coalesce(UserMessage.item_id, -1) == base_query.c.group_item_id,
+            UserMessage.timestamp == base_query.c.latest_time
+        )
     ).order_by(UserMessage.timestamp.desc()).all()
 
-    return render_template('inbox.html', messages=messages)
+    return render_template("inbox.html", messages=messages)
 
 # Route: Chat
+@app.route('/chat/<int:user_id>/', defaults={'item_id': None}, methods=['GET', 'POST'])
 @app.route('/chat/<int:user_id>/<int:item_id>', methods=['GET', 'POST'])
 @login_required
 def chat(user_id, item_id):
     """
-    Show conversation history with a specific user for a specific item.
-    Allow sending replies.
+    Show conversation history with a specific user.
+    Optional: filter by item.
     """
     recipient = User.query.get_or_404(user_id)
-    item = Item.query.get_or_404(item_id)
 
-    # Fetch messages **only** for this user & item
-    messages = UserMessage.query.filter(
-        ((UserMessage.sender_id == current_user.id) & (UserMessage.recipient_id == user_id) & (UserMessage.item_id == item_id)) |
-        ((UserMessage.sender_id == user_id) & (UserMessage.recipient_id == current_user.id) & (UserMessage.item_id == item_id))
-    ).order_by(UserMessage.timestamp).all()
+    # Only fetch item if item_id is provided (avoid .get(None) warning)
+    item = None
+    if item_id is not None:
+        item = Item.query.get_or_404(item_id)
 
-    # Mark received messages as read
-    unread_messages = UserMessage.query.filter(
+    # Build query for messages between the two users
+    message_query = UserMessage.query.filter(
+        ((UserMessage.sender_id == current_user.id) & (UserMessage.recipient_id == user_id)) |
+        ((UserMessage.sender_id == user_id) & (UserMessage.recipient_id == current_user.id))
+    )
+
+    # Filter by item_id or lack thereof
+    if item_id is not None:
+        message_query = message_query.filter(UserMessage.item_id == item_id)
+    else:
+        message_query = message_query.filter(UserMessage.item_id == None)
+
+    messages = message_query.order_by(UserMessage.timestamp).all()
+
+    # Mark unread messages as read
+    unread_query = UserMessage.query.filter(
         UserMessage.sender_id == user_id,
         UserMessage.recipient_id == current_user.id,
-        UserMessage.item_id == item_id,
         UserMessage.read == False
-    ).all()
+    )
+
+    if item_id is not None:
+        unread_query = unread_query.filter(UserMessage.item_id == item_id)
+    else:
+        unread_query = unread_query.filter(UserMessage.item_id == None)
+
+    unread_messages = unread_query.all()
     for msg in unread_messages:
         msg.read = True
+
     db.session.commit()
 
     # Handle reply submission
@@ -1035,21 +1108,21 @@ def chat(user_id, item_id):
                 sender_id=current_user.id,
                 recipient_id=user_id,
                 item_id=item_id,
-                subject=f"{item.item_name}",
+                subject=item.item_name if item else None,
                 content=message_content,
                 read=False
             )
             db.session.add(new_message)
 
-            # Create a notification for the recipient
+            # Create notification
             notification = Notification(
                 user_id=user_id,
-                message=f"You have a new message from {current_user.username} about '{item.item_name}'."
+                message=f"You have a new message from {current_user.username}."
             )
             db.session.add(notification)
 
             db.session.commit()
-            return redirect(url_for('chat', user_id=user_id, item_id=item_id))  # Refresh chat page
+            return redirect(url_for('chat', user_id=user_id, item_id=item_id) if item_id else url_for('chat', user_id=user_id))
 
     return render_template('chat.html', messages=messages, recipient=recipient, item=item)
 
@@ -1375,6 +1448,10 @@ def manager_accounts_update_number(username,update_number):
     
     if account and (1<= update_number <=3) :
         account.priority = update_number
+        if update_number == 2:
+            account.expertise = "other"
+        else:
+            account.expertise = None
         db.session.commit()
 
         return redirect(url_for('manager_accounts'))
@@ -1529,7 +1606,8 @@ def manager_expert_availability():
         assigned_items=assigned_items,
         unassigned_items=unassigned_items,
         approved_items=approved_items,
-        rejected_items=rejected_items
+        rejected_items=rejected_items,
+        category_choices=CATEGORY_CHOICES
 )
 
 #Route: Assign an expert

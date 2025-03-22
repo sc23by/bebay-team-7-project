@@ -21,7 +21,7 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String(30), nullable=False)
     last_name = db.Column(db.String(30), nullable=False)
     priority = db.Column(db.Integer, nullable=False, default=1)
-    profile_picture = db.Column(db.String(255), nullable=False, default="default_profile.jpg")
+    expertise = db.Column(db.String(50), nullable=True, default=None)
 
     watchlist = db.relationship('Item', secondary=Watched_item, backref='watched_by') # allows user to watch multiple items
     items = db.relationship('Item',foreign_keys='Item.seller_id',backref='seller',lazy=True)
@@ -81,6 +81,8 @@ class Item(db.Model):
     #relationship
     bids = db.relationship('Bid',backref='item',lazy=True)
     sold_item = db.relationship('SoldItem',backref='item',lazy=True)
+    # category
+    category = db.Column(db.String(50), nullable=False)  # Must be one of the pre-defined choices
 
     
     def get_image_url(self):
@@ -169,7 +171,7 @@ class UserMessage(db.Model):
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     item_id = db.Column(db.Integer, db.ForeignKey('item.item_id'), nullable=True)  # Link to item
-    subject = db.Column(db.String(200), nullable=False)  # New field for chat subject
+    subject = db.Column(db.String(200), nullable=True)  # New field for chat subject
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     read = db.Column(db.Boolean, default=False)
