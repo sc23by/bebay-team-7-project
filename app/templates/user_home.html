@@ -5,10 +5,10 @@
 <!-- Sort items dynamically using js -->
     <div class="sort">
         <select id="items_dropdown" class="form-select">
-            <option value="all">Sort by:</option>
+            <option value="available">Available Items</option>
             <option value="min_price">Price: Low to High</option>
             <option value="name_asc">Name: A-Z</option>
-            <option value="unexpired">Available Items</option>
+            <option value="all_items">All Items</option>
         </select>
     </div>
 
@@ -35,7 +35,7 @@
                         {% endif %}
                     <div class="card-body">
                         <h5 class="card-title">{{ item.item_name }}</h5>
-                        <p class="card-text">Starting Price: £{{ item.minimum_price }}</p>
+                        <p# class="card-text">Starting Price: £{{ item.minimum_price}}</p>
                         <p class="card-text">Current Highest Bid: 
                             {% if item_bids[item.item_id] is none %}
                                 No bids yet
@@ -45,7 +45,7 @@
                         </p>
                         <p class="countdown">Time Left: 
                             {% if item.expiration_time %}
-                                <span class="time_left"
+                                <span class="time_left {{ 'expired-text' if item.time_left.total_seconds() <= 0 else '' }}"
                                     data-item-id="{{ item.item_id }}"
                                     data-expiration="{{ item.expiration_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
                                 </span>

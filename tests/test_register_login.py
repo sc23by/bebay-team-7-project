@@ -25,7 +25,7 @@ def test_register_validUser(client):
     
     # ensure redirect to login page after registering
     assert response.status_code == 200
-    assert b'<h1>Login</h1>' in response.data
+    assert b'<h1 class="page-title">Login</h1>' in response.data
 
 def test_register_duplicate_username(client):
     print(f"{Colours.YELLOW}Testing register page - duplicate username:{Colours.RESET}")

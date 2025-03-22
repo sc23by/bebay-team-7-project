@@ -11,7 +11,6 @@
     {% if pageTitle %}
     <title>{{pageTitle}}</title>
     {% endif %}
-    
 </head>
 <body>
     <!--Bootstrap Script (global use) -->
@@ -24,22 +23,25 @@
           <a class="navbar-brand" href="{{ url_for('manager_home') }}">Bebay</a>
           
           <!-- Navigation Buttons -->
-          <div class="d-flex gap-2">
-                <li class="navbar-nav d-flex align-items-center nav-item">
-                    <a class="nav-link" href="{{url_for('notifications')}}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bell" viewBox="0 0 16 16">
-                            <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2M8 1.918l-.797.161A4 4 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4 4 0 0 0-3.203-3.92zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5 5 0 0 1 13 6c0 .88.32 4.2 1.22 6"/>
-                        </svg>
-                    </a>
-                </li>  
-                <a href="{{ url_for('manager_overview') }}" class="btn btn-outline-primary">Overview</a>
-                <a href="{{ url_for('manager_statistics') }}" class="btn btn-outline-primary">Stats</a>
-                <a href="{{ url_for('manager_accounts') }}" class="btn btn-outline-secondary">Users</a>
-                <a href="{{ url_for('manager_expert_availability') }}" class="btn btn-outline-secondary">Availability</a>
-                <a href="{{ url_for('manager_listings') }}" class="btn btn-outline-success">Listings</a>
-                <a href="{{ url_for('inbox') }}" class="btn btn-outline-success">Inbox</a>
-                <a href="{{ url_for('account') }}" class="btn btn-outline-dark">Account</a>
-                <a href="{{ url_for('logout') }}" class="btn btn-outline-dark">Logout</a>
+          <ul class="navbar-nav ms-auto">
+            <div class="d-flex gap-2">
+                    <li class="navbar-nav d-flex align-items-center nav-item">
+                        <a class="nav-link" href="{{url_for('notifications')}}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bell" viewBox="0 0 16 16">
+                                <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2M8 1.918l-.797.161A4 4 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4 4 0 0 0-3.203-3.92zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5 5 0 0 1 13 6c0 .88.32 4.2 1.22 6"/>
+                            </svg>
+                        </a>
+                    </li>  
+
+                <li class="nav-item"><a href="{{ url_for('manager_overview') }}" class="nav-link">Overview</a></li>     
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('manager_statistics') }}">Stats</a></li>     
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('manager_accounts') }}">Users</a></li>     
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('manager_expert_availability') }}">Availability</a></li>          
+                    <li class="nav-item"><a class="nav-link" href="{{url_for('inbox')}}">Inbox</a></li>     
+                <li class="nav-item"><a class="nav-link" href="{{url_for('account')}}">My Account</a></li>     
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-primary">Logout</a></a>
+        </ul>
+
           </div>
       </div>
   </nav>
@@ -47,6 +49,7 @@
     <!-- Template extensions go here -->
     {% block content %}{% endblock %}
 
-    <script src="{{ url_for('static', filename='js/expert_expertise_dropdown.js') }}"></script> 
+    <script src="{{ url_for('static', filename='js/expert_expertise_dropdown.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/manager_recommended_expert.js') }}"></script>
 </body>
 </html>

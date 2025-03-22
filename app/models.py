@@ -1,4 +1,3 @@
-
 from app import db
 from flask import url_for
 from flask_login import UserMixin
@@ -24,7 +23,7 @@ class User(UserMixin, db.Model):
     expertise = db.Column(db.String(50), nullable=True, default=None)
 
     watchlist = db.relationship('Item', secondary=Watched_item, backref='watched_by') # allows user to watch multiple items
-    items = db.relationship('Item',foreign_keys='Item.seller_id',backref='seller',lazy=True)
+    items = db.relationship('Item',foreign_keys='Item.seller_id',backref='seller', lazy=True)
 
 # Expert model
 class ExpertAvailabilities(db.Model):
@@ -81,7 +80,7 @@ class Item(db.Model):
     sold = db.Column(db.Boolean, default=False)
     #relationship
     bids = db.relationship('Bid',backref='item',lazy=True)
-    sold_item = db.relationship('SoldItem',backref='item',lazy=True)
+    sold_item = db.relationship('SoldItem', backref='item', uselist=False)
     # category
     category = db.Column(db.String(50), nullable=False)  # Must be one of the pre-defined choices
 

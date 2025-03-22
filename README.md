@@ -30,14 +30,14 @@ The following packages will be installed:
 Once installed, you can start developing with Flask and run tests using:
 
 ```sh
-pytest <test/filename>
+pytest
 ```
 or
 ```sh
 pytest <test/filename> -vs
 ```
 
-for more information on tests. (flask venv must be running first - use `source flask/bin/acivate`).
+for more information on individual tests. (flask venv must be running first - use `source flask/bin/acivate`).
 
 If you change the database after running the initial migrations make sure you run in the terminal:
 **flask db migrate**

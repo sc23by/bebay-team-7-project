@@ -3,7 +3,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-      <!-- Required meta tags -->
+    <!-- Required meta tags -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
@@ -113,11 +113,14 @@
     <script src="{{ url_for('static', filename='js/sort_items.js') }}"></script> 
     <script src="{{ url_for('static', filename='js/user_bidding.js') }}"></script>
     <script src="{{ url_for('static', filename='js/user_bid_countdown.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/update_item_detail_time.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/checkout.js') }}"></script>
     <script src="{{ url_for('static', filename='js/list_item_category.js') }}"></script>
     <script src="{{ url_for('static', filename='js/user_home.js') }}"></script>
     <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
 
 
+    <script src="https://js.stripe.com/v3/"></script>
 
     <script>
         const current_user_id = {{ current_user.id | tojson }};
