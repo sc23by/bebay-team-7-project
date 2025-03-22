@@ -2,8 +2,6 @@
 {% block content %}
 <div>
     <div>
-        <h1>Login</h1>
-        
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
@@ -16,7 +14,8 @@
         {% endwith %}
 
         <!-- Login form -->
-        <form method="post">
+        <form method="post" class="login-form">
+            <h1 class="page-title">Login</h1>
             {{ form.hidden_tag() }}
 
             <!-- Username input -->
