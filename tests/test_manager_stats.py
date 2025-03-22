@@ -183,6 +183,6 @@ def test_manager_weekly_cost(loggedInClientP3):
     assert 'img_data' in context
     assert isinstance(context['img_data'], str)
 
-    print(f"values {values}")
-    print(f"total rev {totalr}")
-    print(f"total pro {totalp}")
+    assert totalr == 305.0
+    assert totalp >= 3.3
+    assert values == [0, 0, 3.3000000000000003, 0]
