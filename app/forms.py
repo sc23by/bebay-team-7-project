@@ -75,6 +75,7 @@ class SideBarForm(FlaskForm):
     my_listings = SubmitField('Listings')
     watchlist = SubmitField('Watchlist')
     notifications = SubmitField('Notifications')
+    past_orders = SubmitField('Past Orders')
     logout = SubmitField('Logout')
 
 # Form for changing user information

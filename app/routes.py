@@ -436,6 +436,8 @@ def account():
             return redirect(url_for("my_listings"))
         elif sidebar_form.watchlist.data:
             return redirect(url_for("watchlist"))
+        elif sidebar_form.past_orders.data:
+            return redirect(url_for("past_orders"))
         elif sidebar_form.notifications.data:
             return redirect(url_for("notifications"))
         elif sidebar_form.logout.data:
@@ -553,6 +555,8 @@ def my_bids():
             return redirect(url_for("my_listings"))
         elif form.watchlist.data:
             return redirect(url_for("watchlist"))
+        elif form.past_orders.data:
+            return redirect(url_for("past_orders"))
         elif form.notifications.data:
             return redirect(url_for("notifications"))
         elif form.logout.data:
@@ -602,6 +606,41 @@ def my_listings():
 
     return render_template('user_my_listings.html', pagetitle='Listings', form=form, items=items, item_bids=item_bids, waiting_list = waiting_list)
 
+# Route: Past Orders
+@app.route('/user/past_orders', methods=['GET', 'POST'])
+@user_required
+def past_orders():
+    """
+    Redirects to my listings page, has buttons to other pages.
+    """
+    form = SideBarForm()
+
+    if form.validate_on_submit():
+        if form.info.data:
+            return redirect(url_for("account"))
+        elif form.my_bids.data:
+            return redirect(url_for("my_bids"))
+        elif form.my_listings.data:
+            return redirect(url_for("my_listings"))
+        elif form.watchlist.data:
+            return redirect(url_for("watchlist"))
+        elif form.past_orders.data:
+            return redirect(url_for("past_orders"))
+        elif form.notifications.data:
+            return redirect(url_for("notifications"))
+        elif form.logout.data:
+            return redirect(url_for("logout"))
+
+
+    items = Item.query.filter_by(seller_id=current_user.id).all()
+
+    item_bids = {item.item_id: item.highest_bid() for item in items}
+
+    waiting_list = db.session.query(WaitingList.item_id).all()
+    waiting_list = [item[0] for item in waiting_list]
+
+    return render_template('user_past_orders.html', pagetitle='Past Orders', form=form, items=items, item_bids=item_bids, waiting_list = waiting_list)
+
 # Route: Watchlist
 @app.route('/user/watchlist', methods=['GET', 'POST'])
 @user_required
@@ -623,6 +662,8 @@ def watchlist():
             return redirect(url_for("my_listings"))
         elif form.watchlist.data:
             return redirect(url_for("watchlist"))
+        elif form.past_orders.data:
+            return redirect(url_for("past_orders"))
         elif form.notifications.data:
             return redirect(url_for("notifications"))
         elif form.logout.data:
