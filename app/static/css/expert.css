@@ -12,3 +12,48 @@
     border-radius: 10px;
     border-color: lightgray;
 }
+
+.page-title {
+    margin-top: 2%;
+    text-align: center;
+    font-weight: bold;
+}
+
+.availability-table-container {
+    margin-left: 5%;   
+    margin-right: 5%;
+}
+
+.availability-table-button {
+    background-color: #2e8758;
+    color: white;
+    border-radius: 5px;
+    font-weight: bold;
+    width: 200px;
+    border: solid #ccc;
+}
+
+.availability-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.availability-table th, .availability-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.availability-table th {
+    background-color: #2e8758;
+    color: white;
+    font-weight: bold;
+}
+
+.availability-table-button-container {
+    display: flex;
+    justify-content: space-evenly; 
+    margin-top: 20px;
+}

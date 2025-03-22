@@ -2,45 +2,32 @@
 {% block content %}
 <head>
     <title>Expert Availability</title>
-    <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: center;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-    </style>
 </head>
 <body>
-    <h1>Expert Availability</h1>
-        <table id="availability-table">
-            <thead>
-                <tr>
-                    <th> Timeslot</th>
-                    <th id="sunday-date"></th>
-                    <th id="monday-date"></th>
-                    <th id="tuesday-date"></th>
-                    <th id="wednesday-date"></th>
-                    <th id="thursday-date"></th>
-                    <th id="friday-date"></th>
-                    <th id="saturday-date"></th>
-                </tr>
-            </thead>
+    <div class="availability-table-container">
+        <h1 class="page-title">Expert Availability</h1>
+            <table class="availability-table" id="availability-table">
+                <thead>
+                    <tr>
+                        <th> Timeslot</th>
+                        <th id="sunday-date"></th>
+                        <th id="monday-date"></th>
+                        <th id="tuesday-date"></th>
+                        <th id="wednesday-date"></th>
+                        <th id="thursday-date"></th>
+                        <th id="friday-date"></th>
+                        <th id="saturday-date"></th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div class="availability-table-button-container">
+                <button id="resetButton" class="availability-table-button">Unavailable for the week</button>
+                <button id="saveButton" class="availability-table-button">Save</button>
+            </div>
+        </div>
 
-        <tbody>
 
-        </tbody>
-    </table>
-
-<button id="resetButton">Unavailable for the week</button>
-<button id="saveButton">Save</button>
 
 <form id="availabilityForm" method="POST" action="/expert/availability" style="display:none;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
