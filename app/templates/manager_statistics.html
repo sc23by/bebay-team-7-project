@@ -9,6 +9,7 @@
   .title{
     font-weight: bold;
     text-align: center;
+    margin-top: 2%;
   }
 
   .card-text{
@@ -30,6 +31,7 @@
     width: 80%;
     text-align: center;
     margin-right: 5%;
+    margin-left: 12%;
 
 
   }
@@ -42,6 +44,7 @@
 .cost-input {
   margin-right: 10px;  
 }
+
 
 
 </style>
@@ -75,19 +78,19 @@
                       <td>{{ total_revenue }}</td>
                       <td>{{ total_profit }}</td>
                       <td>{{ generated_percentage }}</td>
-                    
+
 
                   </tr>
               </tbody>
-          </table>
+            </table>
 
             <div>
               <span>
-                <p class="card-text">Cost per posting:</p>
+                <p class="card-text">Percentage per posting:</p>
               </span>
               <span>
                 <form action="{{url_for('manager_statistics_edit')}}" method="POST" class="cost-form">
-                  <input placeholder="Edit Cost" name="site" type="float" class="cost-input">
+                  <input placeholder="Edit Percentage" name="site" type="float" class="cost-input">
                   <button class="btn btn-success cost-button" type="submit">Edit</button>
                 </form>
               </span>              

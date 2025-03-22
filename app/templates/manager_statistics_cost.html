@@ -7,13 +7,14 @@
     margin-top: 20px;
   }
 
-  .card-text{
-    font-weight:bold;
-  }
-
   .title{
     font-weight: bold;
     text-align: center;
+    margin-top: 2%;
+  }
+
+  .card-text{
+    font-weight:bold;
   }
 
   .card-body {
@@ -24,8 +25,28 @@
 
   .dropdown{
     margin-left: auto;
-    margin-right: 130px;
+    margin-right: 120px;
   }
+
+  .table{
+    width: 80%;
+    text-align: center;
+    margin-right: 5%;
+    margin-left: 12%;
+
+
+  }
+
+.cost-form {
+  display: inline-flex;  
+  align-items: center;   
+}
+
+.cost-input {
+  margin-right: 10px;  
+}
+
+
 
 
 </style>
@@ -47,16 +68,34 @@
           </div>
           <img src="data:image/png;base64,{{img_data}}" class="card-img-top" alt="...">
           <div class="card-body">
-            <div>
-                <p class="card-text">Total Revenue: £ {{ total_revenue }}</p>
-                <p class="card-text">Generated Income: £ {{ total_profit }}</p>
-                <p class="card-text">Site Fee Percentage generated: {{ generated_percentage }}%</p>
-            </div>
-            <div>
-            <p class="card-text">Cost per posting: <form action="{{url_for('manager_statistics_edit')}}" method="POST">
-              <input placeholder="Edit Cost" name="site" type="float">
-              <button type="submit" class="btn btn-success">Edit</button></form></p>
-            </div>
+            <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                  <th>Total Revenue</th>
+                  <th>Generated Income</th>
+                  <th>Site Fee Percentage(%)</th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr>
+                  <td>{{ total_revenue }}</td>
+                  <td>{{ total_profit }}</td>
+                  <td>{{ generated_percentage }}</td>
+
+              </tr>
+          </tbody>
+        </table>
+        <div>
+          <span>
+            <p class="card-text">Percentage per posting:</p>
+          </span>
+          <span>
+            <form action="{{url_for('manager_statistics_edit')}}" method="POST" class="cost-form">
+              <input placeholder="Edit Percentage" name="site" type="float" class="cost-input">
+              <button class="btn btn-success cost-button" type="submit">Edit</button>
+            </form>
+          </span>              
+        </div>
           </div>
         </div>
       </div>
