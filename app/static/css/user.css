@@ -1,3 +1,4 @@
+/* Styles layout and spacing for navbar, search input, sort dropdown, sidebar, and custom buttons */
 .navbar {
     height: auto;
 }
@@ -39,3 +40,21 @@
     height: auto;
     border-radius: 5px;
 }
+
+
+/* Animation keyframes for fading out and slightly shrinking the element and removes highest bid items that have expired using an animation */
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+  }
+  
+  .card.fade-out {
+    animation: fadeOut 1s forwards;
+  }
+  
