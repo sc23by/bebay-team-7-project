@@ -1245,19 +1245,18 @@ def manager_statistics():
         week_start = three_weeks_ago + timedelta(weeks=i)
         week_end = week_start + timedelta(days = 6,hours=23,minutes=59,seconds=59)
 
-        expired_items = Item.query.filter(
-            Item.expiration_time >= week_start,
-            Item.expiration_time <= week_end            
+        weekly_revenue = 0
+        sold_items_in_week = SoldItem.query.filter(
+            SoldItem.sold_at >= week_start,
+            SoldItem.sold_at <= week_end
         ).all()
 
-        weekly_revenue = 0
-
-        for item in items:
-            if item.sold_item:
-                final_price = item.sold_item.price
-                site_fee = item.calculate_fee(final_price, expert_approved=False)
-                total_profit += site_fee
-
+        for sold_item in sold_items_in_week:
+            item = sold_item.item
+            final_price = sold_item.price
+            site_fee = item.calculate_fee(final_price, expert_approved=False)
+            weekly_revenue += site_fee
+        
         values.append(weekly_revenue)
 
         weeks.append({
@@ -1291,7 +1290,7 @@ def manager_statistics():
     img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
     generated_percentage = (total_profit / total_revenue) * 100 if total_revenue != 0 else 0
 
-    return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, week_labels=week_labels,values=values,total_revenue=total_revenue,total_profit=total_profit,generated_percentage=generated_percentage)
+    return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, values=values, week_labels=week_labels,total_revenue=total_revenue,total_profit=total_profit,generated_percentage=generated_percentage)
 
 @app.route('/manager/statistics/edit',methods=['GET','POST'])
 @manager_required

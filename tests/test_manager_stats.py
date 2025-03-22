@@ -1,7 +1,7 @@
 from app import app, db, bcrypt
 from app.models import User, Item, SoldItem
 from flask_login import current_user
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import template_rendered
 from contextlib import contextmanager
 from colours import Colours
@@ -34,7 +34,7 @@ def populate_databse():
                 seller_id=seller.id,
                 item_name="apel1",
                 description="Wow what an item",
-                minimum_price=10.99,
+                minimum_price=10,
                 shipping_cost=5.50,
                 days=3,
                 hours=2,
@@ -52,7 +52,7 @@ def populate_databse():
                 seller_id=seller.id,
                 item_name="apel2",
                 description="Wow what an item",
-                minimum_price=10.99,
+                minimum_price=20,
                 shipping_cost=5.50,
                 days=3,
                 hours=2,
@@ -70,7 +70,7 @@ def populate_databse():
                 seller_id=seller.id,
                 item_name="apel3",
                 description="Wow what an item",
-                minimum_price=10.99,
+                minimum_price=100,
                 shipping_cost=5.50,
                 days=3,
                 hours=2,
@@ -88,13 +88,13 @@ def populate_databse():
                 seller_id=seller.id,
                 item_name="apel4",
                 description="Wow what an item",
-                minimum_price=10.99,
+                minimum_price=155,
                 shipping_cost=5.50,
                 days=3,
                 hours=2,
                 minutes=30,
                 item_image="test_image.jpg",
-                date_time=datetime(2025, 3, 21, 13, 30, 8, 586181),
+                date_time=datetime(2025, 3, 21, 13, 30, 8, 586181), # doesnt matte, only checks sold at time
                 expiration_time=datetime(2025, 3, 21, 13, 10, 0, 0),
                 approved=False,
                 site_fee_percentage=1.0,
@@ -114,7 +114,8 @@ def populate_databse():
                     item_id=item.item_id,
                     seller_id=item.seller_id,
                     buyer_id=buyer.id,
-                    price=item.minimum_price + 5
+                    price=item.minimum_price + 5,
+                    sold_at = datetime.now() - timedelta(days=3) # 3 days before, all will be same date
                 )
                 db.session.add(sold_entry)
 
@@ -166,6 +167,8 @@ def test_manager_weekly_cost(loggedInClientP3):
 
     week_labels = context['week_labels']
     values = context['values']
+    totalr = context['total_revenue']
+    totalp = context['total_profit']
 
     assert isinstance(week_labels, list)
     assert isinstance(values, list)
@@ -181,3 +184,5 @@ def test_manager_weekly_cost(loggedInClientP3):
     assert isinstance(context['img_data'], str)
 
     print(f"values {values}")
+    print(f"total rev {totalr}")
+    print(f"total pro {totalp}")
