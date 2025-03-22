@@ -51,6 +51,7 @@
 
   .card-container{
     margin-left: 30%;
+    width: 60%;
   }
 
   .card-contents{
@@ -87,6 +88,10 @@
 
   .account-name:hover{
     color:darkgray
+  }
+
+  .error-message{
+    margin-left: 15%;
   }
 
 
@@ -156,7 +161,7 @@
       
     {% endfor %}
 {% else %}
-    <p>No accounts found with this priority.</p>
+    <p class = "error-message">No accounts found with this priority.</p>
 {% endif %}
 </div>  
 <!--Page buttons-->

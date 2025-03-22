@@ -1211,7 +1211,7 @@ def manager_home():
     """
     Redirects to managers home page when website first opened.
     """
-    return render_template('manager_home.html')
+    return manager_statistics()
 
 
 #Route: Manager Stats Page
@@ -1299,7 +1299,15 @@ def manager_statistics_edit():
 
     if request.method == 'POST':
         cost_site = request.form.get('site')
-        cost_expert = request.form.get('expert')
+
+        try:
+            cost_site = float(cost_site)
+            if cost_site > 100:
+                flash('The cost must be less than 100.', 'error') 
+                return redirect(url_for('manager_statistics'))
+        except ValueError:
+            flash('Invalid input. Please enter a valid number for the cost.', 'error')  # 숫자가 아닐 때 에러 처리
+            return redirect(url_for('manager_statistics'))
 
         items = Item.query.all()
 
@@ -1307,8 +1315,6 @@ def manager_statistics_edit():
             for item in items:
                 if cost_site:
                     item.site_fee_percentage = float(cost_site)
-                if cost_expert:
-                    item.expert_fee_percentage = float(cost_expert)
 
             db.session.commit()
         return redirect(url_for('manager_statistics'))
@@ -1490,11 +1496,6 @@ def manager_accounts_search():
     return render_template("manager_accounts.html",accounts=filtered_accounts)
 
 #Route: Manager Listing Page
-@app.route('/manager/listings',methods=['GET','POST'])
-@manager_required
-def manager_listings():
-    items = Item.query.all()
-    return render_template("manager_listings.html",items = items)
 
 #Route: Manager User Details Page
 @app.route('/manager/listings/<int:id>',methods=['GET'])
@@ -1514,7 +1515,7 @@ def manager_listings_update_number(username,update_number):
         user_account.priority = update_number
         db.session.commit()
 
-        return render_template("manager_listings.html",account = user_account)
+        return render_template("manager_listings_user.html",account = user_account)
     else:
         return "User not found", 404
 
