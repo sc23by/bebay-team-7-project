@@ -2,7 +2,7 @@
 {% block content %}
 <div>
     <div>
-        <h1>Register</h1>
+        <h1 class="page-title">Register</h1>
         
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -16,7 +16,7 @@
         {% endwith %}
 
         <!-- Registration form -->
-        <form method="post">
+        <form method="post" class="registration-form">
             {{ form.hidden_tag() }}
 
             <!-- First Name input -->

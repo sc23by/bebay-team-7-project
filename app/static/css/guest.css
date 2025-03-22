@@ -12,3 +12,38 @@
     border-radius: 10px;
     border-color: lightgray;
 }
+
+.page-title {
+    text-align: center;
+}
+
+.registration-form {
+
+    width: 30%;
+    margin: 0 auto;
+
+}
+
+.registration-form input[type=text],input[type="password"]{
+
+
+    width: 100%;
+    padding: 6px;
+    margin: 8px 0px;
+    border: 2px solid #D3D3D3;
+    border-radius: 4px;
+    outline: none;
+
+}
+
+.registration-form input[type=submit]{
+    
+    width: 100%;
+    padding: 6px;
+    margin: 8px 0px;
+    border: 2px solid #D3D3D3;
+    border-radius: 4px;
+    outline: none;
+    color: green;
+    background-color: lime;
+}
