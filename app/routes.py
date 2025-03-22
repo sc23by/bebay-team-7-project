@@ -1252,12 +1252,11 @@ def manager_statistics():
 
         weekly_revenue = 0
 
-        for item in expired_items:
+        for item in items:
             if item.sold_item:
-                for sold_item in item.sold_item:
-                    final_price = sold_item.price
-                    site_fee = item.calculate_fee(final_price, expert_approved=False)
-                    weekly_revenue += site_fee
+                final_price = item.sold_item.price
+                site_fee = item.calculate_fee(final_price, expert_approved=False)
+                total_profit += site_fee
 
         values.append(weekly_revenue)
 
@@ -1290,8 +1289,9 @@ def manager_statistics():
     ratio = [0.75]
 
     img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
+    generated_percentage = (total_profit / total_revenue) * 100 if total_revenue != 0 else 0
 
-    return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, week_labels=week_labels,values=values,total_revenue=total_revenue,total_profit=total_profit,generated_percentage=(total_profit/total_revenue)*100)
+    return render_template('manager_statistics.html', img_data=img_base64, ratio=ratio, week_labels=week_labels,values=values,total_revenue=total_revenue,total_profit=total_profit,generated_percentage=generated_percentage)
 
 @app.route('/manager/statistics/edit',methods=['GET','POST'])
 @manager_required
