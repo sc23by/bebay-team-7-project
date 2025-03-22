@@ -1844,7 +1844,10 @@ def manager_fees():
             
     return render_template("manager_fees.html", fee_config=fee_config)
 
-# STRIPE
+
+
+# STRIPE:
+
 # Route: Payment for item using stripe route
 @app.route('/pay/<int:item_id>', methods=['POST'])
 @user_required
@@ -1949,8 +1952,7 @@ def get_time_left(item_id):
 
 
 
-#User Route: Cart route for the checkout items
-
+# User Route: Cart route for the checkout items
 @app.route('/cart')
 @user_required
 def cart():
@@ -1969,8 +1971,8 @@ def get_cart_count():
         return SoldItem.query.filter_by(buyer_id=current_user.id).count()
     return 0
 
-
-
+# Context processor to inject cart count for priority users (shows total items regardless of payment status)
+@app.context_processor
 @app.context_processor
 def inject_cart_count():
     if current_user.is_authenticated and current_user.priority == 1:
@@ -1978,6 +1980,7 @@ def inject_cart_count():
     return {'cart_count': 0}
 
 
+# User/ Stripe Route: to initiate Stripe checkout for selected unpaid items won by the current user
 @app.route('/pay_selected', methods=['POST'])
 @user_required
 def pay_selected_items():
@@ -1994,7 +1997,7 @@ def pay_selected_items():
         if not item:
             continue
 
-        # Validate the user is allowed to pay for this item
+        # Validated the user is allowed to pay for this item
         highest_bid = item.highest_bid()
         highest_bidder = item.highest_bidder()
         if not highest_bid or not highest_bidder or highest_bidder.id != current_user.id or item.time_left.total_seconds() > 0:
@@ -2006,7 +2009,7 @@ def pay_selected_items():
         # Expert fee
         expert_fee = bid_price * (item.expert_fee_percentage / 100) if item.expert_id else 0.0
 
-        # Add to Stripe line items
+        # Added to Stripe line items
         line_items.append({
             'price_data': {
                 'currency': 'gbp',
@@ -2054,7 +2057,7 @@ def pay_selected_items():
         return jsonify({'error': str(e)}), 500
 
 
-
+# Route to handle payment confirmation for multiple items, mark them as paid, and redirect to the payment success page
 @app.route('/payment_success_multi')
 @user_required
 def payment_success_multi():
@@ -2079,7 +2082,7 @@ def payment_success_multi():
     flash("Payment successful! Items have been marked as paid.", "success")
     return redirect(url_for('payment_success', item_ids=",".join(map(str, item_ids))))
 
-
+# Context processor to inject the count of unpaid items into all templates (used for cart icon/badge)
 @app.context_processor
 def inject_cart_count():
     if current_user.is_authenticated:
