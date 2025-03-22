@@ -19,12 +19,14 @@
         <div class="col-md-9 col-lg-10 p-5">
             <h2 class="mb-4">My Watchlist</h2>
             <!-- Sort watchlist items dynamically using js -->
-            <select id="items_dropdown" class="form-select">
-                <option value="all">Sort by:</option>
-                <option value="min_price">Price: Low to High</option>
-                <option value="name_asc">Name: A-Z</option>
-                <option value="unexpired">Available Items</option>
-            </select>
+            <div class="sort">
+                <select id="watchlist_dropdown" class="form-select">
+                    <option value="available">Available Items</option>
+                    <option value="min_price">Price: Low to High</option>
+                    <option value="name_asc">Name: A-Z</option>
+                    <option value="all_items">All Items</option>
+                </select>
+            </div>
             <div id="watchlist_sort" class="row row-cols-3 row-cols-md-4 g-4">
                 {% for item in watched_items %}
                 <div class="col gallery">
