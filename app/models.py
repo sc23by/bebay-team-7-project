@@ -89,6 +89,7 @@ class Item(db.Model):
     def get_image_url(self):
         return url_for('static', filename=f'images/items/{self.item_image}')
 
+
     @property
     def time_left(self):
         """Calculate remaining time from now until expiration."""
