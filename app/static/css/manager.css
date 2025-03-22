@@ -1,7 +1,9 @@
-.account-name{
-    color: black;
-    text-decoration: none;
-    font-weight: bold;
+.search-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 5px; 
 }
 
 .navbar-brand {

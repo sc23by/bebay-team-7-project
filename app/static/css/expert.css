@@ -57,3 +57,47 @@
     justify-content: space-evenly; 
     margin-top: 20px;
 }
+
+.expert-assignments-container {
+    margin-top: 2%;
+    margin-left: 2%;
+    margin-right: 2%;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    height: 100%; 
+    border: 1px solid #ccc;
+    text-align: center;
+}
+
+.card-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;  
+    justify-content: center; 
+    flex-grow: 1; 
+    width: 100%;  
+}
+
+.card-img-top {
+    object-fit: cover;
+    height: 200px; 
+}
+
+.review-button {
+    width: 150%;  
+    max-width: 200px; 
+    padding: 10px 5%; 
+    background-color: #2e8758;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 5px;
+    color: white;
+    border: 2px solid #ccc;
+}
+.card-title {
+    font-weight: bold;
+    margin-bottom: 6%;
+}
