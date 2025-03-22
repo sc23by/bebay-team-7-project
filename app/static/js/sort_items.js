@@ -24,8 +24,6 @@ document.addEventListener("DOMContentLoaded", function() {
                         item_Element.dataset.time_left = item.time_left;
                         item_Element.dataset.seller_id = item.seller_id;
 
-                        updateCountdown();
-
                         let highest_bid = item.current_highest_bid !== "None"  
                             ? `£${item.current_highest_bid}` 
                             : "No bids yet";
@@ -64,6 +62,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         
                         items_container.appendChild(item_Element);
                     });
+                    updateCountdown();
                 });
         });
     }

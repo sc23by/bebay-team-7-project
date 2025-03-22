@@ -1,4 +1,6 @@
 document.addEventListener("DOMContentLoaded", function() {
+    updateCountdown();
+    
     let guest_items_container = document.getElementById("guest_items_sort");
     let guest_sort_dropdown = document.getElementById("guest_items_dropdown");
     if (guest_sort_dropdown) {
@@ -23,8 +25,6 @@ document.addEventListener("DOMContentLoaded", function() {
                         item_Element.dataset.expiration = item.expiration_time;
                         item_Element.dataset.time_left = item.time_left;
                         item_Element.dataset.seller_id = item.seller_id;
-
-                        updateCountdown();
 
                         let highest_bid = item.current_highest_bid !== "None" 
                             ? `£${item.current_highest_bid}` 
@@ -60,6 +60,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         
                         guest_items_container.appendChild(item_Element);
                     });
+                    updateCountdown();
                 });
         });
     }
