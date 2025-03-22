@@ -1864,3 +1864,80 @@ def inject_cart_count():
     if current_user.is_authenticated and current_user.priority == 1:
         return {'cart_count': SoldItem.query.filter_by(buyer_id=current_user.id).count()}
     return {'cart_count': 0}
+
+
+@app.route('/pay_selected', methods=['POST'])
+@user_required
+def pay_selected_items():
+    data = request.get_json()
+    item_ids = data.get('item_ids', [])
+    
+    if not item_ids:
+        return jsonify({'error': 'No items selected.'}), 400
+
+    line_items = []
+
+    for item_id in item_ids:
+        item = Item.query.get(item_id)
+        if not item:
+            continue
+
+        # Validate the user is allowed to pay for this item
+        highest_bid = item.highest_bid()
+        highest_bidder = item.highest_bidder()
+        if not highest_bid or not highest_bidder or highest_bidder.id != current_user.id or item.time_left.total_seconds() > 0:
+            continue
+
+        shipping_price = float(item.shipping_cost)
+        bid_price = float(highest_bid)
+
+        # Expert fee
+        expert_fee = bid_price * (item.expert_fee_percentage / 100) if item.expert_id else 0.0
+
+        # Add to Stripe line items
+        line_items.append({
+            'price_data': {
+                'currency': 'gbp',
+                'product_data': {'name': item.item_name},
+                'unit_amount': int(bid_price * 100),
+            },
+            'quantity': 1,
+        })
+
+        line_items.append({
+            'price_data': {
+                'currency': 'gbp',
+                'product_data': {'name': f"Shipping for {item.item_name}"},
+                'unit_amount': int(shipping_price * 100),
+            },
+            'quantity': 1,
+        })
+
+        if expert_fee > 0:
+            line_items.append({
+                'price_data': {
+                    'currency': 'gbp',
+                    'product_data': {'name': f"Expert Fee for {item.item_name}"},
+                    'unit_amount': int(expert_fee * 100),
+                },
+                'quantity': 1,
+            })
+
+    if not line_items:
+        return jsonify({'error': 'No valid items selected or items not eligible for payment.'}), 400
+
+    try:
+
+        success_url = url_for('payment_success_multi', _external=True) + "?item_ids=" + ",".join(map(str, item_ids))
+
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=line_items,
+            mode='payment',
+            success_url=success_url,
+            cancel_url=url_for('cart', _external=True),
+        )
+        return jsonify({'checkout_url': session.url})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
