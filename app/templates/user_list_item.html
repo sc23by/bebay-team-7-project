@@ -15,6 +15,17 @@
                 {{ form.description.label(class="form-label") }}
                 {{ form.description(class="form-control") }}
             </div>
+
+            <!-- Category Dropdown -->
+            <div class="mb-3">
+                {{ form.category.label(class="form-label") }}
+                <select class="form-select" name="{{ form.category.name }}" id="category-select" style="color: #6c757d;">
+                    <option value="" disabled selected style="color: #6c757d;">Select an item</option>
+                    {% for value, label in form.category.choices %}
+                        <option value="{{ value }}" {% if form.category.data == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
             
             <div class="form-group">
                 <label for="minimum_price">Starting price</label>
