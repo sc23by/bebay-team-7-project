@@ -20,9 +20,9 @@
         <div class="col-md-9 col-lg-10 p-5">
             <h2 class="mb-4">Past Orders</h2>
 
-            {% if items %}
+            {% if purchased_items %}
                 <div class="row row-cols-3 row-cols-md-4 g-4">
-                    {% for item in items %}
+                    {% for item in purchased_items %}
                     <div class="col gallery">
                         <div class="card h-100 {{ 'expired-item' if item.time_left.total_seconds() <= 0 else '' }}">
                             <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 

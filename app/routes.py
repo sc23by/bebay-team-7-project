@@ -631,15 +631,14 @@ def past_orders():
         elif form.logout.data:
             return redirect(url_for("logout"))
 
+    purchased_items = (db.session.query(Item).join(SoldItem, SoldItem.item_id == Item.item_id)
+        .filter(SoldItem.buyer_id == current_user.id)
+        .all()
+    )
 
-    items = Item.query.filter_by(seller_id=current_user.id).all()
+    item_bids = {item.item_id: item.highest_bid() for item in purchased_items}
 
-    item_bids = {item.item_id: item.highest_bid() for item in items}
-
-    waiting_list = db.session.query(WaitingList.item_id).all()
-    waiting_list = [item[0] for item in waiting_list]
-
-    return render_template('user_past_orders.html', pagetitle='Past Orders', form=form, items=items, item_bids=item_bids, waiting_list = waiting_list)
+    return render_template('user_past_orders.html', pagetitle='Past Orders', form=form, purchased_items=purchased_items, item_bids=item_bids)
 
 # Route: Watchlist
 @app.route('/user/watchlist', methods=['GET', 'POST'])
@@ -700,10 +699,6 @@ def sort_watchlist():
         sorted_items = db.session.query(Item).join(Watched_item).filter(Watched_item.c.user_id == current_user.id)
     else:
         sorted_items = query.all()
-        
-        
-
-    print(sorted_items)
 
     # Convert to JSON format
     watched_items = [{
