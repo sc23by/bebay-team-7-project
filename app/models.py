@@ -52,6 +52,7 @@ class SoldItem(db.Model):
     buyer_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
     price = db.Column(db.Float, nullable=False)
     sold_at = db.Column(db.DateTime, default=datetime.utcnow)
+    paid = db.Column(db.Boolean, default=False)
     
     seller = db.relationship('User', foreign_keys=[seller_id], backref='sold_items')
     buyer = db.relationship('User', foreign_keys=[buyer_id], backref='purchased_items')
@@ -126,6 +127,11 @@ class Item(db.Model):
         if highest_bid:
             return Bid.query.filter_by(item_id=self.item_id, bid_amount=highest_bid).first().user
         return None
+    
+    def highest_bidder_id(self):
+        bidder = self.highest_bidder()
+        return bidder.id if bidder else None
+
 
 # Waiting List Model
 class WaitingList(db.Model):
