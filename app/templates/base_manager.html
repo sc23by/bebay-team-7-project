@@ -11,7 +11,6 @@
     {% if pageTitle %}
     <title>{{pageTitle}}</title>
     {% endif %}
-    
 </head>
 <body>
     <!--Bootstrap Script (global use) -->
@@ -37,8 +36,7 @@
                 <li class="nav-item"><a href="{{ url_for('manager_overview') }}" class="nav-link">Overview</a></li>     
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('manager_statistics') }}">Stats</a></li>     
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('manager_accounts') }}">Users</a></li>     
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('manager_expert_availability') }}">Availability</a></li>     
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('manager_listings') }}">Listings</a></li>     
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('manager_expert_availability') }}">Availability</a></li>          
                     <li class="nav-item"><a class="nav-link" href="{{url_for('inbox')}}">Inbox</a></li>     
                 <li class="nav-item"><a class="nav-link" href="{{url_for('account')}}">My Account</a></li>     
                     <a href="{{ url_for('logout') }}" class="btn btn-outline-primary">Logout</a></a>
