@@ -1819,3 +1819,19 @@ def payment_success():
     return render_template('payment_success.html', items=items)
 
 
+# API to fetch get remaining time on auction for an item in real time
+@app.route('/get_time_left/<int:item_id>')
+def get_time_left(item_id):
+    """
+    API to fetch remaining time for an item.
+    """
+    item = Item.query.get_or_404(item_id)
+    
+    # Calculate remaining time
+    if item.time_left.total_seconds() > 0:
+        time_left = f"{item.time_left.days} days, {item.time_left.seconds // 3600} hours, {(item.time_left.seconds // 60) % 60} minutes, {item.time_left.seconds % 60} seconds"
+    else:
+        time_left = "Expired"
+
+    return jsonify({"time_left": time_left})
+
