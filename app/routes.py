@@ -513,8 +513,6 @@ def account():
             return redirect(url_for("my_listings"))
         elif sidebar_form.watchlist.data:
             return redirect(url_for("watchlist"))
-        elif sidebar_form.past_orders.data:
-            return redirect(url_for("past_orders"))
         elif sidebar_form.notifications.data:
             return redirect(url_for("notifications"))
         elif sidebar_form.logout.data:
