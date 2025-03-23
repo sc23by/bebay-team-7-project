@@ -701,11 +701,15 @@ def delete_item(item_id):
         flash("You are not authorised to delete this item.", "danger")
         return redirect(url_for('user_home'))
 
+    # Prevent deleting expired items
+    if item.expiration_time and item.expiration_time <= datetime.utcnow() and item.item_id not in waiting_list:
+        flash("You cannot delete expired listings.", "warning")
+        return redirect(url_for('user_my_listings'))
+
     db.session.delete(item)
     db.session.commit()
     flash("Item successfully deleted.", "success")
-    return redirect(url_for('my_listings'))
-
+    return redirect(url_for('user_my_listings'))
 
 # Route: Past Orders
 @app.route('/user/past_orders', methods=['GET', 'POST'])
