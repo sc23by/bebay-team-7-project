@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", function() {
                                         </p> 
                                         <p class="card-text shipping">Shipping Price: £${item.shipping_cost}</p>                       
                                         ${item.approved ? `<span class="badge bg-success">Approved</span>` : ""}
-                                        <a href="/item/${item.item_id}" class="btn btn-primary">
+                                        <a href="/item/${item.item_id}" class="btn btn-primary btn-sm w-100">
                                             View Details
                                         </a>
                                     </div>
