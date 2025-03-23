@@ -1,4 +1,4 @@
-from app import app, db, bcrypt
+from app import app, db, bcrypt, mail
 from flask import render_template, redirect, url_for, request, flash, current_app, jsonify
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm, EditExpertiseForm, CATEGORY_CHOICES 
@@ -24,7 +24,6 @@ from flask_socketio import emit
 from . import socketio
 # Emails
 from flask_mail import Message
-from app import mail
 # Decorators
 
 # Guest-only access decorator
@@ -911,8 +910,10 @@ def user_list_item():
             minutes=int(form.minutes.data),
             shipping_cost=form.shipping_cost.data,
             approved=False,
-            category=form.category.data
+            category=form.category.data,
+            site_fee_percentage = FeeConfig.get_fee()
         )
+        print(f"item listed with site fee : {FeeConfig.get_fee()}")
         
         db.session.add(new_item)
         db.session.commit()
@@ -1429,18 +1430,16 @@ def manager_statistics_edit():
             if cost_site > 100:
                 flash('The cost must be less than 100.', 'error') 
                 return redirect(url_for('manager_statistics'))
+            if cost_site < 0:
+                flash('The cost must be greater than 0.', 'error') 
+                return redirect(url_for('manager_statistics'))
         except ValueError:
-            flash('Invalid input. Please enter a valid number for the cost.', 'error')  # 숫자가 아닐 때 에러 처리
+            flash('Invalid input. Please enter a valid number for the cost.', 'error')
             return redirect(url_for('manager_statistics'))
 
-        items = Item.query.all()
-
-        if items:
-            for item in items:
-                if cost_site:
-                    item.site_fee_percentage = float(cost_site)
-
-            db.session.commit()
+        print(f"setting site fee to {cost_site}")
+        FeeConfig.set_fee(cost_site)
+        print(f"site fee is now {FeeConfig.get_fee()}")
         return redirect(url_for('manager_statistics'))
 
     return render_template('manager_statistics.html')
@@ -1497,10 +1496,10 @@ def manager_statistics_cost():
             weekly_income += income_fee
             # expert payment amount
             if item.approved:
-                site_fee =item.calculate_fee(final_price, expert_approved=True)
-                weekly_expert_fee = site_fee-weekly_income
+                site_fee += item.calculate_fee(final_price, expert_approved=True)
+                weekly_expert_fee += site_fee-weekly_income
             # amount the user gets
-            weekly_sold = final_price-(weekly_income + weekly_expert_fee)
+            weekly_sold += final_price-(weekly_income + weekly_expert_fee)
 
         expert_fee_values.append(weekly_expert_fee)
         income_value.append(weekly_income)
