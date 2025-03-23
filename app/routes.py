@@ -706,6 +706,15 @@ def delete_item(item_id):
         flash("You cannot delete expired listings.", "warning")
         return redirect(url_for('listings'))
 
+    # Notify all distinct users who bid on the item
+    bidder_ids = db.session.query(Bid.user_id).filter(Bid.item_id == item.item_id).distinct().all()
+    for bidder in bidder_ids:
+        notification = Notification(
+            user_id=bidder[0],
+            message=f"The listing '{item.item_name}' you bid on has been deleted by the seller."
+        )
+        db.session.add(notification)
+
     db.session.delete(item)
     db.session.commit()
     flash("Item successfully deleted.", "success")
