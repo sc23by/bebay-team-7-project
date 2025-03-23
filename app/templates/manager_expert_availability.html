@@ -1,14 +1,15 @@
 {% extends "base_manager.html" %}
 
 {% block content %}
+
+<h1 class="title">Expert Availability Assignment</h1>
+
 <div class="container mt-4">
     <div class="card p-4 border-0 shadow-sm">
-        <h4 class="fw-bold mb-3">Expert Availability Assignment</h4>
-
         <div class="row">
             <div class="col-md-6">
-                <div class="card border-0 shadow-sm p-3">
-                    <h5 class="fw-semibold">Experts</h5>
+                <div class="manager-expert-availability-container">
+                    <h5 class="manager-subtext">Experts</h5>
                     <div class="mb-2">
                         <label for="expertiseFilter" class="form-label">Filter by Expertise</label>
                         <select id="expertiseFilter" class="form-select">
@@ -18,7 +19,7 @@
                             {% endfor %}
                         </select>
                     </div>
-
+                    
                     <form method="POST" action="{{ url_for('assign_expert') }}">
                         <input type="hidden" name="item_id" id="selectedItemId">
 
@@ -40,12 +41,16 @@
                             {% endfor %}
                         </div>
 
-                        <div id="availabilityContainer" class="mt-3 d-none">
-                            <h6>Available Time Slots</h6>
+                        <hr class="manager-divider">
+
+                        <div>
+                            <label class="form-label">Available TimeSlots</label>
                             <select class="form-select mt-1" name="selected_time" id="availabilityDropdown">
                                 <option value="">Select a time slot</option>
                             </select>
                         </div>
+                        
+                        <hr class="manager-divider manager-padding-container">
 
                         <div class="mt-3">
                             <label for="expertPayment">Expert Payment Percentage (%)</label>
@@ -60,8 +65,8 @@
             </div>
 
             <div class="col-md-6">
-                <div class="card border-0 shadow-sm p-3">
-                    <h5 class="fw-semibold">Unassigned Items (From Waiting List)</h5>
+                <div class="manager-expert-availability-container">
+                    <h5 class="manager-subtext">Unassigned Items</h5>
                     <div class="list-group" style="max-height: 250px; overflow-y: auto;">
                         {% for item in unassigned_items %}
                         <label class="list-group-item">
@@ -79,33 +84,45 @@
         <!-- Assigned / Approved / Rejected Items tables here (unchanged) -->
 
     </div>
+        <hr class="manager-divider">
 
-        <h4 class="fw-bold mt-4">Assigned Items</h4>
-        <table class="table table-hover">
-            <thead class="table-light">
-                <tr>
-                    <th>Item Name</th>
-                    <th>Expert</th>
-                    <th>Time Slot</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in assigned_items %}
-                <tr>
-                    <td>{{ item.item_name }}</td>
-                    <td>{{ item.expert.first_name }} {{ item.expert.last_name }}</td>
-                    <td>{{ item.date_time.strftime('%Y-%m-%d %I:%M %p') }}</td>
-                    <td>
-                        <form method="POST" action="{{ url_for('unassign_expert') }}">
-                            <input type="hidden" name="item_id" value="{{ item.item_id }}">
-                            <button class="btn btn-danger btn-sm" type="submit">Unassign</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+        <div class="assigned-items-container">
+            <h1 class="manager-subtitle">Assigned Items</h4>
+            <table class="assigned-items-table">
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>Expert</th>
+                        <th>Time Slot</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if assigned_items %}
+                        {% for item in assigned_items %}
+                        <tr>
+                            <td>{{ item.item_name }}</td>
+                            <td>{{ item.expert.first_name }} {{ item.expert.last_name }}</td>
+                            <td>{{ item.date_time.strftime('%Y-%m-%d %I:%M %p') }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('unassign_expert') }}">
+                                    <input type="hidden" name="item_id" value="{{ item.item_id }}">
+                                    <button class="btn btn-danger btn-sm" type="submit">Unassign</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {%else%}
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                    </tr>
+                    {%endif%}
+                </tbody>
+            </table>
+        </div>
 
 
     <!-- Expert availability JSON for JS -->
