@@ -18,6 +18,9 @@
         <span class="account-detail">{{ account.email }} </span>
     </div>
     </div>
+    <a href="{{ url_for('chat', user_id=account.id) }}" class="btn btn-info">
+      Message user
+    </a>
   </div>
   <h3 class="manager-subtext">{{ account.username}}'s Listings</h3>
   <div class="expert-assignments-container">
