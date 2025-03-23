@@ -9,9 +9,12 @@
 {% endif %}
 
 {% block content %}
-<h2>Chat with {{ recipient.username }}</h2>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+
+<h2 class="page-title">Chat with {{ recipient.username }}</h2>
 {% if item %}
-    <p class="text-muted">about "{{ item.item_name }}"</strong></p>
+    <p class="small-text">about "{{ item.item_name }}"</strong></p>
 {% else %}
 
 {% endif %}
@@ -26,27 +29,11 @@
 </div>
 
 <!-- Reply Form -->
-<form method="POST">
-    <textarea name="message" required placeholder="Type a message..." class="form-control"></textarea>
-    <button type="submit" class="btn btn-primary mt-2">Send</button>
-</form>
-
-<style>
-    .chat-box {
-        border: 1px solid #ccc;
-        padding: 15px;
-        max-height: 400px;
-        overflow-y: scroll;
-        margin-bottom: 10px;
-    }
-    .my-message {
-        text-align: right;
-        color: blue;
-    }
-    .their-message {
-        text-align: left;
-        color: green;
-    }
-</style>
+<div class="chat-input">
+    <form method="POST">
+        <textarea name="message" required placeholder="Type a message..." class="form-control"></textarea>
+    </form>
+    <button type="submit" class="button">Send</button>
+</div>
 
 {% endblock %}

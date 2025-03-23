@@ -18,6 +18,22 @@
     font-weight: bold
 }
 
+.register-container {
+    display: flex;
+    justify-content: center; 
+    align-items: center;     
+    height: 100vh; 
+    margin-top: -5%;
+}
+
+.login-container {
+    display: flex;
+    justify-content: center; 
+    align-items: center;     
+    height: 100vh; 
+    margin-top: -15%;
+}
+
 .registration-form {
 
     width: 50%;

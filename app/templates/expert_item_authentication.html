@@ -1,12 +1,12 @@
 {% extends "base_expert.html" %}
 {% block content %}
 
-<h1>Authenticate Item: {{ item_to_authenticate.item_name }}</h1>
+<h1 class="page-title">Authenticate Item: {{ item_to_authenticate.item_name }}</h1>
 
 
-<div class="card mx-auto" style="width: 50%;">
+<div class="card mx-auto authenticate-card">
     <img src="{{ url_for('static', filename='images/items/' + item_to_authenticate.item_image) }}" 
-         class="card-img-top" alt="{{ item_to_authenticate.item_name }}">
+         class="authenticate-image" alt="{{ item_to_authenticate.item_name }}">
     <div class="card-body">
         <h5 class="card-title">Item Name: {{ item_to_authenticate.item_name }}</h5>
         <p class="card-text"><strong>Starting Price:</strong> £{{ item_to_authenticate.minimum_price }}</p>
@@ -14,22 +14,22 @@
         <p class="card-text"><strong>Description:</strong> {{ item_to_authenticate.description }}</p>
 
 
-        <div class="d-flex justify-content-between">
+        <div class="d-flex justify-content-between authentication-button-container>">
 
             <form action="{{ url_for('approve_item', item_id=item_to_authenticate.item_id) }}" method="POST">
-                <button type="submit">Approve</button>
+                <button class="authenticate-button" type="submit">Approve</button>
             </form>
 
             <form action="{{ url_for('decline_item', item_id=item_to_authenticate.item_id) }}" method="POST">
-                <button type="submit">Reject</button>
+                <button class="authenticate-button" type="submit">Reject</button>
             </form>
 
             <form method="POST" action="{{ url_for('reassign_item', item_id=item_to_authenticate.item_id) }}">
-                <button type="submit" class="button">Reassign</button>
+                <button type="submit" class="authenticate-button">Reassign</button>
             </form>
 
-            <a href="{{ url_for('chat', user_id=item_to_authenticate.seller.id, item_id=item_to_authenticate.item_id) }}" class="btn btn-info">
-                Request More Details
+            <a class="authenticate-button" href="{{ url_for('chat', user_id=item_to_authenticate.seller.id, item_id=item_to_authenticate.item_id) }}" class="btn btn-info">
+                Enquire
             </a>
                                 
             

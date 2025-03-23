@@ -125,7 +125,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const timeSlotColour = document.createElement('style');
     timeSlotColour.innerHTML = `
         .filled {
-            background-color: lightblue;  
+            background-color: #2e9746;  
         }
     `;
     

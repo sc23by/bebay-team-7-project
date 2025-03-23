@@ -13,7 +13,7 @@ def test_load_page(loggedInClientP2):
     response = loggedInClientP2.get('/expert/availability')
 
     assert response.status_code == 200
-    assert b'<table id="availability-table">' in response.data
+    assert b'<table class="availability-table" id="availability-table">' in response.data
     assert ExpertAvailabilities.query.filter_by(user_id= current_user.id).count() == 0
 
 def test_set_availability(loggedInClientP2):

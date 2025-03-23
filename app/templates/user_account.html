@@ -26,7 +26,8 @@
         </form>
         {% endif %}
         <!-- Content Area -->
-        <div class="col-md-9 col-lg-10 p-5">
+
+        <div class="col-md-9 col-lg-10 p-5 account-form">
             <h2 class="mb-4">My Info</h2>
 
             <h4>Update Information:</h4>
@@ -128,12 +129,14 @@
             {% if current_user.priority == 2 %}
                 <h4>Expertise</h4>
 
-                <form action="{{ url_for('account') }}" method="POST">
+                <form class="expertise-form" action="{{ url_for('account') }}" method="post">
                     {{ edit_expertise_form.hidden_tag() }}
                     <div class="mb-3 row">
-                        {{ edit_expertise_form.expertise.label(class="col-sm-2 col-form-label") }}
-                        {{ edit_expertise_form.expertise(class="form-select col-sm-6") }}
-                        <div class="col-sm-2">
+                        <label class="col-sm-2 col-form-label">{{ edit_expertise_form.expertise.label }}</label>
+                        <div class="col-sm-6">
+                            {{ edit_expertise_form.expertise(class="form-select") }}
+                        </div>
+                        <div class="col-sm-2 text-end">
                             {{ edit_expertise_form.update_expertise(class="btn btn-outline-primary") }}
                         </div>
                     </div>

@@ -14,69 +14,71 @@
         {% endwith %}
 
         <!-- Registration form -->
-        <form method="post" class="registration-form">
-            <h1 class="page-title">Register</h1>
-            {{ form.hidden_tag() }}
+        <div class="register-container">
+            <form method="post" class="registration-form">
+                <h1 class="page-title">Register</h1>
+                {{ form.hidden_tag() }}
 
-            <!-- First Name input -->
-            <div>
-                {{ form.first_name.label }}
-                {{ form.first_name }}
-                {% for error in form.first_name.errors %}
-                    <small>{{ error }}</small>
-                {% endfor %}
-            </div>
+                <!-- First Name input -->
+                <div>
+                    {{ form.first_name.label }}
+                    {{ form.first_name }}
+                    {% for error in form.first_name.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
 
-            <!-- Last Name input -->
-            <div>
-                {{ form.last_name.label }}
-                {{ form.last_name }}
-                {% for error in form.last_name.errors %}
-                    <small>{{ error }}</small>
-                {% endfor %}
-            </div>
+                <!-- Last Name input -->
+                <div>
+                    {{ form.last_name.label }}
+                    {{ form.last_name }}
+                    {% for error in form.last_name.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
 
-            <!-- Username input -->
-            <div>
-                {{ form.username.label }}
-                {{ form.username }}
-                {% for error in form.username.errors %}
-                    <small>{{ error }}</small>
-                {% endfor %}
-            </div>
+                <!-- Username input -->
+                <div>
+                    {{ form.username.label }}
+                    {{ form.username }}
+                    {% for error in form.username.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
 
-            <!-- Email input -->
-            <div>
-                {{ form.email.label }}
-                {{ form.email }}
-                {% for error in form.email.errors %}
-                    <small>{{ error }}</small>
-                {% endfor %}
-            </div>
+                <!-- Email input -->
+                <div>
+                    {{ form.email.label }}
+                    {{ form.email }}
+                    {% for error in form.email.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
 
-            <!-- Password input -->
-            <div>
-                {{ form.password.label }}
-                {{ form.password }}
-                {% for error in form.password.errors %}
-                    <small>{{ error }}</small>
-                {% endfor %}
-            </div>
+                <!-- Password input -->
+                <div>
+                    {{ form.password.label }}
+                    {{ form.password }}
+                    {% for error in form.password.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
 
-            <!-- Confirm Password input -->
-            <div>
-                {{ form.confirm_password.label }}
-                {{ form.confirm_password }}
-                {% for error in form.confirm_password.errors %}
-                    <small>{{ error }}</small>
-                {% endfor %}
-            </div>
+                <!-- Confirm Password input -->
+                <div>
+                    {{ form.confirm_password.label }}
+                    {{ form.confirm_password }}
+                    {% for error in form.confirm_password.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
 
-            <!-- Submit button -->
-            <div>
-                {{ form.submit }}
-            </div>
-        </form>
+                <!-- Submit button -->
+                <div>
+                    {{ form.submit }}
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

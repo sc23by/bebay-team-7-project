@@ -1772,12 +1772,14 @@ def unassign_expert():
         )
         db.session.add(restored_availability)
 
+        item_expert_id=item.expert_id
+
         # Remove expert assignment
         item.expert_id = None
         item.date_time = None
 
         notification = Notification(
-            user_id=expert_id,  
+            user_id=item_expert_id,  
             message=f"You have been assigned to authenticate the item '{item.item_name}'."
         )
 

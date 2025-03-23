@@ -1,0 +1,29 @@
+.page-title {
+    font-weight: bold;
+    text-align: center;
+    margin-top: 2%;
+}
+
+.inbox-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.inbox-table th, .inbox-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.inbox-table th {
+    background-color: #2e8758;
+    color: white;
+    font-weight: bold;
+}
+
+.inbox-table-container {
+    margin-left: 5%;   
+    margin-right: 5%;
+}

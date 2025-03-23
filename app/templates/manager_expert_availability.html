@@ -80,6 +80,34 @@
 
     </div>
 
+        <h4 class="fw-bold mt-4">Assigned Items</h4>
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Item Name</th>
+                    <th>Expert</th>
+                    <th>Time Slot</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in assigned_items %}
+                <tr>
+                    <td>{{ item.item_name }}</td>
+                    <td>{{ item.expert.first_name }} {{ item.expert.last_name }}</td>
+                    <td>{{ item.date_time.strftime('%Y-%m-%d %I:%M %p') }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('unassign_expert') }}">
+                            <input type="hidden" name="item_id" value="{{ item.item_id }}">
+                            <button class="btn btn-danger btn-sm" type="submit">Unassign</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
     <!-- Expert availability JSON for JS -->
     <script>
         const expertAvailability = {{ expert_availability | tojson }};
