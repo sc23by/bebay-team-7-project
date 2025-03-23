@@ -99,7 +99,6 @@
 }
 .card-title {
     font-weight: bold;
-    margin-bottom: 6%;
 }
 
 .expert-message{
@@ -119,4 +118,31 @@
 
 .expertise-form {
     width: 80%;
+}
+
+.authenticate-card{
+    margin-top: 2%;
+    width: 55%;
+    align-items: center;
+}
+
+.authenticate-image{
+    object-fit: contain;
+    width: 100%;
+    max-width: 750px;
+}
+
+.authentication-button-container {
+    display: flex;
+    justify-content: space-evenly; 
+}
+
+.authenticate-button {
+    background-color: #2e8758;
+    color: white;
+    border-radius: 5px;
+    font-weight: bold;
+    width: 200px;
+    border: solid #ccc;
+    text-decoration: none;
 }
