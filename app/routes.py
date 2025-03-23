@@ -1496,10 +1496,10 @@ def manager_statistics_cost():
             weekly_income += income_fee
             # expert payment amount
             if item.approved:
-                site_fee =item.calculate_fee(final_price, expert_approved=True)
-                weekly_expert_fee = site_fee-weekly_income
+                site_fee += item.calculate_fee(final_price, expert_approved=True)
+                weekly_expert_fee += site_fee-weekly_income
             # amount the user gets
-            weekly_sold = final_price-(weekly_income + weekly_expert_fee)
+            weekly_sold += final_price-(weekly_income + weekly_expert_fee)
 
         expert_fee_values.append(weekly_expert_fee)
         income_value.append(weekly_income)
