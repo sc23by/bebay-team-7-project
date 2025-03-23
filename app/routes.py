@@ -519,6 +519,8 @@ def account():
             return redirect(url_for("my_listings"))
         elif sidebar_form.watchlist.data:
             return redirect(url_for("watchlist"))
+        elif sidebar_form.past_orders.data:
+            return redirect(url_for("past_orders"))
         elif sidebar_form.notifications.data:
             return redirect(url_for("notifications"))
         elif sidebar_form.logout.data:
@@ -682,6 +684,8 @@ def my_listings():
             return redirect(url_for("my_listings"))
         elif form.watchlist.data:
             return redirect(url_for("watchlist"))
+        elif form.past_orders.data:
+            return redirect(url_for("past_orders"))
         elif form.notifications.data:
             return redirect(url_for("notifications"))
         elif form.logout.data:
@@ -755,7 +759,6 @@ def watchlist():
         elif form.past_orders.data:
             return redirect(url_for("past_orders"))
         elif form.notifications.data:
-
             return redirect(url_for("notifications"))
         elif form.logout.data:
             return redirect(url_for("logout"))
