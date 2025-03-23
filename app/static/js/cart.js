@@ -26,7 +26,7 @@ document.getElementById("checkout-form").addEventListener("submit", function (e)
         return;
     }
 
-    fetch("/pay_selected", {
+    fetch("/pay_selected_items", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

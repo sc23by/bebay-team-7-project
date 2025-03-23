@@ -1899,82 +1899,11 @@ def manager_fees():
             
     return render_template("manager_fees.html", fee_config=fee_config)
 
-# STRIPE
-# Route: Payment for item using stripe route
-@app.route('/pay/<int:item_id>', methods=['POST'])
-@user_required
-def pay_for_item(item_id):
-    """
-    Creates a Stripe Checkout Session for the highest bidder,
-    including shipping cost and expert fee (if applicable) in the total payment amount.
-    """
-    item = Item.query.get_or_404(item_id)
 
-    # Get highest bid
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
-    winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
 
-    # Ensure the current user is the highest bidder
-    if not winning_bid or winning_bid.user_id != current_user.id:
-        flash("You are not the winning bidder!", "danger")
-        return redirect(url_for('user_item_details', item_id=item_id))
+# STRIPE:
 
-    # Convert values to float for proper calculations
-    bid_price = float(highest_bid)
-    shipping_price = float(item.shipping_cost)
 
-    # Check if expert authentication is required
-    if item.expert_id:
-        expert_fee = bid_price * (item.expert_fee_percentage / 100)
-    else:
-        expert_fee = 0.0  # No expert fee if authentication isn't required
-
-    # Calculate total checkout cost (Winning Bid + Shipping Cost + Expert Fee)
-    total_price = bid_price + shipping_price + expert_fee
-
-    # Create Stripe Checkout Session
-    try:
-        line_items = [
-            {
-                'price_data': {
-                    'currency': 'gbp',
-                    'product_data': {'name': item.item_name},
-                    'unit_amount': int(bid_price * 100),  # Convert bid price to pence
-                },
-                'quantity': 1,
-            },
-            {
-                'price_data': {
-                    'currency': 'gbp',
-                    'product_data': {'name': 'Shipping Cost'},
-                    'unit_amount': int(shipping_price * 100),  # Convert shipping price to pence
-                },
-                'quantity': 1,
-            }
-        ]
-
-        # Add expert fee only if applicable
-        if expert_fee > 0:
-            line_items.append({
-                'price_data': {
-                    'currency': 'gbp',
-                    'product_data': {'name': 'Expert Fee'},
-                    'unit_amount': int(expert_fee * 100),  # Convert expert fee to pence
-                },
-                'quantity': 1,
-            })
-
-        session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=line_items,
-            mode='payment',
-            success_url=url_for('payment_success', item_id=item_id, _external=True),
-            cancel_url=url_for('user_item_details', item_id=item_id, _external=True),
-        )
-        return jsonify({'checkout_url': session.url})
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 # Success route
 @app.route('/payment_success')
@@ -2004,8 +1933,7 @@ def get_time_left(item_id):
 
 
 
-#User Route: Cart route for the checkout items
-
+# User Route: Cart route for the checkout items
 @app.route('/cart')
 @user_required
 def cart():
@@ -2024,8 +1952,8 @@ def get_cart_count():
         return SoldItem.query.filter_by(buyer_id=current_user.id).count()
     return 0
 
-
-
+# Context processor to inject cart count for priority users (shows total items regardless of payment status)
+@app.context_processor
 @app.context_processor
 def inject_cart_count():
     if current_user.is_authenticated and current_user.priority == 1:
@@ -2033,7 +1961,7 @@ def inject_cart_count():
     return {'cart_count': 0}
 
 
-@app.route('/pay_selected', methods=['POST'])
+@app.route('/pay_selected_items', methods=['POST'])
 @user_required
 def pay_selected_items():
     data = request.get_json()
@@ -2049,24 +1977,20 @@ def pay_selected_items():
         if not item:
             continue
 
-        # Validate the user is allowed to pay for this item
         highest_bid = item.highest_bid()
         highest_bidder = item.highest_bidder()
         if not highest_bid or not highest_bidder or highest_bidder.id != current_user.id or item.time_left.total_seconds() > 0:
             continue
 
-        shipping_price = float(item.shipping_cost)
         bid_price = float(highest_bid)
-
-        # Expert fee
+        shipping_price = float(item.shipping_cost)
         expert_fee = bid_price * (item.expert_fee_percentage / 100) if item.expert_id else 0.0
 
-        # Add to Stripe line items
         line_items.append({
             'price_data': {
                 'currency': 'gbp',
                 'product_data': {'name': item.item_name},
-                'unit_amount': int(bid_price * 100),
+                'unit_amount': int(bid_price * 100), # *100 bc stripe is weird and wants it as ints that are big
             },
             'quantity': 1,
         })
@@ -2094,22 +2018,42 @@ def pay_selected_items():
         return jsonify({'error': 'No valid items selected or items not eligible for payment.'}), 400
 
     try:
+        # Ensure customer exists in Stripe or create instance for them
+        if not current_user.stripe_customer_id:
+            stripe_customer = stripe.Customer.create(
+                email=current_user.email,
+                name=f"{current_user.first_name} {current_user.last_name}",
+            )
+            current_user.stripe_customer_id = stripe_customer.id
+            db.session.commit()
 
+        # Build success URL with item IDs
         success_url = url_for('payment_success_multi', _external=True) + "?item_ids=" + ",".join(map(str, item_ids))
 
+        # Create the Stripe Checkout session
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
-            line_items=line_items,
             mode='payment',
+            customer=current_user.stripe_customer_id,
+            payment_intent_data={
+                'setup_future_usage': 'on_session'  # Save card for future use
+            },
+            line_items=line_items,
             success_url=success_url,
             cancel_url=url_for('cart', _external=True),
+            saved_payment_method_options={
+                'payment_method_save': 'enabled' #enable card save box
+            },
+
         )
+
         return jsonify({'checkout_url': session.url})
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
-
+# Route to handle payment confirmation for multiple items, mark them as paid, and redirect to the payment success page
 @app.route('/payment_success_multi')
 @user_required
 def payment_success_multi():
@@ -2134,7 +2078,7 @@ def payment_success_multi():
     flash("Payment successful! Items have been marked as paid.", "success")
     return redirect(url_for('payment_success', item_ids=",".join(map(str, item_ids))))
 
-
+# Context processor to inject the count of unpaid items into all templates (used for cart icon/badge)
 @app.context_processor
 def inject_cart_count():
     if current_user.is_authenticated:
