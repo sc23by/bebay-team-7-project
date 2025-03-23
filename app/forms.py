@@ -233,7 +233,7 @@ class BidForm(FlaskForm):
         places=2,
         validators=[DataRequired(),
         NumberRange(min=0.01)],
-        render_kw={"step": "0.01", "min": "0", "class": "currency-input"})
+        render_kw={"step": "0.01", "min": "0.0.1", "class": "currency-input"})
 
     submit = SubmitField("Place Bid")
 
