@@ -1,147 +1,42 @@
 {% extends "base_manager.html" %} {% block content %}
-<style>
-  .account-name{
-    color: black;
-    text-decoration: none;
-    font-weight: bold;
-  }
-  .card{
-    width: 65%;
-    margin-top: 10px;
-  }
-  .contents{
-    margin-left: 10%;
-    display: flex;
-    flex-direction: column;
-    border: 1px solid gainsboro;
-    width: 80%;
-    border-radius: 8px;
-    margin-top: 20px;
-    height: 800px;
-    padding: 20px;
-  }
-  .card-contents{
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 10px;
-  }
-  .card-body{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .title{
-    font-weight: bold;
-    text-align: center;
-  }
 
-  .card-body {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-  }
-
-  .user-header {
-    display: flex;
-    align-items: center;
-    font-weight: bold;
-    gap: 10px; 
-  }
-
-  .listings{
-    font-weight: bold;
-    margin-top: 2%;
-  }
-
-  .no-listings{
-    display: flex;
-    text-align: center;
-    
-  }
-
-  .listings-card{
-    border: 1px solid gainsboro;
-    border-radius: 5px;
-    overflow: hidden;
-  }
-
-  .listings-card img {
-    width: 300px; 
-    height:200px; 
-    object-fit: cover; 
-    margin-right: 100px; 
-    
-  }
-
-  .card-title-listings{
-    text-align: center;
-    
-  }
-
-  .username{
-    font-weight: lighter;
-  }
-
-
-
-</style>
-
+<h1 class="title">User Information</h1>
 
 <div class="contents">
-	<h4 class="title">User Details</h4>
-	<div class="card-body">
-		<div class="card-contents">
-			<div>
-				<div>
-          <div class = "user-detail">
-            <div>
-              <span class="account-name">
-                Username : 
-              </span>
-              <span>
-                {{ account.username }}
-              </span>
-            </div>
-            <div>
-              <span class="account-name">
-                Priority : 
-              </span>
-              <span>
-                {{ account.priority }}
-              </span>
-            </div>
-					
-						<span>
-              <div>
-                <span class="account-name">
-                  Email : 
-                </span>
-                <span>
-                  {{ account.email }}
-                </span>
+	<div class="user-details-card-body">
+    <h3 class="manager-subtext">{{ account.username}}'s Details</h3>
+    <div class="account-info">
+      <span class="account-value">Username :  </span>
+      <span class="account-detail"> {{ account.username }} </span> 
+    </div>
+    <div class="account-info">
+      <span class="account-value">Priority :  </span>
+      <span class="account-detail"> {{ account.priority }} </span>
+    </div>
+      <div class="account-info">
+        <span class="account-value">Email :  </span>
+        <span class="account-detail">{{ account.email }} </span>
+    </div>
+    </div>
+  </div>
+  <h3 class="manager-subtext">{{ account.username}}'s Listings</h3>
+  <div class="expert-assignments-container">
+    <div class="row row-cols-2 row-cols-md-4 g-4">
+      {% if items %}
+          {% for item in items %}
+              <div class="col">
+                  <div class="card h-100">
+                      <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
+                          class="card-img-top" alt="{{ item.item_name }}">
+                      <div class="card-body">
+                          <h5 class="card-title">{{ item.item_name }}</h5>
+                      </div>
+                  </div>
               </div>
-					<p class="listings">
-						Listings
-					</p>
-					 {% if items %}
-					<div class="row row-cols-4 g-4">
-						 {% for item in items %}
-						<div class="col">
-							<div class="listings-card">
-								<img src="{{ url_for('static', filename='images/items/' + item.item_image) }}">
-								<div class="card-title-listings">
-									<h5>{{item.item_name}}</h5>
-								</div>
-							</div>
-						</div>
-						 {% endfor %}
-             {% else %}
-              <p class="no-listings">No Listings</p>
-            {% endif %}
-					</div>
-				</div>
-      </div>
+          {% endfor %}
+      {% else %}
+        <p class="manager-subtext">No Listings</p>
+      {% endif %}
     </div>
   </div>
 </div>
