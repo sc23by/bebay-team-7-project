@@ -69,7 +69,7 @@
                             </p>                            
                             <p class="card-text shipping">Shipping Price: £{{ item.shipping_cost }}</p>                       
                             {% if item.approved %}
-                                <span class="badge bg-success">Approved</span>
+                                <span class="badge bg-success custom-badge">Approved</span>
                             {% endif %}
                             <a href="{{ url_for('user_item_details', item_id=item.item_id) }}" class="btn btn-primary btn-sm w-100">
                                 View Details
