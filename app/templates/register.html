@@ -2,17 +2,6 @@
 {% block content %}
 <div>
     <div>        
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <div>
-              {% for category, message in messages %}
-                <div>{{ message }}</div>
-              {% endfor %}
-            </div>
-          {% endif %}
-        {% endwith %}
-
         <!-- Registration form -->
         <div class="register-container">
             <form method="post" class="registration-form">
