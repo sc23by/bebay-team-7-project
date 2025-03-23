@@ -206,11 +206,13 @@ def guest_home():
     if current_user.is_authenticated:
         return redirect_based_on_priority(current_user)
 
+    page = request.args.get('page',1,type=int)
+
     # show non expired items
     items = Item.query.filter(
         ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
         Item.expiration_time > datetime.utcnow()
-    ).all()
+    ).paginate(page=page,per_page=10,error_out=False)
 
     # Get highest bid for each item
     item_bids = {item.item_id: item.highest_bid() for item in items}
@@ -370,13 +372,17 @@ def user_home():
     """
     Redirects to main page when website first opened. Displays only items not in waiting list.
     """
+
+    page = request.args.get('page',1,type=int)
+
     # show non expired items
     items = Item.query.filter(
         ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
         Item.expiration_time > datetime.utcnow()
-    ).all()
+    ).paginate(page=page,per_page=10,error_out=False)
 
     cart_count = get_cart_count()  # this line is important
+
     item_bids = {item.item_id: item.highest_bid() for item in items}
 
     return render_template('user_home.html', pagetitle='User Home', items=items, item_bids=item_bids, cart_count=cart_count)
@@ -512,6 +518,8 @@ def account():
             return redirect(url_for("my_listings"))
         elif sidebar_form.watchlist.data:
             return redirect(url_for("watchlist"))
+        elif sidebar_form.past_orders.data:
+            return redirect(url_for("past_orders"))
         elif sidebar_form.notifications.data:
             return redirect(url_for("notifications"))
         elif sidebar_form.logout.data:
@@ -675,6 +683,8 @@ def my_listings():
             return redirect(url_for("my_listings"))
         elif form.watchlist.data:
             return redirect(url_for("watchlist"))
+        elif form.past_orders.data:
+            return redirect(url_for("past_orders"))
         elif form.notifications.data:
             return redirect(url_for("notifications"))
         elif form.logout.data:
@@ -748,7 +758,6 @@ def watchlist():
         elif form.past_orders.data:
             return redirect(url_for("past_orders"))
         elif form.notifications.data:
-
             return redirect(url_for("notifications"))
         elif form.logout.data:
             return redirect(url_for("logout"))
