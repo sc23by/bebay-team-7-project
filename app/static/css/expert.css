@@ -103,6 +103,7 @@
 
 .expert-message{
     margin: 10% auto;
+    text-align: center;
 }
 
 .account-form {
@@ -145,4 +146,13 @@
     width: 200px;
     border: solid #ccc;
     text-decoration: none;
+}
+
+body {
+    overflow-x: hidden;
+}
+
+.expert-subtitle {
+    text-align: center;
+    font-size: 20px;
 }

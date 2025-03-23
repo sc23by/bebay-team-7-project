@@ -9,49 +9,54 @@
 {% endif %}
 
 {% block content %}
-<h2>Inbox</h2>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Chat With</th>
-            <th>Subject</th>
-            <th>Last Message</th>
-            <th>Date</th>
-            <th>Status</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for message in messages %}
-        {% set chat_user_id = message.recipient_id if message.sender_id == current_user.id else message.sender_id %}
-        <tr>
-            <td>
-                <a href="{% if message.item_id %}
-                            {{ url_for('chat', user_id=chat_user_id, item_id=message.item_id) }}
-                         {% else %}
-                            {{ url_for('chat', user_id=chat_user_id) }}
-                         {% endif %}">
-                    {{ message.recipient.username if message.sender_id == current_user.id else message.sender.username }}
-                </a>
-            </td>
-            <td>
-                {% if message.item %}
-                    {{ message.item.item_name }}
-                {% else %}
-                    <em>General Message</em>
-                {% endif %}
-            </td>            
-            <td>{{ message.content[:50] }}{% if message.content|length > 50 %}...{% endif %}</td>
-            <td>{{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
-            <td>
-                {% if message.recipient_id == current_user.id and not message.read %}
-                    🔵 Unread
-                {% else %}
-                    ✅ Read
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/inbox.css') }}">
+
+<h2 class="page-title">Inbox</h2>
+
+<div class="inbox-table-container">
+    <table class="inbox-table">
+        <thead>
+            <tr>
+                <th>Chat With</th>
+                <th>Subject</th>
+                <th>Last Message</th>
+                <th>Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for message in messages %}
+            {% set chat_user_id = message.recipient_id if message.sender_id == current_user.id else message.sender_id %}
+            <tr>
+                <td>
+                    <a href="{% if message.item_id %}
+                                {{ url_for('chat', user_id=chat_user_id, item_id=message.item_id) }}
+                            {% else %}
+                                {{ url_for('chat', user_id=chat_user_id) }}
+                            {% endif %}">
+                        {{ message.recipient.username if message.sender_id == current_user.id else message.sender.username }}
+                    </a>
+                </td>
+                <td>
+                    {% if message.item %}
+                        {{ message.item.item_name }}
+                    {% else %}
+                        <em>General Message</em>
+                    {% endif %}
+                </td>            
+                <td>{{ message.content[:50] }}{% if message.content|length > 50 %}...{% endif %}</td>
+                <td>{{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>
+                    {% if message.recipient_id == current_user.id and not message.read %}
+                        🔵 Unread
+                    {% else %}
+                        ✅ Read
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}

@@ -1,10 +1,10 @@
 {% extends "base_expert.html" %}
 {% block content %}
 
-<h2>Expert History Page</h2>
+<h2 class="page-title">Expert History Page</h2>
 
 <!-- Approved Items Section -->
-<h3>Approved Items</h3>
+<h3 class="expert-subtitle">Approved Items</h3>
 <div class="row row-cols-1 row-cols-md-3 g-4">
     {% if approved_items %}
         {% for item in approved_items %}
@@ -25,7 +25,7 @@
 </div>
 
 <!-- Rejected Items Section -->
-<h3>Rejected Items</h3>
+<h3 class="expert-subtitle">Rejected Items</h3>
 <div class="row row-cols-1 row-cols-md-3 g-4">
     {% if rejected_items %}
         {% for item in rejected_items %}
@@ -41,7 +41,7 @@
             </div>
         {% endfor %}
     {% else %}
-        <p class="text-muted">No rejected items yet.</p>
+        <p class="expert-message">No rejected items yet.</p>
     {% endif %}
 </div>
 
