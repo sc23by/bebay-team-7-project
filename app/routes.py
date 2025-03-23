@@ -724,6 +724,24 @@ def delete_item(item_id):
         )
         db.session.add(notification)
 
+    # Notify all managers if item was waiting for authentication
+    if item.item_id in waiting_list:
+        managers = User.query.filter_by(role='manager').all()
+        for manager in managers:
+            db.session.add(Notification(
+                user_id=manager.id,
+                message=f"Item '{item.item_name}' awaiting authentication has been deleted by the seller."
+            ))
+
+    # Notify assigned expert (if any)
+    if item.expert_id:
+        expert = User.query.get(item.expert_id)
+        if expert:
+            db.session.add(Notification(
+                user_id=expert.id,
+                message=f"The item '{item.item_name}' assigned to you for authentication has been deleted by the seller."
+            ))
+
     db.session.delete(item)
     db.session.commit()
     flash("Item successfully deleted.", "success")
