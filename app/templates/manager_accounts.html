@@ -2,11 +2,9 @@
 
 {% block content %}
 <!--Filter Dropdown button-->
-
-<div class = "contents">
-  <div>
-    <h4 class="title">Accounts Priority Settings</h4>
-  </div>
+<h1 class="title">Accounts Priority Settings</h1>
+<div class="contents">
+<div class = "statistics-card">
   <div class = "top-bar">
     <div class = "top-buttons">
         <div class="btn-group" role="group">
@@ -46,10 +44,10 @@
         <div class="card">
             <div class="card-body">
                 <div class = "card-contents">
-                    <a href="{{ url_for('manager_lisgings_user', id=account.id) }}" class = "account-name">{{ account.username }}</a>
+                    <a href="{{ url_for('manager_listings_user', id=account.id) }}" class = "account-name">{{ account.username }}</a>
                     <span class = "priority">Priority: {{ account.priority }}</span>
                 </div>
-                <div class="dropdown">
+                <div class="priority-dropdown">
                     <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Set Priority
                     </button>
@@ -81,7 +79,7 @@
   {% endif %}
   </div>
 </div>
+</div>
 
 
-{% endblock %}
-
+{% endblock %}

@@ -2,11 +2,10 @@
 
 {% block content %}
 
-<div class="container">
-    <div class="row">
-        <div class="card">
-          <h4 class="title">Weekly Income</h4>
-          <div class="dropdown">
+<h1 class="title">Weekly Revenue</h1>
+<div class="contents">
+    <div class="statistics-card">
+        <div class="statistics-dropdown">
             <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
               Select Chart
             </button>
@@ -14,10 +13,11 @@
               <li><a class="dropdown-item" href="{{url_for('manager_statistics')}}">Weekly Income</a></li>
               <li><a class="dropdown-item" href="{{url_for('manager_statistics_cost')}}">Weekly Breakdown</a></li>
             </ul>
+
           </div>
-          <img src="data:image/png;base64,{{img_data}}" class="card-img-top" alt="...">
-          <div class="card-body">
-            <table class="table table-hover">
+          <img src="data:image/png;base64,{{img_data}}" class="stats-card-img-top" alt="...">
+          <div class="statistics-card-body">
+            <table class="statistics-table">
               <thead class="table-light">
                   <tr>
                       <th>Total Revenue</th>
@@ -36,21 +36,16 @@
               </tbody>
             </table>
 
-            <div>
-              <span>
-                <p class="card-text">Percentage per posting:</p>
-              </span>
-              <span>
-                <form action="{{url_for('manager_statistics_edit')}}" method="POST" class="cost-form">
-                  <input placeholder="Edit Percentage" name="site" type="float" class="cost-input">
-                  <button class="btn btn-success cost-button" type="submit">Edit</button>
-                </form>
-              </span>              
-            </div>
+            <div class="statistics-card-edit">
+                <p class="statistics-form-text">Perecentage per posting: </p>
+            <div class="statistics-edit-button">
+              <form action="{{url_for('manager_statistics_edit')}}" method="POST" class="statistics-cost-form">
+                <input placeholder="Edit Percentage" name="site" type="float" class="statistics-cost-input">
+                <button class="btn btn-success cost-button" type="submit">Edit</button>
+            </form>
           </div>
-        </div>
+        </div>      
       </div>
     </div>
-  </div>
-
+  </div>             
 {% endblock %}
