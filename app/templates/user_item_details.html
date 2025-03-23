@@ -51,7 +51,7 @@
             <!-- urls to use in js to redirect user to payment -->
             <div id="auction-data"
                 data-time-left-url="{{ url_for('get_time_left', item_id=item.item_id) }}"
-                data-pay-now-url="{{ url_for('pay_for_item', item_id=item.item_id) }}"
+                data-pay-now-url="{{ url_for('pay_selected_items') }}"
                 data-shipping-cost="{{ item.shipping_cost }}"
                 data-highest-bid="{{ highest_bid }}">
             </div>
