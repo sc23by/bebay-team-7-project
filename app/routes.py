@@ -691,6 +691,22 @@ def my_listings():
 
     return render_template('user_my_listings.html', pagetitle='Listings', form=form, items=items, item_bids=item_bids, waiting_list = waiting_list)
 
+# Route: Delete item from my listing page
+@app.route('/item/<int:item_id>/delete', methods=['POST'])
+@user_required
+def delete_item(item_id):
+    item = Item.query.get_or_404(item_id)
+
+    if item.seller_id != current_user.id:
+        flash("You are not authorised to delete this item.", "danger")
+        return redirect(url_for('user_home'))
+
+    db.session.delete(item)
+    db.session.commit()
+    flash("Item successfully deleted.", "success")
+    return redirect(url_for('my_listings'))
+
+
 # Route: Past Orders
 @app.route('/user/past_orders', methods=['GET', 'POST'])
 @user_required
