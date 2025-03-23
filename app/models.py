@@ -21,6 +21,7 @@ class User(UserMixin, db.Model):
     last_name = db.Column(db.String(30), nullable=False)
     priority = db.Column(db.Integer, nullable=False, default=1)
     expertise = db.Column(db.String(50), nullable=True, default=None)
+    stripe_customer_id = db.Column(db.String(100), nullable=True)
 
     watchlist = db.relationship('Item', secondary=Watched_item, backref='watched_by') # allows user to watch multiple items
     items = db.relationship('Item',foreign_keys='Item.seller_id',backref='seller', lazy=True)

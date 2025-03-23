@@ -1848,81 +1848,7 @@ def manager_fees():
 
 # STRIPE:
 
-# Route: Payment for item using stripe route
-@app.route('/pay/<int:item_id>', methods=['POST'])
-@user_required
-def pay_for_item(item_id):
-    """
-    Creates a Stripe Checkout Session for the highest bidder,
-    including shipping cost and expert fee (if applicable) in the total payment amount.
-    """
-    item = Item.query.get_or_404(item_id)
 
-    # Get highest bid
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
-    winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
-
-    # Ensure the current user is the highest bidder
-    if not winning_bid or winning_bid.user_id != current_user.id:
-        flash("You are not the winning bidder!", "danger")
-        return redirect(url_for('user_item_details', item_id=item_id))
-
-    # Convert values to float for proper calculations
-    bid_price = float(highest_bid)
-    shipping_price = float(item.shipping_cost)
-
-    # Check if expert authentication is required
-    if item.expert_id:
-        expert_fee = bid_price * (item.expert_fee_percentage / 100)
-    else:
-        expert_fee = 0.0  # No expert fee if authentication isn't required
-
-    # Calculate total checkout cost (Winning Bid + Shipping Cost + Expert Fee)
-    total_price = bid_price + shipping_price + expert_fee
-
-    # Create Stripe Checkout Session
-    try:
-        line_items = [
-            {
-                'price_data': {
-                    'currency': 'gbp',
-                    'product_data': {'name': item.item_name},
-                    'unit_amount': int(bid_price * 100),  # Convert bid price to pence
-                },
-                'quantity': 1,
-            },
-            {
-                'price_data': {
-                    'currency': 'gbp',
-                    'product_data': {'name': 'Shipping Cost'},
-                    'unit_amount': int(shipping_price * 100),  # Convert shipping price to pence
-                },
-                'quantity': 1,
-            }
-        ]
-
-        # Add expert fee only if applicable
-        if expert_fee > 0:
-            line_items.append({
-                'price_data': {
-                    'currency': 'gbp',
-                    'product_data': {'name': 'Expert Fee'},
-                    'unit_amount': int(expert_fee * 100),  # Convert expert fee to pence
-                },
-                'quantity': 1,
-            })
-
-        session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=line_items,
-            mode='payment',
-            success_url=url_for('payment_success', item_id=item_id, _external=True),
-            cancel_url=url_for('user_item_details', item_id=item_id, _external=True),
-        )
-        return jsonify({'checkout_url': session.url})
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 # Success route
 @app.route('/payment_success')
@@ -1981,7 +1907,7 @@ def inject_cart_count():
 
 
 # User/ Stripe Route: to initiate Stripe checkout for selected unpaid items won by the current user
-@app.route('/pay_selected', methods=['POST'])
+@app.route('/pay_selected_items', methods=['POST'])
 @user_required
 def pay_selected_items():
     data = request.get_json()
@@ -2045,13 +1971,31 @@ def pay_selected_items():
 
         success_url = url_for('payment_success_multi', _external=True) + "?item_ids=" + ",".join(map(str, item_ids))
 
-        session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=line_items,
-            mode='payment',
-            success_url=success_url,
-            cancel_url=url_for('cart', _external=True),
-        )
+        # Create Stripe customer if not already saved
+        if not current_user.stripe_customer_id:
+            customer = stripe.Customer.create(
+                email=current_user.email,
+                name=f"{current_user.first_name} {current_user.last_name}",
+            )
+            current_user.stripe_customer_id = customer.id
+            db.session.commit()
+        else:
+            # Retrieve the existing customer (optional, useful for updates/logs)
+            customer = stripe.Customer.retrieve(current_user.stripe_customer_id)
+            # Optional: Update email or name in Stripe if changed in your system
+
+            session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                mode='payment',
+                customer=current_user.stripe_customer_id,
+                payment_intent_data={
+                    'setup_future_usage': 'off_session'
+                },
+                line_items=line_items,
+                success_url=success_url,
+                cancel_url=url_for('cart', _external=True),
+            )
+
         return jsonify({'checkout_url': session.url})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
