@@ -32,7 +32,7 @@
 
             <h4>Update Information:</h4>
 
-            <form action="{{ url_for('account') }}" method="post">
+            <form action="{{ url_for('account') }}" method="POST">
                 {{ info_form.hidden_tag() }}
                 <div class="mb-3 row">
                     {{ info_form.first_name.label(class="col-sm-2 col-form-label")}}
@@ -54,7 +54,7 @@
                 </div>
             </form>
             
-            <form action="{{ url_for('account') }}" method="post">
+            <form action="{{ url_for('account') }}" method="POST">
                 {{ username_form.hidden_tag() }}
                 <div class="mb-3 row">
                     {{ username_form.username.label(class="col-sm-2 col-form-label")}}
@@ -68,7 +68,7 @@
                 </div>
             </form>
 
-            <form action="{{ url_for('account') }}" method="post">
+            <form action="{{ url_for('account') }}" method="POST">
                 {{email_form.hidden_tag() }}
                 <div class="mb-3 row">
                     {{ email_form.email.label(class="col-sm-2 col-form-label")}}
@@ -84,7 +84,7 @@
 
             <h4>Change Password:</h4>
 
-            <form action="{{ url_for('account') }}" method="post">
+            <form action="{{ url_for('account') }}" method="POST">
                 {{ password_form.hidden_tag() }}
 
                 <div class="mb-3 row">
@@ -109,7 +109,7 @@
 
             <h4>Card and Shipping Information:</h4>
 
-            <form action="{{ url_for('account') }}" method="post">
+            <form action="{{ url_for('account') }}" method="POST">
                 {{ card_form.hidden_tag() }}
 
                 <div class="mb-3 row">
@@ -142,9 +142,6 @@
                     </div>
                 </form>
             {% endif %}
-
-
-            <a href="{{ url_for('logout') }}" class="btn btn-outline-dark">Logout</a>
         </div>
     </div>
 </body>

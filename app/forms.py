@@ -105,13 +105,11 @@ class UserInfoForm(FlaskForm):
     Allows user to update user information
     """
     first_name = StringField('First Name', validators=[
-        DataRequired(), 
         Length(min=2, max=30, message="First name must be 2-30 characters."),
         Regexp('^[A-Za-z]+$', message="First name should only contain letters.")
     ])
 
     last_name = StringField('Last Name', validators=[
-        DataRequired(), 
         Length(min=2, max=30, message="Last name must be 2-30 characters."),
         Regexp('^[A-Za-z]+$', message="Last name should only contain letters.")
     ]) 
