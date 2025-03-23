@@ -32,7 +32,7 @@
         <p class="details">Listing Time: {{ item.date_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
         <p class="details">Expires On: {{ item.expiration_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
         {% if item.approved %}
-            <span class="badge bg-success">Approved</span>
+            <span class="badge bg-success custom-badge">Approved</span>
         {% endif %}
         <div class="item-buttons">
             <!-- Bidding Form (Initially Hidden If Auction is Still Active) -->
