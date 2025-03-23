@@ -21,6 +21,7 @@ class User(UserMixin, db.Model):
     last_name = db.Column(db.String(30), nullable=False)
     priority = db.Column(db.Integer, nullable=False, default=1)
     expertise = db.Column(db.String(50), nullable=True, default=None)
+    stripe_customer_id = db.Column(db.String(100))
 
 
     watchlist = db.relationship('Item', secondary=Watched_item, backref='watched_by') # allows user to watch multiple items
@@ -80,8 +81,8 @@ class Item(db.Model):
     # Store whether item was sold or just expired
     sold = db.Column(db.Boolean, default=False)
     #relationship
-    bids = db.relationship('Bid',backref='item',lazy=True)
-    sold_item = db.relationship('SoldItem', backref='item', uselist=False)
+    bids = db.relationship('Bid',backref='item',lazy=True, cascade='all, delete-orphan')
+    sold_item = db.relationship('SoldItem', backref='item', uselist=False, cascade='all, delete-orphan')
     # category
     category = db.Column(db.String(50), nullable=False)  # Must be one of the pre-defined choices
 
@@ -133,6 +134,24 @@ class Item(db.Model):
         bidder = self.highest_bidder()
         return bidder.id if bidder else None
 
+class FeeConfig(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    site_fee = db.Column(db.Float, default=1.0)
+
+    @staticmethod
+    def get_fee():
+        fee_entry = FeeConfig.query.first()
+        return fee_entry.site_fee if fee_entry else 1.0
+
+    @staticmethod
+    def set_fee(new_fee):
+        fee_entry = FeeConfig.query.first()
+        if fee_entry:
+            fee_entry.site_fee = new_fee
+        else:
+            fee_entry = FeeConfig(site_fee=new_fee)
+            db.session.add(fee_entry)
+        db.session.commit()
 
 # Waiting List Model
 class WaitingList(db.Model):
@@ -150,21 +169,6 @@ class Bid(db.Model):
     bid_date_time = db.Column(db.DateTime, nullable=False)
 
     user = db.relationship('User', backref='bids')
-
-# Fee Configuration Model (New)
-class FeeConfig(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    site_fee_percentage = db.Column(db.Float, nullable=False, default=1.0)  # Default 1%
-    expert_fee_percentage = db.Column(db.Float, nullable=False, default=4.0)  # Default 4%
-
-    @staticmethod
-    def get_current_fees():
-        fee = FeeConfig.query.first()
-        if not fee:
-            fee = FeeConfig(site_fee_percentage=1.0, expert_fee_percentage=4.0)
-            db.session.add(fee)
-            db.session.commit()
-        return fee
 
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -1,5 +1,5 @@
 from app import app, db, bcrypt
-from flask import render_template, redirect, url_for, request, flash, current_app, jsonify
+from flask import render_template, redirect, url_for, request, flash, current_app, jsonify, session
 from flask_login import login_user, current_user, login_required,logout_user
 from app.forms import RegistrationForm, LoginForm, SideBarForm, UserInfoForm, ChangeUsernameForm, ChangeEmailForm, ChangePasswordForm, CardInfoForm, ListItemForm, BidForm, EditExpertiseForm, CATEGORY_CHOICES 
 from app.models import User, Item, Bid, WaitingList, ExpertAvailabilities, Watched_item, PaymentInfo, Notification, SoldItem, UserMessage, FeeConfig
@@ -350,6 +350,7 @@ def logout():
     Log the user out and redirect to the guest_home page.
     """
     logout_user()
+    session.clear()  
     return redirect(url_for('guest_home'))
 
 @app.route('/messages')
@@ -1906,7 +1907,6 @@ def inject_cart_count():
     return {'cart_count': 0}
 
 
-# User/ Stripe Route: to initiate Stripe checkout for selected unpaid items won by the current user
 @app.route('/pay_selected_items', methods=['POST'])
 @user_required
 def pay_selected_items():
@@ -1923,19 +1923,15 @@ def pay_selected_items():
         if not item:
             continue
 
-        # Validated the user is allowed to pay for this item
         highest_bid = item.highest_bid()
         highest_bidder = item.highest_bidder()
         if not highest_bid or not highest_bidder or highest_bidder.id != current_user.id or item.time_left.total_seconds() > 0:
             continue
 
-        shipping_price = float(item.shipping_cost)
         bid_price = float(highest_bid)
-
-        # Expert fee
+        shipping_price = float(item.shipping_cost)
         expert_fee = bid_price * (item.expert_fee_percentage / 100) if item.expert_id else 0.0
 
-        # Added to Stripe line items
         line_items.append({
             'price_data': {
                 'currency': 'gbp',
@@ -1968,35 +1964,33 @@ def pay_selected_items():
         return jsonify({'error': 'No valid items selected or items not eligible for payment.'}), 400
 
     try:
-
-        success_url = url_for('payment_success_multi', _external=True) + "?item_ids=" + ",".join(map(str, item_ids))
-
-        # Create Stripe customer if not already saved
-        if not stripe.Customer.retrieve(current_user.id):
-            customer = stripe.Customer.create(
+        # Ensure customer exists in Stripe
+        if not current_user.stripe_customer_id:
+            stripe_customer = stripe.Customer.create(
                 email=current_user.email,
                 name=f"{current_user.first_name} {current_user.last_name}",
             )
-            current_user.id = 
+            current_user.stripe_customer_id = stripe_customer.id
             db.session.commit()
-        else:
-            # Retrieve the existing customer (optional, useful for updates/logs)
-            customer = stripe.Customer.retrieve(current_user.id)
-            # Optional: Update email or name in Stripe if changed in your system
 
-            session = stripe.checkout.Session.create(
-                payment_method_types=['card'],
-                mode='payment',
-                customer=current_user.id,
-                payment_intent_data={
-                    'setup_future_usage': 'off_session'
-                },
-                line_items=line_items,
-                success_url=success_url,
-                cancel_url=url_for('cart', _external=True),
-            )
+        # Build success URL with item IDs
+        success_url = url_for('payment_success_multi', _external=True) + "?item_ids=" + ",".join(map(str, item_ids))
+
+        # Create the Stripe Checkout session
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            mode='payment',
+            customer=current_user.stripe_customer_id,
+            payment_intent_data={
+                'setup_future_usage': 'off_session'  # Save card for future use
+            },
+            line_items=line_items,
+            success_url=success_url,
+            cancel_url=url_for('cart', _external=True),
+        )
 
         return jsonify({'checkout_url': session.url})
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
