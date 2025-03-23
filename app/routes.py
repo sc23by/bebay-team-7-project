@@ -207,11 +207,13 @@ def guest_home():
     if current_user.is_authenticated:
         return redirect_based_on_priority(current_user)
 
+    page = request.args.get('page',1,type=int)
+
     # show non expired items
     items = Item.query.filter(
         ~Item.item_id.in_(db.session.query(WaitingList.item_id)),
         Item.expiration_time > datetime.utcnow()
-    ).all()
+    ).paginate(page=page,per_page=10,error_out=False)
 
     # Get highest bid for each item
     item_bids = {item.item_id: item.highest_bid() for item in items}

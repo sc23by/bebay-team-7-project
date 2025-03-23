@@ -49,6 +49,14 @@
                 </div>
             </div>
             {% endfor %}
+            <!-- page turner buttons -->
+            {% if items.has_prev %}
+                <a href="{{ url_for('user_home', page=items.prev_num) }}"class="btn btn-outline-primary">Previous</a>
+            {% endif %}
+            <span> Page : {{ items.page }} / {{ items.pages }} </spans>
+            {% if items.has_next %}
+                <a href="{{ url_for('user_home', page=items.next_num) }}"class="btn btn-outline-primary">Next</a>
+            {% endif %}
         {% else %}
             <p class="text-center text-muted">No items listed</p>
         {% endif %}
