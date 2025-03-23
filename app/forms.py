@@ -105,13 +105,13 @@ class UserInfoForm(FlaskForm):
     Allows user to update user information
     """
     first_name = StringField('First Name', validators=[
-        Length(min=2, max=30, message="First name must be 2-30 characters."),
-        Regexp('^[A-Za-z]+$', message="First name should only contain letters.")
+        Length(min=2, max=30),
+        Regexp('^[A-Za-z]+$')
     ])
 
     last_name = StringField('Last Name', validators=[
-        Length(min=2, max=30, message="Last name must be 2-30 characters."),
-        Regexp('^[A-Za-z]+$', message="Last name should only contain letters.")
+        Length(min=2, max=30),
+        Regexp('^[A-Za-z]+$')
     ]) 
 
     update_info = SubmitField('Edit Name')
@@ -122,8 +122,8 @@ class ChangeUsernameForm(FlaskForm):
     Allows user to change username
     """
     username = StringField('Username', validators=[
-        Length(min=3, max=20, message="Username must be 3-20 characters."),
-        Regexp('^[A-Za-z0-9_]+$', message="Only letters, numbers, and underscores allowed.")
+        Length(min=3, max=20),
+        Regexp('^[A-Za-z0-9_]+$')
     ])
 
     update_username = SubmitField('Edit Username')
