@@ -1972,22 +1972,22 @@ def pay_selected_items():
         success_url = url_for('payment_success_multi', _external=True) + "?item_ids=" + ",".join(map(str, item_ids))
 
         # Create Stripe customer if not already saved
-        if not current_user.stripe_customer_id:
+        if not stripe.Customer.retrieve(current_user.id):
             customer = stripe.Customer.create(
                 email=current_user.email,
                 name=f"{current_user.first_name} {current_user.last_name}",
             )
-            current_user.stripe_customer_id = customer.id
+            current_user.id = 
             db.session.commit()
         else:
             # Retrieve the existing customer (optional, useful for updates/logs)
-            customer = stripe.Customer.retrieve(current_user.stripe_customer_id)
+            customer = stripe.Customer.retrieve(current_user.id)
             # Optional: Update email or name in Stripe if changed in your system
 
             session = stripe.checkout.Session.create(
                 payment_method_types=['card'],
                 mode='payment',
-                customer=current_user.stripe_customer_id,
+                customer=current_user.id,
                 payment_intent_data={
                     'setup_future_usage': 'off_session'
                 },
