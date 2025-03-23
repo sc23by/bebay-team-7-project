@@ -63,17 +63,17 @@
                 </div>
             </div>
             {% endfor %}
-            <div class="row row-cols-3 row-cols-md-5 g-4 gallery">
-                {% if items.has_prev %}
-                    <a href="{{ url_for('user_home', page=items.prev_num) }}"class="btn btn-outline-primary">Previous</a>
-                {% endif %}
-                <span> Page : {{ items.page }} / {{ items.pages }} </span>
-                {% if items.has_next %}
-                    <a href="{{ url_for('user_home', page=items.next_num) }}"class="btn btn-outline-primary">Next</a>
-                {% endif %}
-            </div>
         {% else %}
             <p class="text-center text-muted">No items listed</p>
+        {% endif %}
+    </div>
+    <div class="row row-cols-3 row-cols-md-5 g-4 gallery">
+        {% if items.has_prev %}
+            <a href="{{ url_for('user_home', page=items.prev_num) }}"class="btn btn-outline-primary">Previous</a>
+        {% endif %}
+        <span> Page : {{ items.page }} / {{ items.pages }} </span>
+        {% if items.has_next %}
+            <a href="{{ url_for('user_home', page=items.next_num) }}"class="btn btn-outline-primary">Next</a>
         {% endif %}
     </div>
     
