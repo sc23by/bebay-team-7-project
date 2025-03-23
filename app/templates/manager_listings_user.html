@@ -2,7 +2,7 @@
 
 <h1 class="title">User Information</h1>
 
-<div class="contents">
+<div class="user-information-contents">
 	<div class="user-details-card-body">
     <h3 class="manager-subtext">{{ account.username}}'s Details</h3>
     <div class="account-info">
@@ -17,13 +17,16 @@
         <span class="account-value">Email :  </span>
         <span class="account-detail">{{ account.email }} </span>
     </div>
-    </div>
-    <a href="{{ url_for('chat', user_id=account.id) }}" class="btn btn-info">
-      Message user
-    </a>
   </div>
+      <a class="message-button" href="{{ url_for('chat', user_id=account. id)}}" class="btn btn-info">
+        Message User
+      </a>
+
+  <hr class="manager-divider">
+
+<div class="user-information-contents">
   <h3 class="manager-subtext">{{ account.username}}'s Listings</h3>
-  <div class="expert-assignments-container">
+  <div class="manager-user-listings-container">
     <div class="row row-cols-2 row-cols-md-4 g-4">
       {% if items %}
           {% for item in items %}
