@@ -377,10 +377,10 @@ def user_home():
         Item.expiration_time > datetime.utcnow()
     ).all()
 
-    # Get highest bid for each item
+    cart_count = get_cart_count()  # this line is important
     item_bids = {item.item_id: item.highest_bid() for item in items}
 
-    return render_template('user_home.html', pagetitle='User Home', items=items, item_bids=item_bids)
+    return render_template('user_home.html', pagetitle='User Home', items=items, item_bids=item_bids, cart_count=cart_count)
 
 # Route: Search in navbar
 @app.route('/user/search', methods = ['GET'])
@@ -949,6 +949,8 @@ def user_item_details(item_id):
     highest_bidder_id = highest_bidder.user_id if highest_bidder else None
 
     return render_template('user_item_details.html', form=form, item=item, highest_bid=highest_bid, highest_bidder_id=highest_bidder_id)
+
+
 
 # Route: Placing a bid
 @socketio.on('new_bid')
@@ -1918,36 +1920,13 @@ def pay_for_item(item_id):
         return jsonify({'error': str(e)}), 500
 
 # Success route
-@app.route('/payment_success/<int:item_id>')
+@app.route('/payment_success')
 @user_required
-def payment_success(item_id):
-    item = Item.query.get_or_404(item_id)
-
-    # Find the highest bid for the item
-    highest_bid = db.session.query(db.func.max(Bid.bid_amount)).filter_by(item_id=item_id).scalar()
-    winning_bid = Bid.query.filter_by(item_id=item_id, bid_amount=highest_bid).first()
-
-    # Ensure only the winning bidder can mark the item as sold
-    if winning_bid and winning_bid.user_id == current_user.id:
-        # Mark item as sold
-        item.sold = True
-        db.session.commit()
-
-        # Add the item to SoldItem table
-        sold_item = SoldItem(
-            item_id=item_id,
-            seller_id=item.seller_id,
-            buyer_id=current_user.id,
-            price=highest_bid
-        )
-        db.session.add(sold_item)
-        db.session.commit()
-
-        return render_template("payment_success.html", item=item, price=highest_bid)
-    
-    else:
-        flash("Payment failed or unauthorized access.", "danger")
-        return redirect(url_for('user_home'))
+def payment_success():
+    item_ids_str = request.args.get('item_ids', '')
+    item_ids = [int(i) for i in item_ids_str.split(',') if i.isdigit()]
+    items = Item.query.filter(Item.item_id.in_(item_ids)).all()
+    return render_template('payment_success.html', items=items)
 
 
 # API to fetch get remaining time on auction for an item in real time
@@ -1968,6 +1947,140 @@ def get_time_left(item_id):
 
 
 
+#User Route: Cart route for the checkout items
+
+@app.route('/cart')
+@user_required
+def cart():
+    # Fetch only unpaid items won by current user
+    won_items = SoldItem.query.filter_by(buyer_id=current_user.id, paid=False).all()
+    item_ids = [s.item_id for s in won_items]
+    items = Item.query.filter(Item.item_id.in_(item_ids)).all()
+    
+    cart_count = get_cart_count()  # Assuming this function exists
+    
+    return render_template('cart.html', pagetitle='My Cart', items=items, cart_count=cart_count)
+
+# Function that retrieves the count whether the cart is empty or not
+def get_cart_count():
+    if current_user.is_authenticated:
+        return SoldItem.query.filter_by(buyer_id=current_user.id).count()
+    return 0
 
 
 
+@app.context_processor
+def inject_cart_count():
+    if current_user.is_authenticated and current_user.priority == 1:
+        return {'cart_count': SoldItem.query.filter_by(buyer_id=current_user.id).count()}
+    return {'cart_count': 0}
+
+
+@app.route('/pay_selected', methods=['POST'])
+@user_required
+def pay_selected_items():
+    data = request.get_json()
+    item_ids = data.get('item_ids', [])
+    
+    if not item_ids:
+        return jsonify({'error': 'No items selected.'}), 400
+
+    line_items = []
+
+    for item_id in item_ids:
+        item = Item.query.get(item_id)
+        if not item:
+            continue
+
+        # Validate the user is allowed to pay for this item
+        highest_bid = item.highest_bid()
+        highest_bidder = item.highest_bidder()
+        if not highest_bid or not highest_bidder or highest_bidder.id != current_user.id or item.time_left.total_seconds() > 0:
+            continue
+
+        shipping_price = float(item.shipping_cost)
+        bid_price = float(highest_bid)
+
+        # Expert fee
+        expert_fee = bid_price * (item.expert_fee_percentage / 100) if item.expert_id else 0.0
+
+        # Add to Stripe line items
+        line_items.append({
+            'price_data': {
+                'currency': 'gbp',
+                'product_data': {'name': item.item_name},
+                'unit_amount': int(bid_price * 100),
+            },
+            'quantity': 1,
+        })
+
+        line_items.append({
+            'price_data': {
+                'currency': 'gbp',
+                'product_data': {'name': f"Shipping for {item.item_name}"},
+                'unit_amount': int(shipping_price * 100),
+            },
+            'quantity': 1,
+        })
+
+        if expert_fee > 0:
+            line_items.append({
+                'price_data': {
+                    'currency': 'gbp',
+                    'product_data': {'name': f"Expert Fee for {item.item_name}"},
+                    'unit_amount': int(expert_fee * 100),
+                },
+                'quantity': 1,
+            })
+
+    if not line_items:
+        return jsonify({'error': 'No valid items selected or items not eligible for payment.'}), 400
+
+    try:
+
+        success_url = url_for('payment_success_multi', _external=True) + "?item_ids=" + ",".join(map(str, item_ids))
+
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=line_items,
+            mode='payment',
+            success_url=success_url,
+            cancel_url=url_for('cart', _external=True),
+        )
+        return jsonify({'checkout_url': session.url})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+@app.route('/payment_success_multi')
+@user_required
+def payment_success_multi():
+    item_ids_str = request.args.get('item_ids', '')
+    item_ids = [int(i) for i in item_ids_str.split(',') if i.isdigit()]
+
+    if not item_ids:
+        flash("No valid items provided for payment confirmation.", "danger")
+        return redirect(url_for('user_home'))
+
+    # Fetch matching SoldItems and mark as paid
+    sold_items = SoldItem.query.filter(
+        SoldItem.buyer_id == current_user.id,
+        SoldItem.item_id.in_(item_ids)
+    ).all()
+
+    for sold in sold_items:
+        sold.paid = True
+
+    db.session.commit()
+
+    flash("Payment successful! Items have been marked as paid.", "success")
+    return redirect(url_for('payment_success', item_ids=",".join(map(str, item_ids))))
+
+
+@app.context_processor
+def inject_cart_count():
+    if current_user.is_authenticated:
+        unpaid_count = SoldItem.query.filter_by(buyer_id=current_user.id, paid=False).count()
+        return {'cart_count': unpaid_count}
+    return {'cart_count': 0}

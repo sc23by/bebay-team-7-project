@@ -1,0 +1,93 @@
+/* CSS fro payment success page- arranging the items checked out*/
+
+body {
+    background-color: #f2f4f8;
+    font-family: "Segoe UI", sans-serif;
+    color: #2b2e3c;
+    padding-top: 50px;
+  }
+
+  .confirmation-box {
+    background: #ffffff;
+    padding: 40px 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .checkmark {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #d4f7e3;
+    color: #28a745;
+    font-size: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 20px;
+  }
+
+  .confirmation-title {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .confirmation-subtext {
+    color: #6c757d;
+    font-size: 16px;
+  }
+
+  .item-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 24px;
+    margin-bottom: 50px;
+    justify-content: center;
+  }
+
+  .item-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+
+  .item-card:hover {
+    transform: translateY(-3px);
+  }
+
+  .item-image {
+    display: block;
+    margin: 0 auto 16px auto;
+    width: 70%;
+    height: auto;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+
+  .item-name {
+    font-weight: 600;
+    font-size: 18px;
+    margin-top: 8px;
+    color: #333;
+  }
+
+  .btn-primary-custom {
+    background-color: #007bff;
+    border: none;
+    padding: 12px 30px;
+    font-size: 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .btn-primary-custom:hover {
+    background-color: #0056b3;
+  }

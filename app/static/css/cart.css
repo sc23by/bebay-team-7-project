@@ -1,0 +1,39 @@
+
+/* Custom darker border for checkbox */
+.custom-checkbox {
+    border: 2px solid #a3a3a3;  /* darker gray */
+    border-radius: 4px;
+    width: 1.0rem;
+    height: 1.0rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+/* Darker border on hover */
+.custom-checkbox:hover {
+    border-color: #ffffff;
+}
+
+/* Style when checked */
+.custom-checkbox:checked {
+    background-color: #198754;  /* Bootstrap green */
+    border-color: #198754;
+}
+
+.card.border-light {
+    border-color: #bababa !important;
+}
+
+
+/* Blinking dot feature for the cart*/
+.blink-dot {
+    animation: blink-animation 1s steps(2, start) infinite;
+}
+
+@keyframes blink-animation {
+    to {
+        visibility: hidden;
+    }
+}
+
+
