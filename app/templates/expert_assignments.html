@@ -4,10 +4,10 @@
 <h1 class="page-title">Authentication Assignments</h1>
 
 <div class="expert-assignments-container">
-    <div class="row row-cols-3 row-cols-md-5 g-4 gallery">
+    <div class="row row-cols-3 row-cols-md-5 g-4">
         {% if items %}
             {% for item in items %}
-                <div class="col gallery">
+                <div class="col">
                     <div class="card h-100">
                         <img src="{{ url_for('static', filename='images/items/' + item.item_image) }}" 
                             class="card-img-top" alt="{{ item.item_name }}">

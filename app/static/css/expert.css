@@ -58,7 +58,7 @@
     margin-top: 20px;
 }
 
-.expert-assignments-container {
+.expert-assignments-container{
     margin-top: 2%;
     margin-left: 2%;
     margin-right: 2%;
@@ -155,4 +155,12 @@ body {
 .expert-subtitle {
     text-align: center;
     font-size: 20px;
+}
+
+.expert-history-container{
+    margin-top: 2%;
+    margin-left: 2%;
+    margin-right: 2%;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); 
+    padding: 3%;
 }
