@@ -1,8 +1,4 @@
-import os
-from app import create_app, socketio
+from app import app
 
-app = create_app()
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Required for Render / PythonAnywhere
-    socketio.run(app, host="0.0.0.0", port=port)
+if __name__ == '__main__':
+    socketio.run(app)
